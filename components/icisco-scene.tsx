@@ -285,12 +285,10 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
               const closeElapsed = (performance.now() - closeStart) / 1000;
               const closeP = Math.min(1, closeElapsed / CLOSE_DUR);
 
-              // Fall forward (tip towards viewer) then drop down
+              // Fall backward like a domino, then drop down
               const fallP = closeP * closeP;
-              inner.rotation.x = Math.PI + Math.PI * 0.7 * fallP;
+              inner.rotation.x = Math.PI * 1.5 + Math.PI * 0.55 * fallP;
               outer.position.y = -10 * fallP;
-              orient.scale.y = 1 - 0.15 * fallP;
-              orient.scale.x = 1 + 0.08 * fallP;
 
               // Fade shade out
               if (shadeRef.current) {
