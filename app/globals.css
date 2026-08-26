@@ -960,6 +960,7 @@ a {
   display: grid;
   place-items: center;
   align-content: center;
+  user-select: none;
 }
 
 .icisco-logo-img {
@@ -967,6 +968,8 @@ a {
   animation: iciscoLogoIn 1s cubic-bezier(0.22, 1, 0.36, 1) both,
     iciscoAuraPulse 2.8s ease-in-out 1s infinite;
   filter: drop-shadow(0 0 44px rgba(4, 159, 217, 0.4));
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 @keyframes iciscoLogoIn {
@@ -1005,6 +1008,7 @@ a {
   padding: 14px 20px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(4, 159, 217, 0.12);
   animation: peekBubbleIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+  user-select: none;
 }
 
 .icisco-peek-bubble::after {
@@ -1052,6 +1056,8 @@ a {
   height: auto;
   filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.25));
   transition: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 /* Peek: tilted right, peeking from left edge */
@@ -1125,6 +1131,7 @@ a {
   width: min(440px, 75vw);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(4, 159, 217, 0.15);
   animation: bubbleIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  user-select: none;
 }
 
 .icisco-bubble::before {
@@ -1286,6 +1293,392 @@ a {
   font-weight: 600;
   letter-spacing: 0.04em;
   text-shadow: 0 2px 10px rgba(5, 13, 30, 0.65);
+}
+
+/* ── ID Finder / Games app screen ── */
+.icisco-app-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(160deg, #06101e 0%, #0c1c32 50%, #091522 100%);
+  animation: iciscoFadeIn 0.25s ease-out;
+}
+@keyframes iciscoFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.icisco-app-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem;
+  background: rgba(4, 159, 217, 0.12);
+  border-bottom: 1px solid rgba(4, 159, 217, 0.2);
+}
+.icisco-app-back {
+  background: none;
+  border: none;
+  color: #049fd9;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.icisco-app-back:hover {
+  background: rgba(4, 159, 217, 0.15);
+}
+.icisco-app-title {
+  color: #e4f1fb;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.icisco-idfinder-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0.8rem 1.2rem 1.2rem;
+  gap: 0.7rem;
+  overflow-y: auto;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(4, 159, 217, 0.06) 0%, transparent 60%),
+    repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(4, 159, 217, 0.03) 19px, rgba(4, 159, 217, 0.03) 20px),
+    repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(4, 159, 217, 0.03) 19px, rgba(4, 159, 217, 0.03) 20px);
+}
+
+/* ── Decorative logo ── */
+.icisco-idfinder-deco-logo {
+  opacity: 0.35;
+  filter: brightness(1.2);
+  margin-top: 0.3rem;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* ── Axie in ID Finder ── */
+.icisco-idfinder-axie {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+  width: 100%;
+  max-width: 320px;
+  position: relative;
+}
+.icisco-idfinder-axie-ring {
+  position: absolute;
+  left: -5px;
+  top: -5px;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px solid rgba(4, 159, 217, 0.2);
+  animation: ringPulse 3s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes ringPulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.08); opacity: 0.2; }
+}
+.icisco-idfinder-axie-img {
+  width: 70px !important;
+  height: 70px !important;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 4px 12px rgba(4, 159, 217, 0.3));
+  animation: axieBob 2.5s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
+}
+.icisco-idfinder-axie-img.bounce {
+  animation: axieBounce 0.5s ease-out;
+}
+@keyframes axieBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+@keyframes axieBounce {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.15) translateY(-6px); }
+  100% { transform: scale(1) translateY(0); }
+}
+.icisco-idfinder-bubble {
+  position: relative;
+  background: rgba(4, 159, 217, 0.12);
+  border: 1px solid rgba(4, 159, 217, 0.2);
+  border-radius: 12px 12px 12px 2px;
+  padding: 0.5rem 0.7rem;
+  color: #c3dae8;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  max-width: 210px;
+}
+
+/* ── Form ── */
+.icisco-idfinder-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: 100%;
+  max-width: 300px;
+}
+.icisco-idfinder-label {
+  color: #8eafc8;
+  font-size: 0.82rem;
+  text-align: center;
+  line-height: 1.4;
+}
+.icisco-idfinder-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.icisco-idfinder-input-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: #506878;
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+.icisco-idfinder-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(4, 159, 217, 0.25);
+  border-radius: 10px;
+  padding: 0.65rem 0.8rem 0.65rem 2.2rem;
+  color: #e4f1fb;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.icisco-idfinder-input::placeholder {
+  color: #506878;
+}
+.icisco-idfinder-input:focus {
+  border-color: #049fd9;
+  box-shadow: 0 0 0 3px rgba(4, 159, 217, 0.18);
+}
+.icisco-idfinder-input.shake {
+  animation: inputShake 0.4s ease-out;
+}
+@keyframes inputShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+.icisco-idfinder-btn {
+  background: linear-gradient(135deg, #049fd9 0%, #0379b4 100%);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border: none;
+  border-radius: 10px;
+  padding: 0.55rem 1.2rem;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.icisco-idfinder-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.icisco-idfinder-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+.icisco-idfinder-btn:not(:disabled):active {
+  transform: translateY(0);
+}
+.icisco-idfinder-error {
+  color: #f87171;
+  font-size: 0.8rem;
+  text-align: center;
+  margin-top: 0.15rem;
+}
+
+/* ── ID Card ── */
+.icisco-idcard {
+  width: 100%;
+  max-width: 440px;
+  background: #ffffff;
+  border-radius: 14px;
+  overflow: hidden;
+  animation: idCardSlideIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow:
+    0 2px 1px rgba(0, 0, 0, 0.08),
+    0 8px 24px rgba(0, 0, 0, 0.18);
+}
+@keyframes idCardSlideIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Card body */
+.icisco-idcard-body {
+  padding: 1.2rem 1.2rem 0.8rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+.icisco-idcard-avatar {
+  width: 90px;
+  height: 90px;
+  border-radius: 10px;
+  background: #e8f4fd;
+  border: 1.5px solid #c5e3f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.icisco-idcard-avatar-img {
+  object-fit: contain;
+}
+.icisco-idcard-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
+}
+.icisco-idcard-name {
+  color: #1a2a3a;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.icisco-idcard-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+.icisco-idcard-label {
+  color: #8a9aa8;
+  font-size: 0.58rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.icisco-idcard-value {
+  color: #2a3a4a;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+.icisco-idcard-membership {
+  display: inline-block;
+  width: fit-content;
+  background: #049fd9;
+  border-radius: 4px;
+  padding: 0.12rem 0.5rem;
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Badges */
+.icisco-idcard-badges {
+  padding: 0.6rem 1.2rem 0.5rem;
+  border-top: 1px solid #eef2f5;
+}
+.icisco-idcard-badges-title {
+  display: block;
+  color: #8a9aa8;
+  font-size: 0.58rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.45rem;
+}
+.icisco-idcard-badge-slots {
+  display: flex;
+  gap: 0.6rem;
+}
+.icisco-idcard-badge-slot {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+.icisco-idcard-badge-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  border: 1.5px dashed #d0dbe4;
+  background: #f5f8fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #b0bec5;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.icisco-idcard-badge-label {
+  color: #8a9aa8;
+  font-size: 0.52rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Footer */
+.icisco-idcard-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1.2rem;
+  background: #f5f8fa;
+  border-top: 1px solid #eef2f5;
+}
+.icisco-idcard-footer-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.icisco-idcard-org-footer {
+  color: #8a9aa8;
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.icisco-idcard-id {
+  color: #5a6a78;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", monospace;
+}
+.icisco-idcard-qr {
+  width: 42px;
+  height: 42px;
+  border-radius: 4px;
+  background: #fff;
+  border: 1px solid #e0e6ec;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.icisco-idcard-qr-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 2px;
+}
+
+.icisco-id-card-again {
+  margin-top: 0.3rem;
+  width: 100%;
+  max-width: 440px;
 }
 
 @keyframes iciscoAppIn {

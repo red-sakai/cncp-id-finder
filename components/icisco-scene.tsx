@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
+import QRCode from "qrcode";
 
 let cachedGltf: GLTF | null = null;
 
@@ -33,7 +34,7 @@ type Phase = "anim" | "logo" | "peek" | "walk" | "talk" | "home";
 const DIALOGUE_LINES = [
   "Welcome to iCisco! I'm Axie, your guide!",
   "This is the iCisco iPad \u2014 your gateway to everything Cisco NetConnect!",
-  "You can explore the apps here: ID Finder to look up Cisco IDs, or Games for fun!",
+  "Tap ID Finder and enter your email to look up your CNCP member info. There's also Games for fun!",
   "Tap anywhere or press Escape to leave anytime. Ready to explore?",
 ];
 
@@ -49,6 +50,67 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const [bubbleText, setBubbleText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [walkFrame, setWalkFrame] = useState<"left" | "right">("left");
+
+  // ID Finder app state
+  const [activeApp, setActiveApp] = useState<null | "id-finder" | "games">(
+    null
+  );
+  const [idFinderPhase, setIdFinderPhase] = useState<
+    "prompt" | "found" | "not-found"
+  >("prompt");
+  const [emailInput, setEmailInput] = useState("");
+  const [lookupResult, setLookupResult] = useState<{
+    first_name: string;
+    last_name: string;
+    email: string;
+    course_year_section: string;
+    membership_type: string;
+  } | null>(null);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupError, setLookupError] = useState<string | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState("");
+
+  const handleLookup = useCallback(async () => {
+    const email = emailInput.trim();
+    if (!email) return;
+    setLookupLoading(true);
+    setLookupError(null);
+    setLookupResult(null);
+    setIdFinderPhase("prompt");
+    try {
+      const res = await fetch("/api/lookup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setIdFinderPhase("not-found");
+        setLookupError(
+          res.status === 404
+            ? "No account found with that email."
+            : body.error || "Something went wrong."
+        );
+      } else {
+        const data = await res.json();
+        setLookupResult(data);
+        setIdFinderPhase("found");
+        QRCode.toDataURL(
+          `https://cncp-id-finder.vercel.app/id/${data.email}`,
+          {
+            width: 80,
+            margin: 1,
+            color: { dark: "#1a2a3a", light: "#ffffff" },
+          }
+        ).then(setQrDataUrl);
+      }
+    } catch {
+      setLookupError("Network error. Please try again.");
+      setIdFinderPhase("not-found");
+    } finally {
+      setLookupLoading(false);
+    }
+  }, [emailInput]);
 
   // Use a ref so the Three.js loop can read it without re-running effects
   const closingRef = useRef(false);
@@ -361,6 +423,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             width={330}
             height={231}
             priority
+            draggable={false}
             className="icisco-logo-img"
           />
         </div>
@@ -387,6 +450,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             width={160}
             height={160}
             priority
+            draggable={false}
             className="icisco-axolotl-img"
           />
         </div>
@@ -411,7 +475,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
         </div>
       )}
 
-      {phase === "home" && !closing && (
+      {phase === "home" && !closing && !activeApp && (
         <div className="icisco-home">
           <Image
             src="/cncp-logo-transparent.png"
@@ -421,7 +485,11 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             className="icisco-home-logo"
           />
           <div className="icisco-apps">
-            <button type="button" className="icisco-app" title="Coming soon">
+            <button
+              type="button"
+              className="icisco-app"
+              onClick={() => setActiveApp("id-finder")}
+            >
               <span className="icisco-app-icon">
                 <Image
                   src="/id-finder-icon.png"
@@ -433,7 +501,11 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
               </span>
               <span className="icisco-app-label">ID Finder</span>
             </button>
-            <button type="button" className="icisco-app" title="Coming soon">
+            <button
+              type="button"
+              className="icisco-app"
+              onClick={() => setActiveApp("games")}
+            >
               <span className="icisco-app-icon">
                 <Image
                   src="/games-app-icon.jpg"
@@ -445,6 +517,223 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
               </span>
               <span className="icisco-app-label">Games</span>
             </button>
+          </div>
+        </div>
+      )}
+
+      {activeApp === "id-finder" && !closing && (
+        <div className="icisco-app-screen">
+          <div className="icisco-app-bar">
+            <button
+              type="button"
+              className="icisco-app-back"
+              onClick={() => {
+                setActiveApp(null);
+                setLookupResult(null);
+                setLookupError(null);
+                setEmailInput("");
+                setIdFinderPhase("prompt");
+                setQrDataUrl("");
+              }}
+              aria-label="Back to home"
+            >
+              &#9664;
+            </button>
+            <span className="icisco-app-title">ID Finder</span>
+          </div>
+
+          <div className="icisco-idfinder-body">
+            {/* Decorative logo */}
+            <Image
+              src="/cncp-logo-transparent.png"
+              alt=""
+              width={80}
+              height={56}
+              className="icisco-idfinder-deco-logo"
+              aria-hidden
+            />
+
+            {/* Axie character */}
+            <div className="icisco-idfinder-axie">
+              <div className="icisco-idfinder-axie-ring" />
+              <Image
+                src={
+                  idFinderPhase === "not-found"
+                    ? "/axolotl-confused.png"
+                    : "/waving-axolotl.png"
+                }
+                alt="Axie"
+                width={90}
+                height={90}
+                className={`icisco-idfinder-axie-img ${idFinderPhase === "found" ? "bounce" : ""}`}
+              />
+              <div className="icisco-idfinder-bubble">
+                {idFinderPhase === "found"
+                  ? "Found you! Here's your CNCP member card!"
+                  : idFinderPhase === "not-found"
+                    ? "Hmm, I couldn't find that email. Try again!"
+                    : "Hey! Enter your email below and I'll pull up your CNCP member card!"}
+              </div>
+            </div>
+
+            {/* Form state */}
+            {!lookupResult && (
+              <form
+                className="icisco-idfinder-form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleLookup();
+                }}
+              >
+                <p className="icisco-idfinder-label">
+                  Enter your email to find your CNCP member ID
+                </p>
+                <div className="icisco-idfinder-input-wrap">
+                  <span className="icisco-idfinder-input-icon">&#9993;</span>
+                  <input
+                    type="email"
+                    className={`icisco-idfinder-input ${lookupError ? "shake" : ""}`}
+                    placeholder="you@example.com"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="icisco-idfinder-btn"
+                  disabled={lookupLoading || !emailInput.trim()}
+                >
+                  {lookupLoading ? "Searching\u2026" : "Find My ID"}
+                </button>
+              </form>
+            )}
+
+            {/* ID Card */}
+            {lookupResult && (
+              <div className="icisco-idcard">
+                {/* Main content */}
+                <div className="icisco-idcard-body">
+                  <div className="icisco-idcard-avatar">
+                    <Image
+                      src="/cncp-logo-transparent.png"
+                      alt="CNCP"
+                      width={56}
+                      height={40}
+                      className="icisco-idcard-avatar-img"
+                    />
+                  </div>
+                  <div className="icisco-idcard-info">
+                    <p className="icisco-idcard-name">
+                      {lookupResult.first_name} {lookupResult.last_name}
+                    </p>
+
+                    <div className="icisco-idcard-field">
+                      <span className="icisco-idcard-label">Email</span>
+                      <span className="icisco-idcard-value">
+                        {lookupResult.email}
+                      </span>
+                    </div>
+
+                    <div className="icisco-idcard-field">
+                      <span className="icisco-idcard-label">
+                        Course / Year / Section
+                      </span>
+                      <span className="icisco-idcard-value">
+                        {lookupResult.course_year_section}
+                      </span>
+                    </div>
+
+                    <div className="icisco-idcard-field">
+                      <span className="icisco-idcard-label">Membership</span>
+                      <span className="icisco-idcard-value icisco-idcard-membership">
+                        {lookupResult.membership_type}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Badges */}
+                <div className="icisco-idcard-badges">
+                  <span className="icisco-idcard-badges-title">Badges</span>
+                  <div className="icisco-idcard-badge-slots">
+                    <div className="icisco-idcard-badge-slot">
+                      <div className="icisco-idcard-badge-icon-wrap">?</div>
+                    </div>
+                    <div className="icisco-idcard-badge-slot">
+                      <div className="icisco-idcard-badge-icon-wrap">?</div>
+                    </div>
+                    <div className="icisco-idcard-badge-slot">
+                      <div className="icisco-idcard-badge-icon-wrap">?</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="icisco-idcard-footer">
+                  <div className="icisco-idcard-footer-left">
+                    <span className="icisco-idcard-org-footer">
+                      Cisco NetConnect PUP &ndash; Manila
+                    </span>
+                    <span className="icisco-idcard-id">
+                      CNCP-2026-
+                      {String(
+                        lookupResult.email.length * 7 % 10000
+                      ).padStart(4, "0")}
+                    </span>
+                  </div>
+                  <div className="icisco-idcard-qr">
+                    {qrDataUrl && (
+                      <img
+                        src={qrDataUrl}
+                        alt="QR Code"
+                        className="icisco-idcard-qr-img"
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {lookupError && !lookupResult && (
+              <p className="icisco-idfinder-error">{lookupError}</p>
+            )}
+
+            {lookupResult && (
+              <button
+                type="button"
+                className="icisco-idfinder-btn icisco-id-card-again"
+                onClick={() => {
+                  setLookupResult(null);
+                  setEmailInput("");
+                  setIdFinderPhase("prompt");
+                  setQrDataUrl("");
+                }}
+              >
+                Look up another
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeApp === "games" && !closing && (
+        <div className="icisco-app-screen">
+          <div className="icisco-app-bar">
+            <button
+              type="button"
+              className="icisco-app-back"
+              onClick={() => setActiveApp(null)}
+              aria-label="Back to home"
+            >
+              &#9664;
+            </button>
+            <span className="icisco-app-title">Games</span>
+          </div>
+          <div className="icisco-idfinder-body">
+            <p className="icisco-idfinder-hint">
+              Games coming soon! Stay tuned.
+            </p>
           </div>
         </div>
       )}
