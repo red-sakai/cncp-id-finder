@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Lenis from "lenis";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import IciscoScene from "@/components/icisco-scene";
 
 const EXTEND_INDICES = [1, 2, 3, 5, 6, 7];
 const DOT_LEVELS = [
@@ -176,7 +177,15 @@ function Nav({
   );
 }
 
-function Hero({ isNight, isReady }: { isNight: boolean; isReady: boolean }) {
+function Hero({
+  isNight,
+  isReady,
+  onStart,
+}: {
+  isNight: boolean;
+  isReady: boolean;
+  onStart: () => void;
+}) {
   const [isIntroReady, setIsIntroReady] = useState(false);
   const heroRef = useRef<HTMLElement>(null);
   const heroBgRef = useRef<HTMLDivElement>(null);
@@ -357,11 +366,6 @@ function Hero({ isNight, isReady }: { isNight: boolean; isReady: boolean }) {
           </div>
           <span className="hero-layer hero-bridge" />
         </div>
-        <div className="icisco-badge" title="iCisco">
-          <span className="icisco-wave">
-            <Image src="/icisco.png" alt="iCisco" width={110} height={110} className="icisco-img" />
-          </span>
-        </div>
       </div>
       <div className="hero-content">
         <div className="hero-text">
@@ -374,6 +378,9 @@ function Hero({ isNight, isReady }: { isNight: boolean; isReady: boolean }) {
             Cisco NetConnect PUP &ndash; Manila, the student-led tech community
             where future IT professionals learn, connect, and grow.
           </p>
+          <button type="button" className="btn btn-primary" onClick={onStart}>
+            Click me to get started
+          </button>
         </div>
       </div>
     </section>
@@ -511,8 +518,11 @@ function useTheme() {
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [isNight, toggleTheme] = useTheme();
+  const [iciscoActive, setIciscoActive] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [extendedIndices, setExtendedIndices] = useState<number[]>([]);
+
+  const handleStart = () => setIciscoActive(true);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isNight);
@@ -625,9 +635,23 @@ export default function Home() {
       <main className={`landing${isLoading ? " is-loading" : ""}`}>
         <Nav isNight={isNight} onToggleTheme={toggleTheme} />
         <div className="shell">
-          <Hero isNight={isNight} isReady={!isLoading} />
+          <Hero isNight={isNight} isReady={!isLoading} onStart={handleStart} />
         </div>
         <Footer />
+        {!iciscoActive && (
+          <button
+            type="button"
+            className="icisco-badge"
+            onClick={handleStart}
+            title="iCisco"
+            aria-label="iCisco"
+          >
+            <span className="icisco-wave">
+              <Image src="/icisco.png" alt="iCisco" width={110} height={110} className="icisco-img" />
+            </span>
+          </button>
+        )}
+        {iciscoActive && <IciscoScene onDismiss={() => setIciscoActive(false)} />}
       </main>
     </>
   );
