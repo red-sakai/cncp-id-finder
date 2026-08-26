@@ -69,6 +69,9 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState("");
+  const [cardFlipped, setCardFlipped] = useState(false);
+  const sigCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
 
   const handleLookup = useCallback(async () => {
     const email = emailInput.trim();
@@ -111,6 +114,54 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
       setLookupLoading(false);
     }
   }, [emailInput]);
+
+  // Signature pad functions
+  const getSigPos = (e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = sigCanvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top,
+    };
+  };
+
+  const startDraw = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    setIsDrawing(true);
+    const ctx = sigCanvasRef.current?.getContext("2d");
+    if (!ctx) return;
+    const pos = getSigPos(e);
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+  };
+
+  const draw = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    if (!isDrawing) return;
+    const ctx = sigCanvasRef.current?.getContext("2d");
+    if (!ctx) return;
+    const pos = getSigPos(e);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.strokeStyle = "#1a2a3a";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.stroke();
+  };
+
+  const endDraw = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    setIsDrawing(false);
+  };
+
+  const clearSig = () => {
+    const ctx = sigCanvasRef.current?.getContext("2d");
+    if (!ctx || !sigCanvasRef.current) return;
+    ctx.clearRect(0, 0, sigCanvasRef.current.width, sigCanvasRef.current.height);
+  };
 
   // Use a ref so the Three.js loop can read it without re-running effects
   const closingRef = useRef(false);
@@ -611,86 +662,170 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
 
             {/* ID Card */}
             {lookupResult && (
-              <div className="icisco-idcard">
-                {/* Main content */}
-                <div className="icisco-idcard-body">
-                  <div className="icisco-idcard-avatar">
+              <div
+                className={`icisco-idcard ${cardFlipped ? "flipped" : ""}`}
+                onClick={() => setCardFlipped(!cardFlipped)}
+              >
+                {/* FRONT */}
+                <div className="icisco-idcard-face icisco-idcard-front">
+                  <div className="icisco-idcard-top">
                     <Image
                       src="/cncp-logo-transparent.png"
-                      alt="CNCP"
-                      width={56}
-                      height={40}
-                      className="icisco-idcard-avatar-img"
+                      alt=""
+                      width={20}
+                      height={14}
+                      className="icisco-idcard-top-logo"
+                      draggable={false}
+                    />
+                    <span className="icisco-idcard-top-title">Member ID</span>
+                    <Image
+                      src="/cncp-logo-transparent.png"
+                      alt=""
+                      width={20}
+                      height={14}
+                      className="icisco-idcard-top-logo"
+                      draggable={false}
                     />
                   </div>
-                  <div className="icisco-idcard-info">
-                    <p className="icisco-idcard-name">
-                      {lookupResult.first_name} {lookupResult.last_name}
-                    </p>
-
-                    <div className="icisco-idcard-field">
-                      <span className="icisco-idcard-label">Email</span>
-                      <span className="icisco-idcard-value">
-                        {lookupResult.email}
-                      </span>
+                  <div className="icisco-idcard-body">
+                    <div className="icisco-idcard-avatar">
+                      <Image
+                        src="/cncp-logo-transparent.png"
+                        alt="CNCP"
+                        width={56}
+                        height={40}
+                        className="icisco-idcard-avatar-img"
+                      />
                     </div>
-
-                    <div className="icisco-idcard-field">
-                      <span className="icisco-idcard-label">
-                        Course / Year / Section
-                      </span>
-                      <span className="icisco-idcard-value">
+                    <div className="icisco-idcard-info">
+                      <p className="icisco-idcard-name">
+                        {lookupResult.first_name} {lookupResult.last_name}
+                      </p>
+                      <p className="icisco-idcard-idnum">
+                        CNCP-2026-
+                        {String(
+                          lookupResult.email.length * 7 % 10000
+                        ).padStart(4, "0")}
+                      </p>
+                      <p className="icisco-idcard-course">
                         {lookupResult.course_year_section}
-                      </span>
-                    </div>
-
-                    <div className="icisco-idcard-field">
-                      <span className="icisco-idcard-label">Membership</span>
-                      <span className="icisco-idcard-value icisco-idcard-membership">
+                      </p>
+                      <span className="icisco-idcard-membership">
                         {lookupResult.membership_type}
                       </span>
+                      <p className="icisco-idcard-email">
+                        {lookupResult.email}
+                      </p>
                     </div>
                   </div>
-                </div>
-
-                {/* Badges */}
-                <div className="icisco-idcard-badges">
-                  <span className="icisco-idcard-badges-title">Badges</span>
-                  <div className="icisco-idcard-badge-slots">
-                    <div className="icisco-idcard-badge-slot">
-                      <div className="icisco-idcard-badge-icon-wrap">?</div>
-                    </div>
-                    <div className="icisco-idcard-badge-slot">
-                      <div className="icisco-idcard-badge-icon-wrap">?</div>
-                    </div>
-                    <div className="icisco-idcard-badge-slot">
-                      <div className="icisco-idcard-badge-icon-wrap">?</div>
+                  <div className="icisco-idcard-badges">
+                    <span className="icisco-idcard-badges-title">Badges</span>
+                    <div className="icisco-idcard-badge-slots">
+                      <div className="icisco-idcard-badge-slot">
+                        <div className="icisco-idcard-badge-icon-wrap">?</div>
+                      </div>
+                      <div className="icisco-idcard-badge-slot">
+                        <div className="icisco-idcard-badge-icon-wrap">?</div>
+                      </div>
+                      <div className="icisco-idcard-badge-slot">
+                        <div className="icisco-idcard-badge-icon-wrap">?</div>
+                      </div>
                     </div>
                   </div>
-                </div>
-
-                {/* Footer */}
-                <div className="icisco-idcard-footer">
-                  <div className="icisco-idcard-footer-left">
+                  <div className="icisco-idcard-footer">
                     <span className="icisco-idcard-org-footer">
                       Cisco NetConnect PUP &ndash; Manila
                     </span>
-                    <span className="icisco-idcard-id">
-                      CNCP-2026-
-                      {String(
-                        lookupResult.email.length * 7 % 10000
-                      ).padStart(4, "0")}
+                    <div className="icisco-idcard-qr">
+                      {qrDataUrl && (
+                        <img
+                          src={qrDataUrl}
+                          alt="QR Code"
+                          className="icisco-idcard-qr-img"
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* BACK */}
+                <div className="icisco-idcard-face icisco-idcard-back">
+                  <div className="icisco-idcard-back-header">
+                    <Image
+                      src="/cncp-logo-transparent.png"
+                      alt="CNCP"
+                      width={40}
+                      height={28}
+                      draggable={false}
+                    />
+                    <span className="icisco-idcard-back-org">
+                      Cisco NetConnect PUP &ndash; Manila
                     </span>
                   </div>
-                  <div className="icisco-idcard-qr">
-                    {qrDataUrl && (
-                      <img
-                        src={qrDataUrl}
-                        alt="QR Code"
-                        className="icisco-idcard-qr-img"
+                  <p className="icisco-idcard-back-text">
+                    This is an official identification card issued and recognized
+                    by <strong>Cisco NetConnect PUP &ndash; Manila</strong> for
+                    its registered members.
+                  </p>
+                  <div className="icisco-idcard-back-signatories">
+                    <div className="icisco-idcard-signatory" onClick={(e) => e.stopPropagation()}>
+                      <Image
+                        src="/jhered-signatory.png"
+                        alt="Jhered Miguel Republica"
+                        width={160}
+                        height={50}
+                        className="icisco-idcard-sig-img"
+                        draggable={false}
                       />
-                    )}
+                      <div className="icisco-idcard-sig-line" />
+                      <p className="icisco-idcard-sig-name">
+                        Jhered Miguel Republica
+                      </p>
+                      <p className="icisco-idcard-sig-role">
+                        Chief Executive Officer
+                      </p>
+                    </div>
+                    <div className="icisco-idcard-signatory" onClick={(e) => e.stopPropagation()}>
+                      <canvas
+                        ref={sigCanvasRef}
+                        width={160}
+                        height={50}
+                        className="icisco-idcard-sig-canvas"
+                        onMouseDown={startDraw}
+                        onMouseMove={draw}
+                        onMouseUp={endDraw}
+                        onMouseLeave={endDraw}
+                        onTouchStart={startDraw}
+                        onTouchMove={draw}
+                        onTouchEnd={endDraw}
+                      />
+                      <button
+                        type="button"
+                        className="icisco-idcard-sig-clear"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          clearSig();
+                        }}
+                      >
+                        Clear
+                      </button>
+                      <div className="icisco-idcard-sig-line" />
+                      <p className="icisco-idcard-sig-name">
+                        {lookupResult.first_name} {lookupResult.last_name}
+                      </p>
+                      <p className="icisco-idcard-sig-role">Member</p>
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    className="icisco-idcard-back-flip"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCardFlipped(false);
+                    }}
+                  >
+                    Tap to flip back
+                  </button>
                 </div>
               </div>
             )}

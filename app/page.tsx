@@ -390,7 +390,7 @@ function Hero({
 const SOCIALS = [
   {
     label: "Email",
-    href: "mailto:cncp@pup.edu.ph",
+    href: "mailto:pupcisconetconmain@gmail.com",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
         <rect x="2" y="4" width="20" height="16" rx="2" />
@@ -461,7 +461,7 @@ function Footer() {
           <h3>Contact</h3>
           <ul>
             <li>
-              <a href="mailto:cncp@pup.edu.ph">cncp@pup.edu.ph</a>
+              <a href="mailto:pupcisconetconmain@gmail.com">pupcisconetconmain@gmail.com</a>
             </li>
             <li>
               <span>PUP Manila Main Campus</span>

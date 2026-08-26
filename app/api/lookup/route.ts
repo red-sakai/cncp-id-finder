@@ -12,15 +12,15 @@ export async function POST(request: NextRequest) {
     .from("registration_personal_info")
     .select("first_name, last_name, email, course_year_section, membership_type")
     .eq("email", email.trim().toLowerCase())
-    .maybeSingle();
+    .limit(1);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  if (!data) {
+  if (!data || data.length === 0) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(data[0]);
 }
