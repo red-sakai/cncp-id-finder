@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Lenis from "lenis";
 import { useEffect, useRef, useState, useSyncExternalStore, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import IciscoScene from "@/components/icisco-scene";
 
 const EXTEND_INDICES = [1, 2, 3, 5, 6, 7];
@@ -515,13 +516,11 @@ function useTheme() {
   return [isNight, toggleTheme] as const;
 }
 
-export default function Home() {
+function HomeContent() {
+  const searchParams = useSearchParams();
+  const hasAwardParams = searchParams.get("awarded") !== null && searchParams.get("email") !== null;
   const [isLoading, setIsLoading] = useState(true);
   const [isNight, toggleTheme] = useTheme();
-  const hasAwardParams =
-    typeof window !== "undefined" &&
-    new URLSearchParams(window.location.search).get("awarded") !== null &&
-    new URLSearchParams(window.location.search).get("email") !== null;
   const [iciscoActive, setIciscoActive] = useState(hasAwardParams);
   const [activeIndex, setActiveIndex] = useState(0);
   const [extendedIndices, setExtendedIndices] = useState<number[]>([]);
@@ -662,5 +661,13 @@ export default function Home() {
         )}
       </main>
     </>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <HomeContent />
+    </Suspense>
   );
 }
