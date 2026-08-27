@@ -1727,6 +1727,227 @@ a {
   border-color: #d4a800;
 }
 
+/* ─── Card Style: DIAMOND (Higher Positions) ─── */
+.card-style-diamond .icisco-idcard-face {
+  background: linear-gradient(145deg, #e8eaf6 0%, #c5cae9 20%, #9fa8da 50%, #7986cb 80%, #5c6bc0 100%);
+  position: relative;
+  overflow: hidden;
+}
+.card-style-diamond .icisco-idcard-face::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -60%;
+  width: 40%;
+  height: 200%;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.15) 40%,
+    rgba(179, 229, 252, 0.4) 48%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(179, 229, 252, 0.4) 52%,
+    rgba(255, 255, 255, 0.15) 60%,
+    transparent 70%
+  );
+  transform: skewX(-20deg);
+  animation: diamondShine 3s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 10;
+}
+@keyframes diamondShine {
+  0%, 100% { left: -60%; opacity: 0.5; }
+  50% { left: 120%; opacity: 1; }
+}
+.card-style-diamond .icisco-idcard-face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255,255,255,0.3) 0%, transparent 2%),
+    radial-gradient(circle at 80% 15%, rgba(255,255,255,0.25) 0%, transparent 1.5%),
+    radial-gradient(circle at 50% 80%, rgba(255,255,255,0.2) 0%, transparent 2%),
+    radial-gradient(circle at 10% 60%, rgba(179,229,252,0.3) 0%, transparent 1.5%),
+    radial-gradient(circle at 90% 70%, rgba(179,229,252,0.25) 0%, transparent 1%);
+  animation: diamondSparkle 5s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 11;
+}
+@keyframes diamondSparkle {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+.card-style-diamond .icisco-idcard-top {
+  border-bottom-color: #7986cb;
+  background: linear-gradient(90deg, #3949ab 0%, #7986cb 30%, #c5cae9 50%, #7986cb 70%, #3949ab 100%);
+}
+.card-style-diamond .icisco-idcard-top-title {
+  color: #fff;
+  text-shadow: 0 0 12px rgba(121, 134, 203, 0.5);
+}
+.card-style-diamond .icisco-idcard-membership {
+  background: linear-gradient(90deg, #283593, #3949ab, #5c6bc0, #3949ab, #283593);
+  background-size: 200% 100%;
+  animation: diamondBadge 3s ease-in-out infinite;
+}
+@keyframes diamondBadge {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+.card-style-diamond .icisco-idcard-avatar {
+  border-color: #7986cb;
+  box-shadow: 0 0 14px rgba(121, 134, 203, 0.4), 0 0 28px rgba(92, 107, 192, 0.15);
+}
+.card-style-diamond .icisco-idcard-name {
+  background: linear-gradient(90deg, #1a237e, #283593, #3949ab, #283593, #1a237e);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.card-style-diamond .icisco-idcard-idnum {
+  color: #3949ab;
+}
+.card-style-diamond .icisco-idcard-footer {
+  border-top-color: #7986cb;
+}
+.card-style-diamond .icisco-idcard-qr {
+  border-color: #7986cb;
+}
+
+/* ─── Card Style: SILVER (Vice Chief Executives) ─── */
+.card-style-silver .icisco-idcard-face {
+  background: linear-gradient(145deg, #fafafa 0%, #f5f5f5 20%, #e0e0e0 50%, #bdbdbd 80%, #9e9e9e 100%);
+  position: relative;
+  overflow: hidden;
+}
+.card-style-silver .icisco-idcard-face::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -60%;
+  width: 40%;
+  height: 200%;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.4) 45%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0.4) 55%,
+    transparent 70%
+  );
+  transform: skewX(-20deg);
+  animation: silverShine 3.5s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 10;
+}
+@keyframes silverShine {
+  0%, 100% { left: -60%; }
+  50% { left: 120%; }
+}
+.card-style-silver .icisco-idcard-top {
+  border-bottom-color: #9e9e9e;
+  background: linear-gradient(90deg, #616161 0%, #9e9e9e 30%, #e0e0e0 50%, #9e9e9e 70%, #616161 100%);
+}
+.card-style-silver .icisco-idcard-top-title {
+  color: #fff;
+  text-shadow: 0 0 8px rgba(158, 158, 158, 0.4);
+}
+.card-style-silver .icisco-idcard-membership {
+  background: linear-gradient(90deg, #424242, #757575, #9e9e9e, #757575, #424242);
+  background-size: 200% 100%;
+  animation: silverBadge 3s ease-in-out infinite;
+}
+@keyframes silverBadge {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+.card-style-silver .icisco-idcard-avatar {
+  border-color: #9e9e9e;
+  box-shadow: 0 0 10px rgba(158, 158, 158, 0.3);
+}
+.card-style-silver .icisco-idcard-name {
+  background: linear-gradient(90deg, #424242, #9e9e9e, #e0e0e0, #9e9e9e, #424242);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.card-style-silver .icisco-idcard-idnum {
+  color: #616161;
+}
+.card-style-silver .icisco-idcard-footer {
+  border-top-color: #9e9e9e;
+}
+.card-style-silver .icisco-idcard-qr {
+  border-color: #9e9e9e;
+}
+
+/* ─── Card Style: BRONZE (Leads / Co-Leads) ─── */
+.card-style-bronze .icisco-idcard-face {
+  background: linear-gradient(145deg, #fbe9e7 0%, #ffccbc 20%, #ffab91 50%, #ff8a65 80%, #bf360c 100%);
+  position: relative;
+  overflow: hidden;
+}
+.card-style-bronze .icisco-idcard-face::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -60%;
+  width: 40%;
+  height: 200%;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.3) 45%,
+    rgba(255, 255, 255, 0.45) 50%,
+    rgba(255, 255, 255, 0.3) 55%,
+    transparent 70%
+  );
+  transform: skewX(-20deg);
+  animation: bronzeShine 4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 10;
+}
+@keyframes bronzeShine {
+  0%, 100% { left: -60%; }
+  50% { left: 120%; }
+}
+.card-style-bronze .icisco-idcard-top {
+  border-bottom-color: #bf360c;
+  background: linear-gradient(90deg, #8b2500 0%, #bf360c 30%, #e65100 50%, #bf360c 70%, #8b2500 100%);
+}
+.card-style-bronze .icisco-idcard-top-title {
+  color: #fff;
+  text-shadow: 0 0 8px rgba(191, 54, 12, 0.4);
+}
+.card-style-bronze .icisco-idcard-membership {
+  background: linear-gradient(90deg, #6d1b00, #a13200, #bf360c, #a13200, #6d1b00);
+  background-size: 200% 100%;
+  animation: bronzeBadge 3s ease-in-out infinite;
+}
+@keyframes bronzeBadge {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+.card-style-bronze .icisco-idcard-avatar {
+  border-color: #bf360c;
+  box-shadow: 0 0 10px rgba(191, 54, 12, 0.3);
+}
+.card-style-bronze .icisco-idcard-name {
+  background: linear-gradient(90deg, #6d1b00, #bf360c, #e65100, #bf360c, #6d1b00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.card-style-bronze .icisco-idcard-idnum {
+  color: #8b2500;
+}
+.card-style-bronze .icisco-idcard-footer {
+  border-top-color: #bf360c;
+}
+.card-style-bronze .icisco-idcard-qr {
+  border-color: #bf360c;
+}
+
 /* ─── Public ID Page ─── */
 .public-id-page {
   display: flex;
@@ -2930,6 +3151,27 @@ html.dark .footer-legal-links a:hover {
 }
 .card-style-blue .icisco-public-id-avatar {
   background: linear-gradient(135deg, #d0eaf8, #0277bd);
+}
+.icisco-public-id-card.card-style-diamond {
+  border-color: #7986cb;
+  background: linear-gradient(145deg, #e8eaf6, #c5cae9);
+}
+.card-style-diamond .icisco-public-id-avatar {
+  background: linear-gradient(135deg, #c5cae9, #3949ab);
+}
+.icisco-public-id-card.card-style-silver {
+  border-color: #9e9e9e;
+  background: linear-gradient(145deg, #fafafa, #e0e0e0);
+}
+.card-style-silver .icisco-public-id-avatar {
+  background: linear-gradient(135deg, #e0e0e0, #616161);
+}
+.icisco-public-id-card.card-style-bronze {
+  border-color: #bf360c;
+  background: linear-gradient(145deg, #fbe9e7, #ffccbc);
+}
+.card-style-bronze .icisco-public-id-avatar {
+  background: linear-gradient(135deg, #ffccbc, #bf360c);
 }
 .icisco-public-id-name {
   font-size: 0.7rem;
