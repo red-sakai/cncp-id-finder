@@ -1511,7 +1511,7 @@ a {
 .icisco-idcard {
   width: 100%;
   max-width: 440px;
-  perspective: 1000px;
+  perspective: 1200px;
   cursor: pointer;
   animation: idCardSlideIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -1519,33 +1519,34 @@ a {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+.icisco-idcard-inner {
+  position: relative;
+  width: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  display: grid;
+}
+.icisco-idcard.flipped .icisco-idcard-inner {
+  transform: rotateY(180deg);
+}
 .icisco-idcard-face {
   width: 100%;
   backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
   background: #ffffff;
   border-radius: 14px;
   overflow: hidden;
   box-shadow:
     0 2px 1px rgba(0, 0, 0, 0.08),
     0 8px 24px rgba(0, 0, 0, 0.18);
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  grid-area: 1 / 1;
 }
 .icisco-idcard-front {
-  position: relative;
   z-index: 2;
 }
 .icisco-idcard-back {
-  position: absolute;
-  top: 0;
-  left: 0;
   z-index: 1;
   transform: rotateY(180deg);
-}
-.icisco-idcard.flipped .icisco-idcard-front {
-  transform: rotateY(180deg);
-}
-.icisco-idcard.flipped .icisco-idcard-back {
-  transform: rotateY(0deg);
 }
 
 /* Card header */
@@ -2987,15 +2988,14 @@ html.dark .footer-legal-links a:hover {
 
 /* ─── Badge Info Modal ─── */
 .icisco-badge-modal {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(26, 42, 58, 0.55);
   backdrop-filter: blur(3px);
-  border-radius: 1rem;
 }
 .icisco-badge-modal-card {
   background: #fff;

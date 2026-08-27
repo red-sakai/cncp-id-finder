@@ -136,6 +136,7 @@ export default function PublicIdPage() {
         className={`icisco-idcard ${cardFlipped ? "flipped" : ""} card-style-${cardStyle}`}
         onClick={() => setCardFlipped(!cardFlipped)}
       >
+        <div className="icisco-idcard-inner">
         {/* FRONT */}
         <div className="icisco-idcard-face icisco-idcard-front">
           <div className="icisco-idcard-top">
@@ -245,6 +246,7 @@ export default function PublicIdPage() {
           <button type="button" className="icisco-idcard-back-flip" onClick={(e) => { e.stopPropagation(); setCardFlipped(false); }}>
             Tap to flip back
           </button>
+        </div>
         </div>
       </div>
     </div>

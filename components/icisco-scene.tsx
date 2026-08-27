@@ -538,6 +538,20 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
         : "/walking-axolotl-right.png"
       : "/waving-axolotl.png";
 
+  useEffect(() => {
+    if (activeApp) {
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+    } else {
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+    };
+  }, [activeApp]);
+
   return (
     <div className={`icisco-overlay${closing ? " is-closing" : ""}`} role="presentation">
       <div ref={mountRef} className="icisco-canvas" />
@@ -889,6 +903,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                 className={`icisco-idcard ${cardFlipped ? "flipped" : ""} card-style-${lookupResult.card_style || "white"}`}
                 onClick={() => setCardFlipped(!cardFlipped)}
               >
+              <div className="icisco-idcard-inner">
                 {/* FRONT */}
                 <div className="icisco-idcard-face icisco-idcard-front">
                   <div className="icisco-idcard-top">
@@ -1102,6 +1117,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                   </button>
                 </div>
               </div>
+              </div>
             )}
 
             {lookupError && !lookupResult && (
@@ -1117,7 +1133,6 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                   setEmailInput("");
                   setIdFinderPhase("prompt");
                   setQrDataUrl("");
-                  setPublicIds([]);
                   setViewingPublicId(null);
                 }}
               >
