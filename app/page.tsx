@@ -518,7 +518,11 @@ function useTheme() {
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [isNight, toggleTheme] = useTheme();
-  const [iciscoActive, setIciscoActive] = useState(false);
+  const hasAwardParams =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("awarded") !== null &&
+    new URLSearchParams(window.location.search).get("email") !== null;
+  const [iciscoActive, setIciscoActive] = useState(hasAwardParams);
   const [activeIndex, setActiveIndex] = useState(0);
   const [extendedIndices, setExtendedIndices] = useState<number[]>([]);
 
