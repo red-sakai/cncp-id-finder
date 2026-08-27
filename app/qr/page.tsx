@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
 import Image from "next/image";
 
+const SESSION_KEY = "cncp-qr-auth";
 const BADGES = [
   {
     id: "welcome-to-cisco",
@@ -12,7 +13,98 @@ const BADGES = [
   },
 ];
 
+function getInitialAuth() {
+  if (typeof window === "undefined") return false;
+  return sessionStorage.getItem(SESSION_KEY) === "ok";
+}
+
 export default function QRPage() {
+  const [authenticated, setAuthenticated] = useState(getInitialAuth);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError("");
+    setLoginLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      if (res.ok) {
+        sessionStorage.setItem(SESSION_KEY, "ok");
+        setAuthenticated(true);
+      } else {
+        setLoginError("Invalid username or password.");
+      }
+    } catch {
+      setLoginError("Network error. Please try again.");
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem(SESSION_KEY);
+    setAuthenticated(false);
+    setUsername("");
+    setPassword("");
+  };
+
+  if (!authenticated) {
+    return (
+      <div className="qr-page">
+        <div className="qr-card">
+          <Image
+            src="/cncp-logo-transparent.png"
+            alt="CNCP Logo"
+            width={56}
+            height={39}
+            className="qr-logo"
+            draggable={false}
+          />
+          <h1 className="qr-title">Badge QR Generator</h1>
+          <p className="qr-subtitle">Log in to access the QR generator.</p>
+          <form onSubmit={handleLogin} className="scan-form">
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Username"
+              className="scan-input"
+              autoFocus
+              disabled={loginLoading}
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="scan-input"
+              disabled={loginLoading}
+            />
+            {loginError && <p className="scan-error">{loginError}</p>}
+            <button
+              type="submit"
+              className="scan-button"
+              disabled={loginLoading}
+            >
+              {loginLoading ? "Logging in..." : "Log in"}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  return <QRGenerator onLogout={handleLogout} />;
+}
+
+function QRGenerator({ onLogout }: { onLogout: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [qrUrl, setQrUrl] = useState("");
   const [selected, setSelected] = useState(BADGES[0].id);
@@ -44,14 +136,22 @@ export default function QRPage() {
   return (
     <div className="qr-page">
       <div className="qr-card">
-        <Image
-          src="/cncp-logo-transparent.png"
-          alt="CNCP Logo"
-          width={56}
-          height={39}
-          className="qr-logo"
-          draggable={false}
-        />
+        <div className="qr-top-bar">
+          <Image
+            src="/cncp-logo-transparent.png"
+            alt="CNCP Logo"
+            width={40}
+            height={28}
+            draggable={false}
+          />
+          <button
+            type="button"
+            className="qr-logout"
+            onClick={onLogout}
+          >
+            Log out
+          </button>
+        </div>
         <h1 className="qr-title">Badge QR Generator</h1>
         <p className="qr-subtitle">
           Select a badge and download the QR code to print or share.

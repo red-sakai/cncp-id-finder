@@ -6,6 +6,7 @@ import Image from "next/image";
 import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import QRCode from "qrcode";
+import WireZipGame from "@/components/wirezip-game";
 
 let cachedGltf: GLTF | null = null;
 
@@ -67,6 +68,8 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     course_year_section: string;
     membership_type: string;
     badges: { badge_id: string; awarded_at: string }[];
+    card_style: string;
+    is_public: boolean;
   } | null>(null);
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
@@ -76,6 +79,20 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const [isDrawing, setIsDrawing] = useState(false);
   const [earnedBadges, setEarnedBadges] = useState<Set<string>>(new Set());
   const [showCongrats, setShowCongrats] = useState(false);
+  const [selectedBadge, setSelectedBadge] = useState<string | null>(null);
+  const [publicIds, setPublicIds] = useState<{
+    first_name: string;
+    last_name: string;
+    email: string;
+    course_year_section: string;
+    membership_type: string;
+    card_style: string;
+    badges: string[];
+  }[]>([]);
+  const [publicIdsLoading, setPublicIdsLoading] = useState(false);
+  const [viewingPublicId, setViewingPublicId] = useState<string | null>(null);
+  const [isPublic, setIsPublic] = useState(false);
+  const [publicToggleLoading, setPublicToggleLoading] = useState(false);
 
   const handleLookup = useCallback(async () => {
     const email = emailInput.trim();
@@ -106,6 +123,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
           (data.badges ?? []).map((b: { badge_id: string }) => b.badge_id)
         );
         setEarnedBadges(badges);
+        setIsPublic(data.is_public ?? false);
         QRCode.toDataURL(
           `https://cncp-id-finder.vercel.app/scan`,
           {
@@ -114,6 +132,11 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             color: { dark: "#1a2a3a", light: "#ffffff" },
           }
         ).then(setQrDataUrl);
+        setPublicIdsLoading(true);
+        fetch("/api/public-ids")
+          .then((r) => r.json())
+          .then((d) => setPublicIds(d.ids ?? []))
+          .finally(() => setPublicIdsLoading(false));
       }
     } catch {
       setLookupError("Network error. Please try again.");
@@ -519,8 +542,30 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     <div className={`icisco-overlay${closing ? " is-closing" : ""}`} role="presentation">
       <div ref={mountRef} className="icisco-canvas" />
       <div ref={shadeRef} className="icisco-shade" />
+
+      {!closing && !activeApp && (
+        <button
+          type="button"
+          className="icisco-close-btn"
+          onClick={startClose}
+          aria-label="Close iCisco"
+        >
+          &times;
+        </button>
+      )}
+
       {!ready && phase === "anim" && (
         <div className="icisco-loading">Loading iCisco\u2026</div>
+      )}
+
+      {phase !== "home" && !closing && (
+        <button
+          type="button"
+          className="icisco-skip-btn"
+          onClick={() => setPhase("home")}
+        >
+          Skip &#9654;
+        </button>
       )}
 
       {(phase === "logo" || showAxolotl) && !closing && (
@@ -596,7 +641,16 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             <button
               type="button"
               className="icisco-app"
-              onClick={() => setActiveApp("id-finder")}
+              onClick={() => {
+                setActiveApp("id-finder");
+                if (publicIds.length === 0 && !publicIdsLoading) {
+                  setPublicIdsLoading(true);
+                  fetch("/api/public-ids")
+                    .then((r) => r.json())
+                    .then((d) => { setPublicIds(d.ids ?? []); setPublicIdsLoading(false); })
+                    .catch(() => setPublicIdsLoading(false));
+                }
+              }}
             >
               <span className="icisco-app-icon">
                 <Image
@@ -678,7 +732,92 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
           )}
 
           <div className="icisco-idfinder-body">
-            {/* Decorative logo */}
+            {viewingPublicId ? (
+              <div className="icisco-publicid-view">
+                <div className={`icisco-idcard card-style-${publicIds.find((i) => i.email === viewingPublicId)?.card_style || "white"}`} style={{ maxWidth: "100%", cursor: "default" }}>
+                  {(() => {
+                    const person = publicIds.find((i) => i.email === viewingPublicId);
+                    if (!person) return <p className="icisco-idfinder-hint">ID not found.</p>;
+                    const personBadges = new Set(person.badges);
+                    return (
+                      <>
+                        <div className="icisco-idcard-face icisco-idcard-front">
+                          <div className="icisco-idcard-top">
+                            <Image src="/cncp-logo-transparent.png" alt="" width={20} height={14} className="icisco-idcard-top-logo" draggable={false} />
+                            <span className="icisco-idcard-top-title">Member ID</span>
+                            <Image src="/cncp-logo-transparent.png" alt="" width={20} height={14} className="icisco-idcard-top-logo" draggable={false} />
+                          </div>
+                          <div className="icisco-idcard-body">
+                            <div className="icisco-idcard-avatar">
+                              <Image src="/cncp-logo-transparent.png" alt="CNCP" width={56} height={40} className="icisco-idcard-avatar-img" />
+                            </div>
+                            <div className="icisco-idcard-info">
+                              <p className="icisco-idcard-name">{person.first_name} {person.last_name}</p>
+                              <p className="icisco-idcard-idnum">CNCP-2026-{String(person.email.length * 7 % 10000).padStart(4, "0")}</p>
+                              <p className="icisco-idcard-course">{person.course_year_section}</p>
+                              <span className="icisco-idcard-membership">{person.membership_type}</span>
+                              <p className="icisco-idcard-email">{person.email}</p>
+                            </div>
+                          </div>
+                          <div className="icisco-idcard-badges">
+                            <span className="icisco-idcard-badges-title">Badges</span>
+                            <div className="icisco-idcard-badge-slots">
+                              <div className={`icisco-idcard-badge-slot ${personBadges.has("welcome-to-cisco") ? "earned" : ""}`}>
+                                {personBadges.has("welcome-to-cisco") ? (
+                                  <Image src="/badges/welcome-to-cisco-badge.png" alt="Welcome to Cisco" width={36} height={36} className="icisco-idcard-badge-img" draggable={false} />
+                                ) : (
+                                  <div className="icisco-idcard-badge-icon-wrap">?</div>
+                                )}
+                              </div>
+                              <div className="icisco-idcard-badge-slot"><div className="icisco-idcard-badge-icon-wrap">?</div></div>
+                              <div className="icisco-idcard-badge-slot"><div className="icisco-idcard-badge-icon-wrap">?</div></div>
+                            </div>
+                          </div>
+                          <div className="icisco-idcard-footer">
+                            <span className="icisco-idcard-org-footer">Cisco NetConnect PUP &ndash; Manila</span>
+                          </div>
+                        </div>
+                        <div className="icisco-idcard-face icisco-idcard-back">
+                          <div className="icisco-idcard-back-header">
+                            <Image src="/cncp-logo-transparent.png" alt="CNCP" width={40} height={28} draggable={false} />
+                            <span className="icisco-idcard-back-org">Cisco NetConnect PUP &ndash; Manila</span>
+                          </div>
+                          <p className="icisco-idcard-back-text">
+                            This is an official identification card issued and recognized by <strong>Cisco NetConnect PUP &ndash; Manila</strong> for its registered members.
+                          </p>
+                          <div className="icisco-idcard-back-signatories">
+                            <div className="icisco-idcard-signatory">
+                              <Image src="/jhered-signatory.png" alt="Jhered Miguel Republica" width={160} height={50} className="icisco-idcard-sig-img" draggable={false} />
+                              <div className="icisco-idcard-sig-line" />
+                              <p className="icisco-idcard-sig-name">Jhered Miguel Republica</p>
+                              <p className="icisco-idcard-sig-role">Chief Executive Officer</p>
+                            </div>
+                            <div className="icisco-idcard-signatory">
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "#f8f9fa", border: "1px dashed #d0dbe4", borderRadius: "4px", width: "100%", height: "50px" }}>
+                                <span style={{ color: "#90a4ae", fontSize: "0.65rem" }}>Signature</span>
+                              </div>
+                              <div className="icisco-idcard-sig-line" />
+                              <p className="icisco-idcard-sig-name">{person.first_name} {person.last_name}</p>
+                              <p className="icisco-idcard-sig-role">Member</p>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+                <button
+                  type="button"
+                  className="icisco-idfinder-btn"
+                  style={{ marginTop: "0.5rem" }}
+                  onClick={() => setViewingPublicId(null)}
+                >
+                  &#9664; Back to list
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* Decorative logo */}
             <Image
               src="/cncp-logo-transparent.png"
               alt=""
@@ -747,7 +886,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             {/* ID Card */}
             {lookupResult && (
               <div
-                className={`icisco-idcard ${cardFlipped ? "flipped" : ""}`}
+                className={`icisco-idcard ${cardFlipped ? "flipped" : ""} card-style-${lookupResult.card_style || "white"}`}
                 onClick={() => setCardFlipped(!cardFlipped)}
               >
                 {/* FRONT */}
@@ -803,9 +942,23 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                     </div>
                   </div>
                   <div className="icisco-idcard-badges">
-                    <span className="icisco-idcard-badges-title">Badges</span>
+                    <span className="icisco-idcard-badges-title">
+                      Badges
+                      <span className="icisco-idcard-badges-help" onClick={(e) => e.stopPropagation()}>
+                        ?
+                        <span className="icisco-idcard-badges-tooltip">
+                          Earn badges by scanning QR codes at CNCP events and activities.
+                        </span>
+                      </span>
+                    </span>
                     <div className="icisco-idcard-badge-slots">
-                      <div className="icisco-idcard-badge-slot">
+                      <div
+                        className={`icisco-idcard-badge-slot ${earnedBadges.has("welcome-to-cisco") ? "earned" : ""}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (earnedBadges.has("welcome-to-cisco")) setSelectedBadge("welcome-to-cisco");
+                        }}
+                      >
                         {earnedBadges.has("welcome-to-cisco") ? (
                           <Image
                             src="/badges/welcome-to-cisco-badge.png"
@@ -842,6 +995,32 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                     </div>
                   </div>
                 </div>
+
+                {selectedBadge && (
+                  <div className="icisco-badge-modal" onClick={(e) => { e.stopPropagation(); setSelectedBadge(null); }}>
+                    <div className="icisco-badge-modal-card" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        className="icisco-badge-modal-close"
+                        onClick={() => setSelectedBadge(null)}
+                      >
+                        &times;
+                      </button>
+                      <Image
+                        src="/badges/welcome-to-cisco-badge.png"
+                        alt="Welcome to Cisco"
+                        width={64}
+                        height={64}
+                        className="icisco-badge-modal-img"
+                        draggable={false}
+                      />
+                      <p className="icisco-badge-modal-name">Welcome to Cisco</p>
+                      <p className="icisco-badge-modal-desc">
+                        Awarded to new members who join Cisco NetConnect PUP &ndash; Manila. Welcome to the community!
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* BACK */}
                 <div className="icisco-idcard-face icisco-idcard-back">
@@ -938,10 +1117,71 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                   setEmailInput("");
                   setIdFinderPhase("prompt");
                   setQrDataUrl("");
+                  setPublicIds([]);
+                  setViewingPublicId(null);
                 }}
               >
                 Look up another
               </button>
+            )}
+
+            {lookupResult && !viewingPublicId && (
+              <div className="icisco-public-toggle">
+                <span className="icisco-public-toggle-label">Show my ID publicly</span>
+                <button
+                  type="button"
+                  className={`icisco-toggle-switch ${isPublic ? "on" : ""}`}
+                  disabled={publicToggleLoading}
+                  onClick={() => {
+                    setPublicToggleLoading(true);
+                    const newVal = !isPublic;
+                    fetch("/api/digital-id", {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ email: lookupResult.email, is_public: newVal }),
+                    })
+                      .then(() => setIsPublic(newVal))
+                      .finally(() => setPublicToggleLoading(false));
+                  }}
+                >
+                  <span className="icisco-toggle-knob" />
+                </button>
+              </div>
+            )}
+
+            {!viewingPublicId && (
+              <div className="icisco-public-ids-section">
+                <p className="icisco-public-ids-header">Public IDs</p>
+                {publicIdsLoading ? (
+                  <p className="icisco-idfinder-hint" style={{ fontSize: "0.7rem" }}>Loading...</p>
+                ) : publicIds.length === 0 ? (
+                  <p className="icisco-idfinder-hint" style={{ fontSize: "0.7rem" }}>No public IDs available yet.</p>
+                ) : (
+                  <div className="icisco-public-ids-grid">
+                    {publicIds.map((person) => (
+                      <button
+                        key={person.email}
+                        type="button"
+                        className={`icisco-public-id-card card-style-${person.card_style || "white"}`}
+                        onClick={() => setViewingPublicId(person.email)}
+                      >
+                        <div className="icisco-public-id-avatar">
+                          <Image src="/cncp-logo-transparent.png" alt="CNCP" width={32} height={22} draggable={false} />
+                        </div>
+                        <p className="icisco-public-id-name">{person.first_name} {person.last_name}</p>
+                        <p className="icisco-public-id-type">{person.membership_type}</p>
+                        <div className="icisco-public-id-badges">
+                          {(person.badges ?? []).map((b) => (
+                            <Image key={b} src="/badges/welcome-to-cisco-badge.png" alt="Badge" width={18} height={18} draggable={false} />
+                          ))}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            </>
             )}
           </div>
         </div>
@@ -960,10 +1200,8 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             </button>
             <span className="icisco-app-title">Games</span>
           </div>
-          <div className="icisco-idfinder-body">
-            <p className="icisco-idfinder-hint">
-              Games coming soon! Stay tuned.
-            </p>
+          <div className="icisco-idfinder-body" style={{ overflow: "hidden", padding: "0.4rem", justifyContent: "center" }}>
+            <WireZipGame />
           </div>
         </div>
       )}

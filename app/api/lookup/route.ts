@@ -29,5 +29,16 @@ export async function POST(request: NextRequest) {
     .select("badge_id, awarded_at")
     .eq("email", trimmed);
 
-  return NextResponse.json({ ...data[0], badges: badges ?? [] });
+  const { data: digitalId } = await supabase
+    .from("digital_ids")
+    .select("card_style, is_public")
+    .eq("email", trimmed)
+    .limit(1);
+
+  return NextResponse.json({
+    ...data[0],
+    badges: badges ?? [],
+    card_style: digitalId && digitalId.length > 0 ? digitalId[0].card_style : "white",
+    is_public: digitalId && digitalId.length > 0 ? digitalId[0].is_public : false,
+  });
 }
