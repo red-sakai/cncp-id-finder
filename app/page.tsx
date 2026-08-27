@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import Lenis from "lenis";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, Suspense } from "react";
 import IciscoScene from "@/components/icisco-scene";
 
 const EXTEND_INDICES = [1, 2, 3, 5, 6, 7];
@@ -651,7 +651,11 @@ export default function Home() {
             </span>
           </button>
         )}
-        {iciscoActive && <IciscoScene onDismiss={() => setIciscoActive(false)} />}
+        {iciscoActive && (
+          <Suspense fallback={null}>
+            <IciscoScene onDismiss={() => setIciscoActive(false)} />
+          </Suspense>
+        )}
       </main>
     </>
   );

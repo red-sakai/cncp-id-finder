@@ -2337,3 +2337,253 @@ html.dark .footer-legal-links a:hover {
     align-items: flex-start;
   }
 }
+
+/* ─── Scan Page ─── */
+.scan-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f7fbfe 0%, #eef5fa 50%, #f0f4f8 100%);
+  padding: 2rem;
+}
+.scan-card {
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 8px 32px rgba(26, 42, 58, 0.1);
+  padding: 2.5rem 2rem;
+  text-align: center;
+  max-width: 380px;
+  width: 100%;
+}
+.scan-logo {
+  margin-bottom: 1rem;
+}
+.scan-title {
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a2a3a;
+  margin: 0 0 0.3rem;
+}
+.scan-subtitle {
+  font-size: 0.85rem;
+  color: #607d8b;
+  margin: 0 0 1.5rem;
+}
+.scan-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.scan-input {
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #d0dbe4;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-family: var(--font-body), sans-serif;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.scan-input:focus {
+  border-color: #049fd9;
+}
+.scan-error {
+  color: #e53935;
+  font-size: 0.8rem;
+  margin: 0;
+}
+.scan-button {
+  padding: 0.75rem 1rem;
+  background: #049fd9;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: var(--font-body), sans-serif;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.scan-button:hover {
+  background: #0379b4;
+}
+.scan-button:disabled {
+  background: #b0bec5;
+  cursor: not-allowed;
+}
+
+/* ─── Congratulations Overlay ─── */
+.icisco-congrats-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(26, 42, 58, 0.6);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.3s ease;
+}
+.icisco-congrats-card {
+  background: #fff;
+  border-radius: 1rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(26, 42, 58, 0.25);
+  animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.icisco-congrats-badge {
+  margin-bottom: 0.75rem;
+  animation: badgeBounce 0.6s ease 0.2s both;
+}
+.icisco-congrats-title {
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #049fd9;
+  margin: 0 0 0.25rem;
+}
+.icisco-congrats-text {
+  font-size: 0.8rem;
+  color: #607d8b;
+  margin: 0;
+}
+
+/* ─── Confetti Particles ─── */
+.icisco-confetti {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  top: -10px;
+  animation: confettiFall 1.5s ease-out forwards;
+}
+.icisco-confetti:nth-child(1) { left: 15%; background: #049fd9; animation-delay: 0s; }
+.icisco-confetti:nth-child(2) { left: 30%; background: #e53935; animation-delay: 0.1s; }
+.icisco-confetti:nth-child(3) { left: 45%; background: #fdd835; animation-delay: 0.15s; }
+.icisco-confetti:nth-child(4) { left: 60%; background: #43a047; animation-delay: 0.05s; }
+.icisco-confetti:nth-child(5) { left: 75%; background: #8e24aa; animation-delay: 0.2s; }
+.icisco-confetti:nth-child(6) { left: 22%; background: #ff7043; animation-delay: 0.12s; }
+.icisco-confetti:nth-child(7) { left: 55%; background: #049fd9; animation-delay: 0.08s; }
+.icisco-confetti:nth-child(8) { left: 85%; background: #fdd835; animation-delay: 0.18s; }
+
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(200px) rotate(720deg); opacity: 0; }
+}
+
+/* ─── Badge Image on Card ─── */
+.icisco-idcard-badge-img {
+  border-radius: 4px;
+}
+
+/* ─── Reduced Motion: scan + congrats ─── */
+@media (prefers-reduced-motion: reduce) {
+  .scan-button { transition: none; }
+  .scan-input { transition: none; }
+  .icisco-congrats-overlay { animation: none; }
+  .icisco-congrats-card { animation: none; }
+  .icisco-congrats-badge { animation: none; }
+  .icisco-confetti { animation: none; }
+}
+
+/* ─── QR Generator Page ─── */
+.qr-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f7fbfe 0%, #eef5fa 50%, #f0f4f8 100%);
+  padding: 2rem;
+}
+.qr-card {
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 8px 32px rgba(26, 42, 58, 0.1);
+  padding: 2.5rem 2rem;
+  text-align: center;
+  max-width: 420px;
+  width: 100%;
+}
+.qr-logo {
+  margin-bottom: 0.75rem;
+}
+.qr-title {
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1a2a3a;
+  margin: 0 0 0.3rem;
+}
+.qr-subtitle {
+  font-size: 0.85rem;
+  color: #607d8b;
+  margin: 0 0 1.5rem;
+}
+.qr-badge-select {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+.qr-badge-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid #d0dbe4;
+  border-radius: 0.75rem;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #1a2a3a;
+}
+.qr-badge-option:hover {
+  border-color: #049fd9;
+}
+.qr-badge-option.active {
+  border-color: #049fd9;
+  box-shadow: 0 0 0 3px rgba(4, 159, 217, 0.15);
+}
+.qr-preview {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+.qr-canvas {
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 12px rgba(26, 42, 58, 0.08);
+}
+.qr-url {
+  font-size: 0.65rem;
+  color: #90a4ae;
+  word-break: break-all;
+  margin: 0 0 1.25rem;
+  line-height: 1.4;
+}
+.qr-download {
+  padding: 0.75rem 1.5rem;
+  background: #049fd9;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: var(--font-body), sans-serif;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.qr-download:hover {
+  background: #0379b4;
+}
+.qr-download:disabled {
+  background: #b0bec5;
+  cursor: not-allowed;
+}

@@ -8,10 +8,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid email" }, { status: 400 });
   }
 
+  const trimmed = email.trim().toLowerCase();
+
   const { data, error } = await supabase
     .from("registration_personal_info")
     .select("first_name, last_name, email, course_year_section, membership_type")
-    .eq("email", email.trim().toLowerCase())
+    .eq("email", trimmed)
     .limit(1);
 
   if (error) {
@@ -22,5 +24,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  return NextResponse.json(data[0]);
+  const { data: badges } = await supabase
+    .from("user_badges")
+    .select("badge_id, awarded_at")
+    .eq("email", trimmed);
+
+  return NextResponse.json({ ...data[0], badges: badges ?? [] });
 }

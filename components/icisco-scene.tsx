@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -65,6 +66,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     email: string;
     course_year_section: string;
     membership_type: string;
+    badges: { badge_id: string; awarded_at: string }[];
   } | null>(null);
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
@@ -72,6 +74,8 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const [cardFlipped, setCardFlipped] = useState(false);
   const sigCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
+  const [earnedBadges, setEarnedBadges] = useState<Set<string>>(new Set());
+  const [showCongrats, setShowCongrats] = useState(false);
 
   const handleLookup = useCallback(async () => {
     const email = emailInput.trim();
@@ -98,8 +102,12 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
         const data = await res.json();
         setLookupResult(data);
         setIdFinderPhase("found");
+        const badges = new Set<string>(
+          (data.badges ?? []).map((b: { badge_id: string }) => b.badge_id)
+        );
+        setEarnedBadges(badges);
         QRCode.toDataURL(
-          `https://cncp-id-finder.vercel.app/id/${data.email}`,
+          `https://cncp-id-finder.vercel.app/scan`,
           {
             width: 80,
             margin: 1,
@@ -445,6 +453,55 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [phase, closing, startClose]);
 
+  const searchParams = useSearchParams();
+  const awardedRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const awarded = searchParams.get("awarded");
+    const email = searchParams.get("email");
+    if (awarded && email && awardedRef.current !== awarded) {
+      awardedRef.current = awarded;
+      setActiveApp("id-finder");
+      setEmailInput(email);
+      const doAward = async () => {
+        const res = await fetch("/api/lookup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setLookupResult(data);
+          setIdFinderPhase("found");
+          const badges = new Set<string>(
+            (data.badges ?? []).map((b: { badge_id: string }) => b.badge_id)
+          );
+          setEarnedBadges(badges);
+          QRCode.toDataURL(
+            `https://cncp-id-finder.vercel.app/scan`,
+            {
+              width: 80,
+              margin: 1,
+              color: { dark: "#1a2a3a", light: "#ffffff" },
+            }
+          ).then(setQrDataUrl);
+          if (!badges.has(awarded)) {
+            await fetch("/api/badges", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email, badgeId: awarded }),
+            });
+            setEarnedBadges((prev) => new Set([...prev, awarded]));
+            setShowCongrats(true);
+            setTimeout(() => setShowCongrats(false), 4000);
+          }
+        }
+      };
+      doAward();
+      window.history.replaceState({}, "", "/");
+    }
+  }, [searchParams]);
+
   const showAxolotl = phase === "peek" || phase === "walk" || phase === "talk";
   const isPeek = phase === "peek";
   const isWalk = phase === "walk";
@@ -593,6 +650,33 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             <span className="icisco-app-title">ID Finder</span>
           </div>
 
+          {showCongrats && (
+            <div className="icisco-congrats-overlay">
+              <div className="icisco-congrats-card">
+                <div className="icisco-confetti" />
+                <div className="icisco-confetti" />
+                <div className="icisco-confetti" />
+                <div className="icisco-confetti" />
+                <div className="icisco-confetti" />
+                <div className="icisco-confetti" />
+                <div className="icisco-confetti" />
+                <div className="icisco-confetti" />
+                <Image
+                  src="/badges/welcome-to-cisco-badge.png"
+                  alt="Welcome to Cisco Badge"
+                  width={80}
+                  height={80}
+                  className="icisco-congrats-badge"
+                  draggable={false}
+                />
+                <p className="icisco-congrats-title">Congratulations!</p>
+                <p className="icisco-congrats-text">
+                  You earned the Welcome to Cisco badge!
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="icisco-idfinder-body">
             {/* Decorative logo */}
             <Image
@@ -722,7 +806,18 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                     <span className="icisco-idcard-badges-title">Badges</span>
                     <div className="icisco-idcard-badge-slots">
                       <div className="icisco-idcard-badge-slot">
-                        <div className="icisco-idcard-badge-icon-wrap">?</div>
+                        {earnedBadges.has("welcome-to-cisco") ? (
+                          <Image
+                            src="/badges/welcome-to-cisco-badge.png"
+                            alt="Welcome to Cisco"
+                            width={36}
+                            height={36}
+                            className="icisco-idcard-badge-img"
+                            draggable={false}
+                          />
+                        ) : (
+                          <div className="icisco-idcard-badge-icon-wrap">?</div>
+                        )}
                       </div>
                       <div className="icisco-idcard-badge-slot">
                         <div className="icisco-idcard-badge-icon-wrap">?</div>
