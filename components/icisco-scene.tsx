@@ -83,6 +83,8 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const [showCongrats, setShowCongrats] = useState(false);
   const [congratsBadge, setCongratsBadge] = useState<string>("welcome-to-cisco");
   const [selectedBadge, setSelectedBadge] = useState<string | null>(null);
+  const [zoomedBadgeImg, setZoomedBadgeImg] = useState<{ src: string; alt: string } | null>(null);
+  const [zoomedQrImg, setZoomedQrImg] = useState<string | null>(null);
   const [publicIds, setPublicIds] = useState<{
     first_name: string;
     last_name: string;
@@ -1062,6 +1064,8 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                           src={qrDataUrl}
                           alt="QR Code"
                           className="icisco-idcard-qr-img"
+                          onClick={(e) => { e.stopPropagation(); setZoomedQrImg(qrDataUrl); }}
+                          style={{ cursor: "zoom-in" }}
                         />
                       )}
                     </div>
@@ -1100,6 +1104,8 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                           height={64}
                           className="icisco-badge-modal-img"
                           draggable={false}
+                          onClick={() => setZoomedBadgeImg({ src: info.img, alt: info.name })}
+                          style={{ cursor: "zoom-in" }}
                         />
                         <p className="icisco-badge-modal-name">{info.name}</p>
                         <p className="icisco-badge-modal-desc">
@@ -1114,6 +1120,32 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                     </div>
                   );
                 })(), document.body)}
+
+                {zoomedBadgeImg && createPortal(
+                  <div className="icisco-badge-zoom-overlay" onClick={(e) => { e.stopPropagation(); setZoomedBadgeImg(null); }}>
+                    <Image
+                      src={zoomedBadgeImg.src}
+                      alt={zoomedBadgeImg.alt}
+                      width={256}
+                      height={256}
+                      className="icisco-badge-zoom-img"
+                      draggable={false}
+                    />
+                  </div>,
+                  document.body
+                )}
+
+                {zoomedQrImg && createPortal(
+                  <div className="icisco-badge-zoom-overlay" onClick={(e) => { e.stopPropagation(); setZoomedQrImg(null); }}>
+                    <img
+                      src={zoomedQrImg}
+                      alt="QR Code"
+                      className="icisco-badge-zoom-img"
+                      draggable={false}
+                    />
+                  </div>,
+                  document.body
+                )}
 
                 {/* BACK */}
                 <div className="icisco-idcard-face icisco-idcard-back">

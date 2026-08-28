@@ -3266,6 +3266,30 @@ html.dark .footer-legal-links a:hover {
   font-style: italic;
 }
 
+/* ─── Badge Image Zoom ─── */
+.icisco-badge-zoom-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  cursor: zoom-out;
+  animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.icisco-badge-zoom-img {
+  max-width: 80vw;
+  max-height: 80vh;
+  width: auto;
+  height: auto;
+  border-radius: 0.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  object-fit: contain;
+}
+
 /* ─── Skip Button ─── */
 .icisco-skip-btn {
   position: absolute;

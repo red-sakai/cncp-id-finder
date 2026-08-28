@@ -38,6 +38,8 @@ export default function PublicIdPage() {
   const [cardFlipped, setCardFlipped] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [selectedBadge, setSelectedBadge] = useState<string | null>(null);
+  const [zoomedBadgeImg, setZoomedBadgeImg] = useState<{ src: string; alt: string } | null>(null);
+  const [zoomedQrImg, setZoomedQrImg] = useState<string | null>(null);
   const sigCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
 
@@ -197,7 +199,7 @@ export default function PublicIdPage() {
           <div className="icisco-idcard-footer">
             <span className="icisco-idcard-org-footer">Cisco NetConnect PUP &ndash; Manila</span>
             <div className="icisco-idcard-qr">
-              {qrDataUrl && <img src={qrDataUrl} alt="QR Code" className="icisco-idcard-qr-img" />}
+              {qrDataUrl && <img src={qrDataUrl} alt="QR Code" className="icisco-idcard-qr-img" onClick={(e) => { e.stopPropagation(); setZoomedQrImg(qrDataUrl); }} style={{ cursor: "zoom-in" }} />}
             </div>
           </div>
         </div>
@@ -208,7 +210,7 @@ export default function PublicIdPage() {
             <div className="icisco-badge-modal" onClick={(e) => { e.stopPropagation(); setSelectedBadge(null); }}>
               <div className="icisco-badge-modal-card" onClick={(e) => e.stopPropagation()}>
                 <button type="button" className="icisco-badge-modal-close" onClick={() => setSelectedBadge(null)}>&times;</button>
-                <Image src={BADGE_INFO[selectedBadge].image} alt={BADGE_INFO[selectedBadge].name} width={64} height={64} className="icisco-badge-modal-img" draggable={false} />
+                <Image src={BADGE_INFO[selectedBadge].image} alt={BADGE_INFO[selectedBadge].name} width={64} height={64} className="icisco-badge-modal-img" draggable={false} onClick={() => setZoomedBadgeImg({ src: BADGE_INFO[selectedBadge].image, alt: BADGE_INFO[selectedBadge].name })} style={{ cursor: "zoom-in" }} />
                 <p className="icisco-badge-modal-name">{BADGE_INFO[selectedBadge].name}</p>
                 <p className="icisco-badge-modal-desc">{BADGE_INFO[selectedBadge].desc}</p>
                 {badgeData?.awarded_by && (
@@ -220,6 +222,20 @@ export default function PublicIdPage() {
             </div>
           );
         })(), document.body)}
+
+        {zoomedBadgeImg && createPortal(
+          <div className="icisco-badge-zoom-overlay" onClick={(e) => { e.stopPropagation(); setZoomedBadgeImg(null); }}>
+            <Image src={zoomedBadgeImg.src} alt={zoomedBadgeImg.alt} width={256} height={256} className="icisco-badge-zoom-img" draggable={false} />
+          </div>,
+          document.body
+        )}
+
+        {zoomedQrImg && createPortal(
+          <div className="icisco-badge-zoom-overlay" onClick={(e) => { e.stopPropagation(); setZoomedQrImg(null); }}>
+            <img src={zoomedQrImg} alt="QR Code" className="icisco-badge-zoom-img" draggable={false} />
+          </div>,
+          document.body
+        )}
 
         {/* BACK */}
         <div className="icisco-idcard-face icisco-idcard-back" onClick={(e) => e.stopPropagation()}>
