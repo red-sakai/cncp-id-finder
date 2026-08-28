@@ -43,9 +43,6 @@ function ScanForm() {
           setTokenBadge(data.badgeId ?? "");
           setTokenBy(data.awardedBy ?? "");
           setTokenValid(true);
-        } else if (res.status === 410) {
-          setTokenValid(false);
-          setError("This QR code has already been used.");
         } else {
           setTokenValid(false);
           setError("Invalid QR code.");
@@ -96,7 +93,6 @@ function ScanForm() {
       const params = new URLSearchParams({ email: trimmed });
       if (badge) params.set("awarded", badge);
       if (awardedBy) params.set("by", awardedBy);
-      if (tokenParam) params.set("token", tokenParam);
       router.push(`/?${params.toString()}`);
     } catch {
       setError("Network error. Please try again.");
@@ -119,9 +115,6 @@ function ScanForm() {
           <h1 className="scan-title">Cisco NetConnect PUP &ndash; Manila</h1>
           <div className="scan-already-earned">
             <p className="scan-error">{error}</p>
-            <p className="scan-already-earned-text">
-              This QR code is no longer valid. Please ask for a new one.
-            </p>
           </div>
         </div>
       </div>

@@ -237,7 +237,7 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
 
         <p className="qr-url">{scanUrl}</p>
 
-        <p className="qr-single-use">Each QR code is single-use and cannot be reused.</p>
+        <p className="qr-single-use">Each person can only claim this badge once with their email.</p>
 
         <button
           type="button"

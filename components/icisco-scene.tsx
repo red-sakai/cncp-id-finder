@@ -486,7 +486,6 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     const awarded = searchParams.get("awarded");
     const email = searchParams.get("email");
     const by = searchParams.get("by");
-    const token = searchParams.get("token");
     if (awarded && email && awardedRef.current !== awarded) {
       awardedRef.current = awarded;
       setActiveApp("id-finder");
@@ -527,13 +526,6 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ email, badgeId: awarded, awardedBy: by || undefined }),
             });
-            if (token) {
-              await fetch("/api/tokens", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ token, email }),
-              });
-            }
             setEarnedBadges((prev) => new Set([...prev, awarded]));
             setCongratsBadge(awarded);
             setShowCongrats(true);
