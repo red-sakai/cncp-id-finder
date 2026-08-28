@@ -26,7 +26,8 @@ export async function GET() {
   const { data: allBadges } = await supabase
     .from("user_badges")
     .select("email, badge_id")
-    .in("email", emails);
+    .in("email", emails)
+    .order("awarded_at", { ascending: true });
 
   const userMap = new Map((users ?? []).map((u) => [u.email, u]));
   const badgeMap = new Map<string, string[]>();

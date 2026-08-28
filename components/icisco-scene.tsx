@@ -78,8 +78,9 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const sigCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [earnedBadges, setEarnedBadges] = useState<Set<string>>(new Set());
-  const [badgeMeta, setBadgeMeta] = useState<Record<string, { awarded_by?: string }>>({});
+  const [badgeMeta, setBadgeMeta] = useState<Record<string, { awarded_by?: string; awarded_at?: string }>>({});
   const [showCongrats, setShowCongrats] = useState(false);
+  const [congratsBadge, setCongratsBadge] = useState<string>("welcome-to-cisco");
   const [selectedBadge, setSelectedBadge] = useState<string | null>(null);
   const [publicIds, setPublicIds] = useState<{
     first_name: string;
@@ -522,6 +523,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
               body: JSON.stringify({ email, badgeId: awarded, awardedBy: by || undefined }),
             });
             setEarnedBadges((prev) => new Set([...prev, awarded]));
+            setCongratsBadge(awarded);
             setShowCongrats(true);
             setTimeout(() => setShowCongrats(false), 4000);
           }
@@ -725,32 +727,39 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             <span className="icisco-app-title">ID Finder</span>
           </div>
 
-          {showCongrats && (
-            <div className="icisco-congrats-overlay">
-              <div className="icisco-congrats-card">
-                <div className="icisco-confetti" />
-                <div className="icisco-confetti" />
-                <div className="icisco-confetti" />
-                <div className="icisco-confetti" />
-                <div className="icisco-confetti" />
-                <div className="icisco-confetti" />
-                <div className="icisco-confetti" />
-                <div className="icisco-confetti" />
-                <Image
-                  src="/badges/welcome-to-cisco-badge.png"
-                  alt="Welcome to Cisco Badge"
-                  width={80}
-                  height={80}
-                  className="icisco-congrats-badge"
-                  draggable={false}
-                />
-                <p className="icisco-congrats-title">Congratulations!</p>
-                <p className="icisco-congrats-text">
-                  You earned the Welcome to Cisco badge!
-                </p>
+          {showCongrats && (() => {
+            const badgeInfo: Record<string, { img: string; name: string }> = {
+              "welcome-to-cisco": { img: "/badges/welcome-to-cisco-badge.png", name: "Welcome to Cisco" },
+              "golden-alumni": { img: "/badges/golden-alumni-badge.png", name: "Golden Alumni" },
+            };
+            const info = badgeInfo[congratsBadge] ?? badgeInfo["welcome-to-cisco"];
+            return (
+              <div className="icisco-congrats-overlay">
+                <div className="icisco-congrats-card">
+                  <div className="icisco-confetti" />
+                  <div className="icisco-confetti" />
+                  <div className="icisco-confetti" />
+                  <div className="icisco-confetti" />
+                  <div className="icisco-confetti" />
+                  <div className="icisco-confetti" />
+                  <div className="icisco-confetti" />
+                  <div className="icisco-confetti" />
+                  <Image
+                    src={info.img}
+                    alt={`${info.name} Badge`}
+                    width={80}
+                    height={80}
+                    className="icisco-congrats-badge"
+                    draggable={false}
+                  />
+                  <p className="icisco-congrats-title">Congratulations!</p>
+                  <p className="icisco-congrats-text">
+                    You earned the {info.name} badge!
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           <div className="icisco-idfinder-body">
             {viewingPublicId ? (
@@ -974,49 +983,45 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                       </span>
                     </span>
                     <div className="icisco-idcard-badge-slots">
-                      <div
-                        className={`icisco-idcard-badge-slot ${earnedBadges.has("welcome-to-cisco") ? "earned" : ""}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (earnedBadges.has("welcome-to-cisco")) setSelectedBadge("welcome-to-cisco");
-                        }}
-                      >
-                        {earnedBadges.has("welcome-to-cisco") ? (
-                          <Image
-                            src="/badges/welcome-to-cisco-badge.png"
-                            alt="Welcome to Cisco"
-                            width={36}
-                            height={36}
-                            className="icisco-idcard-badge-img"
-                            draggable={false}
-                          />
-                        ) : (
-                          <div className="icisco-idcard-badge-icon-wrap">?</div>
-                        )}
-                      </div>
-                      <div
-                        className={`icisco-idcard-badge-slot ${earnedBadges.has("golden-alumni") ? "earned" : ""}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (earnedBadges.has("golden-alumni")) setSelectedBadge("golden-alumni");
-                        }}
-                      >
-                        {earnedBadges.has("golden-alumni") ? (
-                          <Image
-                            src="/badges/golden-alumni-badge.png"
-                            alt="Golden Alumni"
-                            width={36}
-                            height={36}
-                            className="icisco-idcard-badge-img"
-                            draggable={false}
-                          />
-                        ) : (
-                          <div className="icisco-idcard-badge-icon-wrap">?</div>
-                        )}
-                      </div>
-                      <div className="icisco-idcard-badge-slot">
-                        <div className="icisco-idcard-badge-icon-wrap">?</div>
-                      </div>
+                      {(() => {
+                        const allBadgeInfo: Record<string, { img: string; name: string }> = {
+                          "welcome-to-cisco": { img: "/badges/welcome-to-cisco-badge.png", name: "Welcome to Cisco" },
+                          "golden-alumni": { img: "/badges/golden-alumni-badge.png", name: "Golden Alumni" },
+                        };
+                        const totalSlots = 3;
+                        const earned = Array.from(earnedBadges)
+                          .map((id) => ({ id, at: badgeMeta[id]?.awarded_at ?? "" }))
+                          .sort((a, b) => a.at.localeCompare(b.at));
+                        const slots: ({ id: string; img: string; name: string } | null)[] = [];
+                        for (const e of earned) {
+                          const info = allBadgeInfo[e.id];
+                          if (info) slots.push({ id: e.id, img: info.img, name: info.name });
+                        }
+                        while (slots.length < totalSlots) slots.push(null);
+                        return slots.map((slot, i) => (
+                          <div
+                            key={slot ? slot.id : `empty-${i}`}
+                            className={`icisco-idcard-badge-slot ${slot ? "earned" : ""}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (slot) setSelectedBadge(slot.id);
+                            }}
+                          >
+                            {slot ? (
+                              <Image
+                                src={slot.img}
+                                alt={slot.name}
+                                width={36}
+                                height={36}
+                                className="icisco-idcard-badge-img"
+                                draggable={false}
+                              />
+                            ) : (
+                              <div className="icisco-idcard-badge-icon-wrap">?</div>
+                            )}
+                          </div>
+                        ));
+                      })()}
                     </div>
                   </div>
                   <div className="icisco-idcard-footer">
