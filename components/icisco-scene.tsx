@@ -727,6 +727,16 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
               <span className="icisco-app-label">Games</span>
             </button>
           </div>
+          <Image src="/stickers/airplane-sticker.png" alt="" width={85} height={85} className="icisco-sticker" draggable={false} style={{ top: "8%", right: "6%", opacity: 0.8, transform: "rotate(-10deg)", animation: "stickerFloat1 4s ease-in-out infinite" }} />
+          <Image src="/stickers/wave-sticker.png" alt="" width={95} height={55} className="icisco-sticker" draggable={false} style={{ bottom: "15%", left: "4%", opacity: 0.75, transform: "rotate(5deg)", animation: "stickerFloat2 3.5s ease-in-out infinite 0.3s" }} />
+          <Image src="/stickers/bridge-sticker.png" alt="" width={80} height={80} className="icisco-sticker" draggable={false} style={{ bottom: "10%", right: "8%", opacity: 0.8, transform: "rotate(-5deg)", animation: "stickerFloat3 4.5s ease-in-out infinite 0.5s" }} />
+          <Image src="/stickers/pup-sticker.png" alt="" width={75} height={95} className="icisco-sticker" draggable={false} style={{ top: "18%", left: "5%", opacity: 0.8, transform: "rotate(8deg)", animation: "stickerFloat2 5s ease-in-out infinite 1s" }} />
+          <Image src="/stickers/airplane-sticker.png" alt="" width={45} height={45} className="icisco-sticker" draggable={false} style={{ bottom: "32%", left: "18%", opacity: 0.45, transform: "rotate(15deg)", animation: "stickerFloat3 5.5s ease-in-out infinite 0.7s" }} />
+          <Image src="/stickers/wave-sticker.png" alt="" width={55} height={32} className="icisco-sticker" draggable={false} style={{ top: "35%", right: "10%", opacity: 0.4, transform: "rotate(-8deg)", animation: "stickerFloat1 4.5s ease-in-out infinite 1.2s" }} />
+          <Image src="/stickers/bridge-sticker.png" alt="" width={40} height={40} className="icisco-sticker" draggable={false} style={{ top: "12%", left: "32%", opacity: 0.45, transform: "rotate(12deg)", animation: "stickerFloat2 5s ease-in-out infinite 1.8s" }} />
+          <Image src="/stickers/pup-sticker.png" alt="" width={38} height={50} className="icisco-sticker" draggable={false} style={{ bottom: "28%", right: "28%", opacity: 0.4, transform: "rotate(-12deg)", animation: "stickerFloat3 4s ease-in-out infinite 0.4s" }} />
+          <Image src="/stickers/airplane-sticker.png" alt="" width={60} height={60} className="icisco-sticker" draggable={false} style={{ top: "55%", left: "8%", opacity: 0.5, transform: "rotate(-18deg)", animation: "stickerFloat1 6s ease-in-out infinite 0.9s" }} />
+          <Image src="/stickers/bridge-sticker.png" alt="" width={35} height={35} className="icisco-sticker" draggable={false} style={{ top: "45%", right: "5%", opacity: 0.35, transform: "rotate(20deg)", animation: "stickerFloat2 5.5s ease-in-out infinite 2s" }} />
         </div>
       )}
 
@@ -1309,6 +1319,16 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             </>
             )}
           </div>
+          <Image src="/stickers/airplane-sticker.png" alt="" width={60} height={60} className="icisco-sticker" draggable={false} style={{ top: "6%", right: "4%", opacity: 0.65, transform: "rotate(-8deg)", animation: "stickerFloat1 5s ease-in-out infinite 0.2s" }} />
+          <Image src="/stickers/wave-sticker.png" alt="" width={75} height={45} className="icisco-sticker" draggable={false} style={{ bottom: "6%", left: "3%", opacity: 0.6, transform: "rotate(4deg)", animation: "stickerFloat2 4s ease-in-out infinite 0.5s" }} />
+          <Image src="/stickers/bridge-sticker.png" alt="" width={55} height={55} className="icisco-sticker" draggable={false} style={{ bottom: "20%", right: "4%", opacity: 0.65, transform: "rotate(-6deg)", animation: "stickerFloat3 4.5s ease-in-out infinite 0.8s" }} />
+          <Image src="/stickers/pup-sticker.png" alt="" width={50} height={65} className="icisco-sticker" draggable={false} style={{ top: "15%", left: "3%", opacity: 0.6, transform: "rotate(6deg)", animation: "stickerFloat2 5s ease-in-out infinite 1s" }} />
+          <Image src="/stickers/airplane-sticker.png" alt="" width={30} height={30} className="icisco-sticker" draggable={false} style={{ bottom: "35%", left: "12%", opacity: 0.35, transform: "rotate(18deg)", animation: "stickerFloat1 5.5s ease-in-out infinite 1.5s" }} />
+          <Image src="/stickers/wave-sticker.png" alt="" width={45} height={27} className="icisco-sticker" draggable={false} style={{ top: "30%", right: "7%", opacity: 0.3, transform: "rotate(-10deg)", animation: "stickerFloat3 4.5s ease-in-out infinite 0.3s" }} />
+          <Image src="/stickers/bridge-sticker.png" alt="" width={28} height={28} className="icisco-sticker" draggable={false} style={{ top: "8%", left: "35%", opacity: 0.35, transform: "rotate(14deg)", animation: "stickerFloat2 6s ease-in-out infinite 2s" }} />
+          <Image src="/stickers/pup-sticker.png" alt="" width={25} height={35} className="icisco-sticker" draggable={false} style={{ bottom: "30%", right: "32%", opacity: 0.3, transform: "rotate(-15deg)", animation: "stickerFloat3 4s ease-in-out infinite 0.6s" }} />
+          <Image src="/stickers/airplane-sticker.png" alt="" width={40} height={40} className="icisco-sticker" draggable={false} style={{ top: "55%", left: "6%", opacity: 0.4, transform: "rotate(-20deg)", animation: "stickerFloat1 5s ease-in-out infinite 1.8s" }} />
+          <Image src="/stickers/bridge-sticker.png" alt="" width={22} height={22} className="icisco-sticker" draggable={false} style={{ top: "42%", right: "4%", opacity: 0.3, transform: "rotate(22deg)", animation: "stickerFloat2 6.5s ease-in-out infinite 2.5s" }} />
         </div>
       )}
 
