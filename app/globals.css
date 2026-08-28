@@ -3125,6 +3125,20 @@ html.dark .footer-legal-links a:hover {
   margin: 0.5rem 0 0;
   text-align: center;
 }
+.qr-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.qr-actions .qr-download {
+  flex: 1;
+}
+.qr-download-secondary {
+  background: #546e7a;
+}
+.qr-download-secondary:hover {
+  background: #455a64;
+}
 
 /* ─── Badge Help Tooltip ─── */
 .icisco-idcard-badges-title {

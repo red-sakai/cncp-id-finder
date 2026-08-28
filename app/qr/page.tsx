@@ -116,40 +116,44 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
   const [awardedBy, setAwardedBy] = useState("");
   const [token, setToken] = useState("");
   const [generating, setGenerating] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
 
   const badge = BADGES.find((b) => b.id === selected) ?? BADGES[0];
   const byParam = awardedBy.trim();
   const scanUrl = token
     ? `https://cncp-id-finder.vercel.app/scan?token=${token}`
-    : `https://cncp-id-finder.vercel.app/scan?badge=${badge.id}${byParam ? `&by=${encodeURIComponent(byParam)}` : ""}`;
+    : "";
 
-  useEffect(() => {
-    let cancelled = false;
-    const generate = async () => {
-      setGenerating(true);
-      setToken("");
-      try {
-        const res = await fetch("/api/tokens", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            badgeId: badge.id,
-            awardedBy: byParam || undefined,
-          }),
-        });
-        if (res.ok && !cancelled) {
-          const data = await res.json();
-          setToken(data.token);
-        }
-      } catch {
-        // fall back to non-token URL
-      } finally {
-        if (!cancelled) setGenerating(false);
+  const handleConfirm = async () => {
+    setGenerating(true);
+    setToken("");
+    setConfirmed(false);
+    try {
+      const res = await fetch("/api/tokens", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          badgeId: badge.id,
+          awardedBy: byParam || undefined,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setToken(data.token);
+        setConfirmed(true);
       }
-    };
-    generate();
-    return () => { cancelled = true; };
-  }, [badge.id, byParam]);
+    } catch {
+      // ignore
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleReset = () => {
+    setToken("");
+    setConfirmed(false);
+    setQrUrl("");
+  };
 
   useEffect(() => {
     if (!token) return;
@@ -194,7 +198,7 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
         </div>
         <h1 className="qr-title">Badge QR Generator</h1>
         <p className="qr-subtitle">
-          Select a badge and download the QR code to print or share.
+          Select a badge, enter the awardee name, and confirm to generate.
         </p>
 
         <div className="qr-badge-select">
@@ -203,7 +207,8 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
               key={b.id}
               type="button"
               className={`qr-badge-option ${selected === b.id ? "active" : ""}`}
-              onClick={() => setSelected(b.id)}
+              onClick={() => { setSelected(b.id); handleReset(); }}
+              disabled={generating}
             >
               <Image
                 src={b.image}
@@ -228,25 +233,48 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
             onChange={(e) => setAwardedBy(e.target.value)}
             placeholder="Your name"
             className="scan-input"
+            disabled={generating || confirmed}
           />
         </div>
 
-        <div className="qr-preview">
-          <canvas ref={canvasRef} className="qr-canvas" />
-        </div>
+        {!confirmed ? (
+          <button
+            type="button"
+            className="qr-download"
+            onClick={handleConfirm}
+            disabled={generating}
+          >
+            {generating ? "Generating..." : "Confirm & Generate QR"}
+          </button>
+        ) : (
+          <>
+            <div className="qr-preview">
+              <canvas ref={canvasRef} className="qr-canvas" />
+            </div>
 
-        <p className="qr-url">{scanUrl}</p>
+            <p className="qr-url">{scanUrl}</p>
 
-        <p className="qr-single-use">Each QR code can be scanned by multiple people. Links cannot be shared.</p>
+            <p className="qr-single-use">This QR code is ready to use. Each person who scans it gets their own badge.</p>
 
-        <button
-          type="button"
-          className="qr-download"
-          onClick={handleDownload}
-          disabled={!qrUrl || generating}
-        >
-          {generating ? "Generating..." : "Download QR Code"}
-        </button>
+            <div className="qr-actions">
+              <button
+                type="button"
+                className="qr-download"
+                onClick={handleDownload}
+                disabled={!qrUrl}
+              >
+                Download QR Code
+              </button>
+              <button
+                type="button"
+                className="qr-download qr-download-secondary"
+                onClick={handleReset}
+              >
+                Generate New QR
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
