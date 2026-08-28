@@ -126,6 +126,11 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
           (data.badges ?? []).map((b: { badge_id: string }) => b.badge_id)
         );
         setEarnedBadges(badges);
+        const meta: Record<string, { awarded_by?: string }> = {};
+        (data.badges ?? []).forEach((b: { badge_id: string; awarded_by?: string }) => {
+          if (b.awarded_by) meta[b.badge_id] = { awarded_by: b.awarded_by };
+        });
+        setBadgeMeta(meta);
         setIsPublic(data.is_public ?? false);
         QRCode.toDataURL(
           `https://cncp-id-finder.vercel.app/scan`,

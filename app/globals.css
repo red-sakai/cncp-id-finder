@@ -3218,7 +3218,7 @@ html.dark .footer-legal-links a:hover {
   border-radius: 0.75rem;
   padding: 1.25rem 1rem;
   text-align: center;
-  width: 200px;
+  width: min(280px, 90vw);
   box-shadow: 0 8px 24px rgba(26, 42, 58, 0.2);
   position: relative;
   animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -3258,8 +3258,8 @@ html.dark .footer-legal-links a:hover {
   line-height: 1.4;
 }
 .icisco-badge-modal-awarded-by {
-  font-size: 0.6rem;
-  color: #90a4ae;
+  font-size: 0.75rem;
+  color: #546e7a;
   margin: 0.5rem 0 0;
   padding-top: 0.4rem;
   border-top: 1px solid #eceff1;
