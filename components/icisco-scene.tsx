@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import * as THREE from "three";
@@ -485,6 +486,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     const awarded = searchParams.get("awarded");
     const email = searchParams.get("email");
     const by = searchParams.get("by");
+    const token = searchParams.get("token");
     if (awarded && email && awardedRef.current !== awarded) {
       awardedRef.current = awarded;
       setActiveApp("id-finder");
@@ -525,6 +527,13 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ email, badgeId: awarded, awardedBy: by || undefined }),
             });
+            if (token) {
+              await fetch("/api/tokens", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ token, email }),
+              });
+            }
             setEarnedBadges((prev) => new Set([...prev, awarded]));
             setCongratsBadge(awarded);
             setShowCongrats(true);
@@ -1049,7 +1058,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                   </div>
                 </div>
 
-                {selectedBadge && (() => {
+                {selectedBadge && createPortal((() => {
                   const badgeInfo: Record<string, { img: string; name: string; desc: string }> = {
                     "welcome-to-cisco": {
                       img: "/badges/welcome-to-cisco-badge.png",
@@ -1094,7 +1103,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                       </div>
                     </div>
                   );
-                })()}
+                })(), document.body)}
 
                 {/* BACK */}
                 <div className="icisco-idcard-face icisco-idcard-back">

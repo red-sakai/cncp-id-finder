@@ -2890,6 +2890,19 @@ html.dark .footer-legal-links a:hover {
   font-size: 0.8rem;
   margin: 0;
 }
+.scan-already-earned {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+.scan-already-earned-text {
+  color: #ff9800;
+  font-size: 0.85rem;
+  margin: 0;
+  line-height: 1.4;
+}
 .scan-button {
   padding: 0.75rem 1rem;
   background: #049fd9;
@@ -3105,6 +3118,12 @@ html.dark .footer-legal-links a:hover {
 .qr-download:disabled {
   background: #b0bec5;
   cursor: not-allowed;
+}
+.qr-single-use {
+  font-size: 0.7rem;
+  color: #90a4ae;
+  margin: 0.5rem 0 0;
+  text-align: center;
 }
 
 /* ─── Badge Help Tooltip ─── */

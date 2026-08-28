@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import QRCode from "qrcode";
@@ -201,7 +202,7 @@ export default function PublicIdPage() {
           </div>
         </div>
 
-        {selectedBadge && BADGE_INFO[selectedBadge] && (() => {
+        {selectedBadge && BADGE_INFO[selectedBadge] && createPortal((() => {
           const badgeData = data?.badges?.find((b) => b.badge_id === selectedBadge);
           return (
             <div className="icisco-badge-modal" onClick={(e) => { e.stopPropagation(); setSelectedBadge(null); }}>
@@ -218,7 +219,7 @@ export default function PublicIdPage() {
               </div>
             </div>
           );
-        })()}
+        })(), document.body)}
 
         {/* BACK */}
         <div className="icisco-idcard-face icisco-idcard-back" onClick={(e) => e.stopPropagation()}>

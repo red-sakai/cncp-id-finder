@@ -114,12 +114,45 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
   const [qrUrl, setQrUrl] = useState("");
   const [selected, setSelected] = useState(BADGES[0].id);
   const [awardedBy, setAwardedBy] = useState("");
+  const [token, setToken] = useState("");
+  const [generating, setGenerating] = useState(false);
 
   const badge = BADGES.find((b) => b.id === selected) ?? BADGES[0];
   const byParam = awardedBy.trim();
-  const scanUrl = `https://cncp-id-finder.vercel.app/scan?badge=${badge.id}${byParam ? `&by=${encodeURIComponent(byParam)}` : ""}`;
+  const scanUrl = token
+    ? `https://cncp-id-finder.vercel.app/scan?token=${token}`
+    : `https://cncp-id-finder.vercel.app/scan?badge=${badge.id}${byParam ? `&by=${encodeURIComponent(byParam)}` : ""}`;
 
   useEffect(() => {
+    let cancelled = false;
+    const generate = async () => {
+      setGenerating(true);
+      setToken("");
+      try {
+        const res = await fetch("/api/tokens", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            badgeId: badge.id,
+            awardedBy: byParam || undefined,
+          }),
+        });
+        if (res.ok && !cancelled) {
+          const data = await res.json();
+          setToken(data.token);
+        }
+      } catch {
+        // fall back to non-token URL
+      } finally {
+        if (!cancelled) setGenerating(false);
+      }
+    };
+    generate();
+    return () => { cancelled = true; };
+  }, [badge.id, byParam]);
+
+  useEffect(() => {
+    if (!token) return;
     QRCode.toCanvas(canvasRef.current, scanUrl, {
       width: 256,
       margin: 2,
@@ -130,7 +163,7 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
       margin: 2,
       color: { dark: "#1a2a3a", light: "#ffffff" },
     }).then(setQrUrl);
-  }, [scanUrl]);
+  }, [scanUrl, token]);
 
   const handleDownload = () => {
     if (!qrUrl) return;
@@ -204,13 +237,15 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
 
         <p className="qr-url">{scanUrl}</p>
 
+        <p className="qr-single-use">Each QR code is single-use and cannot be reused.</p>
+
         <button
           type="button"
           className="qr-download"
           onClick={handleDownload}
-          disabled={!qrUrl}
+          disabled={!qrUrl || generating}
         >
-          Download QR Code
+          {generating ? "Generating..." : "Download QR Code"}
         </button>
       </div>
     </div>
