@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (!data || data.length === 0) {
-    return NextResponse.json({ error: "Token not found" }, { status: 404 });
+    return NextResponse.json({ error: "Invalid QR code." }, { status: 404 });
   }
 
   return NextResponse.json({

@@ -488,9 +488,22 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     const by = searchParams.get("by");
     if (awarded && email && awardedRef.current !== awarded) {
       awardedRef.current = awarded;
+      sessionStorage.removeItem("cncp-scan-token");
       setActiveApp("id-finder");
       setEmailInput(email);
       const doAward = async () => {
+        let validBy: string | undefined;
+        if (by) {
+          try {
+            const awarderRes = await fetch(`/api/awarders?name=${encodeURIComponent(by)}`);
+            if (awarderRes.ok) {
+              const awarderData = await awarderRes.json();
+              if (awarderData.valid) validBy = by;
+            }
+          } catch {
+            // ignore validation errors, treat as invalid
+          }
+        }
         const res = await fetch("/api/lookup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -508,8 +521,8 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
           (data.badges ?? []).forEach((b: { badge_id: string; awarded_by?: string }) => {
             if (b.awarded_by) meta[b.badge_id] = { awarded_by: b.awarded_by };
           });
-          if (by && awarded) {
-            meta[awarded] = { awarded_by: by };
+          if (validBy && awarded) {
+            meta[awarded] = { awarded_by: validBy };
           }
           setBadgeMeta(meta);
           QRCode.toDataURL(
@@ -524,7 +537,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             await fetch("/api/badges", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email, badgeId: awarded, awardedBy: by || undefined }),
+              body: JSON.stringify({ email, badgeId: awarded, awardedBy: validBy }),
             });
             setEarnedBadges((prev) => new Set([...prev, awarded]));
             setCongratsBadge(awarded);

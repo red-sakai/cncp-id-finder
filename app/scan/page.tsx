@@ -90,6 +90,9 @@ function ScanForm() {
         setLoading(false);
         return;
       }
+      if (tokenParam) {
+        sessionStorage.setItem("cncp-scan-token", tokenParam);
+      }
       const params = new URLSearchParams({ email: trimmed });
       if (badge) params.set("awarded", badge);
       if (awardedBy) params.set("by", awardedBy);
