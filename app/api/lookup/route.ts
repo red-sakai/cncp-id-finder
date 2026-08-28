@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
   const { data: badges } = await supabase
     .from("user_badges")
-    .select("badge_id, awarded_at")
+    .select("badge_id, awarded_at, awarded_by")
     .eq("email", trimmed)
     .order("awarded_at", { ascending: true });
 

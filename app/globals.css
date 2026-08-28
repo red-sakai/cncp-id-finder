@@ -2853,7 +2853,8 @@ html.dark .footer-legal-links a:hover {
   width: 100%;
 }
 .scan-logo {
-  margin-bottom: 1rem;
+  display: block;
+  margin: 0 auto 1rem;
 }
 .scan-title {
   font-family: var(--font-display), sans-serif;

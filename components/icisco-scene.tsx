@@ -523,6 +523,9 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
               body: JSON.stringify({ email, badgeId: awarded, awardedBy: by || undefined }),
             });
             setEarnedBadges((prev) => new Set([...prev, awarded]));
+            if (by) {
+              setBadgeMeta((prev) => ({ ...prev, [awarded]: { awarded_by: by } }));
+            }
             setCongratsBadge(awarded);
             setShowCongrats(true);
             setTimeout(() => setShowCongrats(false), 4000);
