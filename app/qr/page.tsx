@@ -11,6 +11,11 @@ const BADGES = [
     name: "Welcome to Cisco",
     image: "/badges/welcome-to-cisco-badge.png",
   },
+  {
+    id: "golden-alumni",
+    name: "Golden Alumni",
+    image: "/badges/golden-alumni-badge.png",
+  },
 ];
 
 function getInitialAuth() {
@@ -108,9 +113,11 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [qrUrl, setQrUrl] = useState("");
   const [selected, setSelected] = useState(BADGES[0].id);
+  const [awardedBy, setAwardedBy] = useState("");
 
   const badge = BADGES.find((b) => b.id === selected) ?? BADGES[0];
-  const scanUrl = `https://cncp-id-finder.vercel.app/scan?badge=${badge.id}`;
+  const byParam = awardedBy.trim();
+  const scanUrl = `https://cncp-id-finder.vercel.app/scan?badge=${badge.id}${byParam ? `&by=${encodeURIComponent(byParam)}` : ""}`;
 
   useEffect(() => {
     QRCode.toCanvas(canvasRef.current, scanUrl, {
@@ -175,6 +182,20 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
               <span>{b.name}</span>
             </button>
           ))}
+        </div>
+
+        <div className="qr-awarded-by">
+          <label className="qr-awarded-label" htmlFor="awarded-by">
+            Awarded by
+          </label>
+          <input
+            id="awarded-by"
+            type="text"
+            value={awardedBy}
+            onChange={(e) => setAwardedBy(e.target.value)}
+            placeholder="Your name"
+            className="scan-input"
+          />
         </div>
 
         <div className="qr-preview">

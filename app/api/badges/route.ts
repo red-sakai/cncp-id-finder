@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-const VALID_BADGES = ["welcome-to-cisco"];
+const VALID_BADGES = ["welcome-to-cisco", "golden-alumni"];
 
 export async function GET(request: NextRequest) {
   const email = request.nextUrl.searchParams.get("email");
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabase
     .from("user_badges")
-    .select("badge_id, awarded_at")
+    .select("badge_id, awarded_at, awarded_by")
     .eq("email", email.trim().toLowerCase());
 
   if (error) {
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const { email, badgeId } = await request.json();
+  const { email, badgeId, awardedBy } = await request.json();
 
   if (!email || typeof email !== "string") {
     return NextResponse.json({ error: "Invalid email" }, { status: 400 });
@@ -46,9 +46,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ alreadyEarned: true });
   }
 
+  const insertData: { email: string; badge_id: string; awarded_by?: string } = {
+    email: trimmedEmail,
+    badge_id: badgeId,
+  };
+  if (awardedBy && typeof awardedBy === "string" && awardedBy.trim()) {
+    insertData.awarded_by = awardedBy.trim();
+  }
+
   const { error } = await supabase
     .from("user_badges")
-    .insert({ email: trimmedEmail, badge_id: badgeId });
+    .insert(insertData);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

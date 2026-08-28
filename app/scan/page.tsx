@@ -9,6 +9,7 @@ function ScanForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const badge = searchParams.get("badge");
+  const awardedBy = searchParams.get("by");
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,6 +41,7 @@ function ScanForm() {
       }
       const params = new URLSearchParams({ email: trimmed });
       if (badge) params.set("awarded", badge);
+      if (awardedBy) params.set("by", awardedBy);
       router.push(`/?${params.toString()}`);
     } catch {
       setError("Network error. Please try again.");

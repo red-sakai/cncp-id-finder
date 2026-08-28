@@ -1949,7 +1949,167 @@ a {
   border-color: #bf360c;
 }
 
-/* ─── Public ID Page ─── */
+/* ─── Card Style: ALUMNI ─── */
+.card-style-alumni .icisco-idcard-face {
+  background: linear-gradient(160deg, #0d1b2a 0%, #1b2838 25%, #1a2744 50%, #162032 75%, #0d1b2a 100%);
+  position: relative;
+  overflow: hidden;
+}
+.card-style-alumni .icisco-idcard-face::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(212, 168, 0, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(212, 168, 0, 0.06) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 1;
+}
+.card-style-alumni .icisco-idcard-face::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -60%;
+  width: 40%;
+  height: 200%;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.03) 42%,
+    rgba(212, 168, 0, 0.12) 48%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(212, 168, 0, 0.12) 52%,
+    rgba(255, 255, 255, 0.03) 58%,
+    transparent 70%
+  );
+  transform: skewX(-20deg);
+  animation: alumniShine 4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 10;
+}
+@keyframes alumniShine {
+  0%, 100% { left: -60%; }
+  50% { left: 120%; }
+}
+.card-style-alumni .icisco-idcard-top {
+  border-bottom-color: rgba(212, 168, 0, 0.3);
+  background: linear-gradient(90deg, #0d1b2a 0%, #1a2744 40%, #2a3a5c 50%, #1a2744 60%, #0d1b2a 100%);
+  position: relative;
+}
+.card-style-alumni .icisco-idcard-top::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 5%, #d4a800 30%, #f5d67a 50%, #d4a800 70%, transparent 95%);
+}
+.card-style-alumni .icisco-idcard-top-title {
+  color: #f5e6b8;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.12em;
+  font-size: 0.6rem;
+}
+.card-style-alumni .icisco-idcard-membership {
+  background: linear-gradient(90deg, #8b6914, #c69500, #d4a800, #c69500, #8b6914);
+  background-size: 200% 100%;
+  animation: alumniBadge 3s ease-in-out infinite;
+  color: #1a1a2e;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+@keyframes alumniBadge {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+.card-style-alumni .icisco-idcard-avatar {
+  border-color: #d4a800;
+  box-shadow:
+    0 0 0 3px rgba(212, 168, 0, 0.15),
+    0 0 16px rgba(212, 168, 0, 0.2);
+}
+.card-style-alumni .icisco-idcard-name {
+  background: linear-gradient(90deg, #c69500, #f5e6b8, #d4a800, #f5e6b8, #c69500);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: alumniName 4s ease-in-out infinite;
+  font-weight: 800;
+}
+@keyframes alumniName {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+.card-style-alumni .icisco-idcard-idnum {
+  color: #7a8fa8;
+  letter-spacing: 0.08em;
+}
+.card-style-alumni .icisco-idcard-course,
+.card-style-alumni .icisco-idcard-email {
+  color: #5a6f85;
+}
+.card-style-alumni .icisco-idcard-footer {
+  border-top-color: rgba(212, 168, 0, 0.2);
+  color: #8b9dc3;
+}
+.card-style-alumni .icisco-idcard-footer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 5%, #d4a800 30%, #f5d67a 50%, #d4a800 70%, transparent 95%);
+}
+.card-style-alumni .icisco-idcard-qr {
+  border-color: rgba(212, 168, 0, 0.4);
+  box-shadow: 0 0 8px rgba(212, 168, 0, 0.1);
+}
+.card-style-alumni .icisco-idcard-badges-title {
+  color: #d4a800;
+}
+.card-style-alumni .icisco-idcard-back-header {
+  background: linear-gradient(90deg, #0d1b2a, #1a2744, #0d1b2a);
+  border-bottom-color: rgba(212, 168, 0, 0.3);
+  position: relative;
+}
+.card-style-alumni .icisco-idcard-back-header::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 5%, #d4a800 30%, #f5d67a 50%, #d4a800 70%, transparent 95%);
+}
+.card-style-alumni .icisco-idcard-back-org {
+  color: #f5e6b8;
+  letter-spacing: 0.08em;
+}
+.card-style-alumni .icisco-idcard-back-text {
+  color: #8b9dc3;
+}
+.card-style-alumni .icisco-idcard-sig-name {
+  color: #b0bec5;
+}
+.card-style-alumni .icisco-idcard-sig-role {
+  color: #7a8fa8;
+}
+.card-style-alumni .icisco-idcard-sig-line {
+  background: linear-gradient(90deg, transparent, #d4a800, transparent);
+}
+.card-style-alumni .icisco-idcard-back-flip {
+  border-color: rgba(212, 168, 0, 0.4);
+  color: #d4a800;
+}
+.card-style-alumni .icisco-idcard-back-flip:hover {
+  background: rgba(212, 168, 0, 0.1);
+}
 .public-id-page {
   display: flex;
   align-items: center;
@@ -2888,6 +3048,21 @@ html.dark .footer-legal-links a:hover {
   border-color: #049fd9;
   box-shadow: 0 0 0 3px rgba(4, 159, 217, 0.15);
 }
+.qr-awarded-by {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0 auto 1rem;
+  width: 100%;
+  max-width: 280px;
+}
+.qr-awarded-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #546e7a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
 .qr-preview {
   display: flex;
   justify-content: center;
@@ -3041,6 +3216,14 @@ html.dark .footer-legal-links a:hover {
   margin: 0;
   line-height: 1.4;
 }
+.icisco-badge-modal-awarded-by {
+  font-size: 0.6rem;
+  color: #90a4ae;
+  margin: 0.5rem 0 0;
+  padding-top: 0.4rem;
+  border-top: 1px solid #eceff1;
+  font-style: italic;
+}
 
 /* ─── Skip Button ─── */
 .icisco-skip-btn {
@@ -3172,6 +3355,17 @@ html.dark .footer-legal-links a:hover {
 }
 .card-style-bronze .icisco-public-id-avatar {
   background: linear-gradient(135deg, #ffccbc, #bf360c);
+}
+.icisco-public-id-card.card-style-alumni {
+  border-color: rgba(212, 168, 0, 0.3);
+  background: linear-gradient(160deg, #0d1b2a, #1a2744);
+  color: #c5cae9;
+}
+.icisco-public-id-card.card-style-alumni:hover {
+  border-color: #d4a800;
+}
+.card-style-alumni .icisco-public-id-avatar {
+  background: linear-gradient(135deg, #1a2744, #d4a800);
 }
 .icisco-public-id-name {
   font-size: 0.7rem;

@@ -67,7 +67,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     email: string;
     course_year_section: string;
     membership_type: string;
-    badges: { badge_id: string; awarded_at: string }[];
+    badges: { badge_id: string; awarded_at: string; awarded_by?: string }[];
     card_style: string;
     is_public: boolean;
   } | null>(null);
@@ -78,6 +78,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const sigCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [earnedBadges, setEarnedBadges] = useState<Set<string>>(new Set());
+  const [badgeMeta, setBadgeMeta] = useState<Record<string, { awarded_by?: string }>>({});
   const [showCongrats, setShowCongrats] = useState(false);
   const [selectedBadge, setSelectedBadge] = useState<string | null>(null);
   const [publicIds, setPublicIds] = useState<{
@@ -482,6 +483,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   useEffect(() => {
     const awarded = searchParams.get("awarded");
     const email = searchParams.get("email");
+    const by = searchParams.get("by");
     if (awarded && email && awardedRef.current !== awarded) {
       awardedRef.current = awarded;
       setActiveApp("id-finder");
@@ -500,6 +502,11 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             (data.badges ?? []).map((b: { badge_id: string }) => b.badge_id)
           );
           setEarnedBadges(badges);
+          const meta: Record<string, { awarded_by?: string }> = {};
+          (data.badges ?? []).forEach((b: { badge_id: string; awarded_by?: string }) => {
+            if (b.awarded_by) meta[b.badge_id] = { awarded_by: b.awarded_by };
+          });
+          setBadgeMeta(meta);
           QRCode.toDataURL(
             `https://cncp-id-finder.vercel.app/scan`,
             {
@@ -512,7 +519,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             await fetch("/api/badges", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email, badgeId: awarded }),
+              body: JSON.stringify({ email, badgeId: awarded, awardedBy: by || undefined }),
             });
             setEarnedBadges((prev) => new Set([...prev, awarded]));
             setShowCongrats(true);
@@ -987,8 +994,25 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                           <div className="icisco-idcard-badge-icon-wrap">?</div>
                         )}
                       </div>
-                      <div className="icisco-idcard-badge-slot">
-                        <div className="icisco-idcard-badge-icon-wrap">?</div>
+                      <div
+                        className={`icisco-idcard-badge-slot ${earnedBadges.has("golden-alumni") ? "earned" : ""}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (earnedBadges.has("golden-alumni")) setSelectedBadge("golden-alumni");
+                        }}
+                      >
+                        {earnedBadges.has("golden-alumni") ? (
+                          <Image
+                            src="/badges/golden-alumni-badge.png"
+                            alt="Golden Alumni"
+                            width={36}
+                            height={36}
+                            className="icisco-idcard-badge-img"
+                            draggable={false}
+                          />
+                        ) : (
+                          <div className="icisco-idcard-badge-icon-wrap">?</div>
+                        )}
                       </div>
                       <div className="icisco-idcard-badge-slot">
                         <div className="icisco-idcard-badge-icon-wrap">?</div>
@@ -1011,31 +1035,52 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                   </div>
                 </div>
 
-                {selectedBadge && (
-                  <div className="icisco-badge-modal" onClick={(e) => { e.stopPropagation(); setSelectedBadge(null); }}>
-                    <div className="icisco-badge-modal-card" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        type="button"
-                        className="icisco-badge-modal-close"
-                        onClick={() => setSelectedBadge(null)}
-                      >
-                        &times;
-                      </button>
-                      <Image
-                        src="/badges/welcome-to-cisco-badge.png"
-                        alt="Welcome to Cisco"
-                        width={64}
-                        height={64}
-                        className="icisco-badge-modal-img"
-                        draggable={false}
-                      />
-                      <p className="icisco-badge-modal-name">Welcome to Cisco</p>
-                      <p className="icisco-badge-modal-desc">
-                        Awarded to new members who join Cisco NetConnect PUP &ndash; Manila. Welcome to the community!
-                      </p>
+                {selectedBadge && (() => {
+                  const badgeInfo: Record<string, { img: string; name: string; desc: string }> = {
+                    "welcome-to-cisco": {
+                      img: "/badges/welcome-to-cisco-badge.png",
+                      name: "Welcome to Cisco",
+                      desc: "Awarded to new members who join Cisco NetConnect PUP \u2013 Manila. Welcome to the community!",
+                    },
+                    "golden-alumni": {
+                      img: "/badges/golden-alumni-badge.png",
+                      name: "Golden Alumni",
+                      desc: "Awarded to distinguished alumni of Cisco NetConnect PUP \u2013 Manila for their continued excellence and contributions.",
+                    },
+                  };
+                  const info = badgeInfo[selectedBadge] ?? badgeInfo["welcome-to-cisco"];
+                  const meta = badgeMeta[selectedBadge];
+                  return (
+                    <div className="icisco-badge-modal" onClick={(e) => { e.stopPropagation(); setSelectedBadge(null); }}>
+                      <div className="icisco-badge-modal-card" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          className="icisco-badge-modal-close"
+                          onClick={() => setSelectedBadge(null)}
+                        >
+                          &times;
+                        </button>
+                        <Image
+                          src={info.img}
+                          alt={info.name}
+                          width={64}
+                          height={64}
+                          className="icisco-badge-modal-img"
+                          draggable={false}
+                        />
+                        <p className="icisco-badge-modal-name">{info.name}</p>
+                        <p className="icisco-badge-modal-desc">
+                          {info.desc}
+                        </p>
+                        {meta?.awarded_by && (
+                          <p className="icisco-badge-modal-awarded-by">
+                            Awarded by {meta.awarded_by}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* BACK */}
                 <div className="icisco-idcard-face icisco-idcard-back">
