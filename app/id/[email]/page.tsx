@@ -11,7 +11,7 @@ type UserData = {
   email: string;
   course_year_section: string;
   membership_type: string;
-  badges: { badge_id: string; awarded_at: string }[];
+  badges: { badge_id: string; awarded_at: string; awarded_by?: string }[];
   card_style: string;
 };
 
@@ -20,6 +20,11 @@ const BADGE_INFO: Record<string, { name: string; image: string; desc: string }> 
     name: "Welcome to Cisco",
     image: "/badges/welcome-to-cisco-badge.png",
     desc: "Awarded to new members who join Cisco NetConnect PUP \u2013 Manila. Welcome to the community!",
+  },
+  "golden-alumni": {
+    name: "Golden Alumni",
+    image: "/badges/golden-alumni-badge.png",
+    desc: "Awarded to distinguished alumni of Cisco NetConnect PUP \u2013 Manila for their continued excellence and contributions.",
   },
 };
 
@@ -196,16 +201,24 @@ export default function PublicIdPage() {
           </div>
         </div>
 
-        {selectedBadge && BADGE_INFO[selectedBadge] && (
-          <div className="icisco-badge-modal" onClick={(e) => { e.stopPropagation(); setSelectedBadge(null); }}>
-            <div className="icisco-badge-modal-card" onClick={(e) => e.stopPropagation()}>
-              <button type="button" className="icisco-badge-modal-close" onClick={() => setSelectedBadge(null)}>&times;</button>
-              <Image src={BADGE_INFO[selectedBadge].image} alt={BADGE_INFO[selectedBadge].name} width={64} height={64} className="icisco-badge-modal-img" draggable={false} />
-              <p className="icisco-badge-modal-name">{BADGE_INFO[selectedBadge].name}</p>
-              <p className="icisco-badge-modal-desc">{BADGE_INFO[selectedBadge].desc}</p>
+        {selectedBadge && BADGE_INFO[selectedBadge] && (() => {
+          const badgeData = data?.badges?.find((b) => b.badge_id === selectedBadge);
+          return (
+            <div className="icisco-badge-modal" onClick={(e) => { e.stopPropagation(); setSelectedBadge(null); }}>
+              <div className="icisco-badge-modal-card" onClick={(e) => e.stopPropagation()}>
+                <button type="button" className="icisco-badge-modal-close" onClick={() => setSelectedBadge(null)}>&times;</button>
+                <Image src={BADGE_INFO[selectedBadge].image} alt={BADGE_INFO[selectedBadge].name} width={64} height={64} className="icisco-badge-modal-img" draggable={false} />
+                <p className="icisco-badge-modal-name">{BADGE_INFO[selectedBadge].name}</p>
+                <p className="icisco-badge-modal-desc">{BADGE_INFO[selectedBadge].desc}</p>
+                {badgeData?.awarded_by && (
+                  <p className="icisco-badge-modal-awarded-by">
+                    Awarded by {badgeData.awarded_by}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* BACK */}
         <div className="icisco-idcard-face icisco-idcard-back" onClick={(e) => e.stopPropagation()}>

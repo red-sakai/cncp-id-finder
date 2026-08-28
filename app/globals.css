@@ -2949,6 +2949,13 @@ html.dark .footer-legal-links a:hover {
   margin: 0;
 }
 
+.icisco-congrats-awarded-by {
+  font-size: 0.75rem;
+  color: #455a64;
+  margin: 6px 0 0;
+  font-style: italic;
+}
+
 /* ─── Confetti Particles ─── */
 .icisco-confetti {
   position: absolute;

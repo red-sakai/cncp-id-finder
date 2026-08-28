@@ -507,6 +507,9 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
           (data.badges ?? []).forEach((b: { badge_id: string; awarded_by?: string }) => {
             if (b.awarded_by) meta[b.badge_id] = { awarded_by: b.awarded_by };
           });
+          if (by && awarded) {
+            meta[awarded] = { awarded_by: by };
+          }
           setBadgeMeta(meta);
           QRCode.toDataURL(
             `https://cncp-id-finder.vercel.app/scan`,
@@ -523,9 +526,6 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
               body: JSON.stringify({ email, badgeId: awarded, awardedBy: by || undefined }),
             });
             setEarnedBadges((prev) => new Set([...prev, awarded]));
-            if (by) {
-              setBadgeMeta((prev) => ({ ...prev, [awarded]: { awarded_by: by } }));
-            }
             setCongratsBadge(awarded);
             setShowCongrats(true);
             setTimeout(() => setShowCongrats(false), 4000);
@@ -736,6 +736,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
               "golden-alumni": { img: "/badges/golden-alumni-badge.png", name: "Golden Alumni" },
             };
             const info = badgeInfo[congratsBadge] ?? badgeInfo["welcome-to-cisco"];
+            const awardedByName = badgeMeta[congratsBadge]?.awarded_by;
             return (
               <div className="icisco-congrats-overlay">
                 <div className="icisco-congrats-card">
@@ -759,6 +760,11 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                   <p className="icisco-congrats-text">
                     You earned the {info.name} badge!
                   </p>
+                  {awardedByName && (
+                    <p className="icisco-congrats-awarded-by">
+                      Awarded by {awardedByName}
+                    </p>
+                  )}
                 </div>
               </div>
             );
