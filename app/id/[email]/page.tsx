@@ -42,6 +42,7 @@ export default function PublicIdPage() {
   const [zoomedQrImg, setZoomedQrImg] = useState<string | null>(null);
   const sigCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
+  const [savedSignatureUrl, setSavedSignatureUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -63,6 +64,31 @@ export default function PublicIdPage() {
           margin: 1,
           color: { dark: "#1a2a3a", light: "#ffffff" },
         }).then(setQrDataUrl);
+
+        // Load saved signature
+        try {
+          const sigRes = await fetch(`/api/signature?email=${encodeURIComponent(email)}`);
+          if (sigRes.ok) {
+            const { signatureUrl } = await sigRes.json();
+            if (signatureUrl) {
+              setSavedSignatureUrl(signatureUrl);
+              const canvas = sigCanvasRef.current;
+              if (canvas) {
+                const ctx = canvas.getContext("2d");
+                if (ctx) {
+                  const img = new window.Image();
+                  img.onload = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                  };
+                  img.src = signatureUrl;
+                }
+              }
+            }
+          }
+        } catch {
+          // ignore
+        }
       } catch {
         setError("Failed to load ID.");
       } finally {
@@ -109,15 +135,34 @@ export default function PublicIdPage() {
     ctx.stroke();
   };
 
-  const endDraw = (e: React.MouseEvent | React.TouchEvent) => {
+  const endDraw = async (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
     setIsDrawing(false);
+    // Auto-save signature
+    const canvas = sigCanvasRef.current;
+    if (canvas) {
+      const imageData = canvas.toDataURL("image/png");
+      try {
+        const res = await fetch("/api/signature", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, imageData }),
+        });
+        if (res.ok) {
+          const { signatureUrl } = await res.json();
+          setSavedSignatureUrl(signatureUrl);
+        }
+      } catch {
+        // ignore
+      }
+    }
   };
 
   const clearSig = () => {
     const ctx = sigCanvasRef.current?.getContext("2d");
     if (!ctx) return;
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    setSavedSignatureUrl(null);
   };
 
   if (loading) {

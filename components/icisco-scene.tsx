@@ -98,6 +98,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const [viewingPublicId, setViewingPublicId] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(false);
   const [publicToggleLoading, setPublicToggleLoading] = useState(false);
+  const [savedSignatureUrl, setSavedSignatureUrl] = useState<string | null>(null);
 
   const handleLookup = useCallback(async () => {
     const email = emailInput.trim();
@@ -134,6 +135,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
         });
         setBadgeMeta(meta);
         setIsPublic(data.is_public ?? false);
+        loadSavedSignature(data.email);
         QRCode.toDataURL(
           `https://cncp-id-finder.vercel.app/scan`,
           {
@@ -196,12 +198,59 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const endDraw = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
     setIsDrawing(false);
+    saveSignature();
   };
 
   const clearSig = () => {
     const ctx = sigCanvasRef.current?.getContext("2d");
     if (!ctx || !sigCanvasRef.current) return;
     ctx.clearRect(0, 0, sigCanvasRef.current.width, sigCanvasRef.current.height);
+    setSavedSignatureUrl(null);
+  };
+
+  const saveSignature = async () => {
+    const canvas = sigCanvasRef.current;
+    if (!canvas || !lookupResult?.email) return;
+    const imageData = canvas.toDataURL("image/png");
+    try {
+      const res = await fetch("/api/signature", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: lookupResult.email, imageData }),
+      });
+      if (res.ok) {
+        const { signatureUrl } = await res.json();
+        setSavedSignatureUrl(signatureUrl);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const loadSavedSignature = async (email: string) => {
+    try {
+      const res = await fetch(`/api/signature?email=${encodeURIComponent(email)}`);
+      if (res.ok) {
+        const { signatureUrl } = await res.json();
+        if (signatureUrl) {
+          setSavedSignatureUrl(signatureUrl);
+          const canvas = sigCanvasRef.current;
+          if (canvas) {
+            const ctx = canvas.getContext("2d");
+            if (ctx) {
+              const img = new window.Image();
+              img.onload = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+              };
+              img.src = signatureUrl;
+            }
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
   };
 
   // Use a ref so the Three.js loop can read it without re-running effects
