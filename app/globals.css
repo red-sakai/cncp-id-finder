@@ -3085,6 +3085,7 @@ html.dark .footer-legal-links a:hover {
   max-width: 380px;
   width: 100%;
   animation: popIn 0.3s ease;
+  color: #1a2a3a;
 }
 .qr-login-logo-wrap {
   width: 80px;
@@ -3100,6 +3101,30 @@ html.dark .footer-legal-links a:hover {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+.qr-login-card .qr-title {
+  color: #1a2a3a;
+}
+.qr-login-card .qr-subtitle {
+  color: #607d8b;
+}
+.qr-login-card .qr-input-label {
+  color: #546e7a;
+}
+.qr-login-card .qr-input {
+  background: #f5f7fa;
+  border-color: #d0dbe4;
+  color: #1a2a3a;
+}
+.qr-login-card .qr-input::placeholder {
+  color: #90a4ae;
+}
+.qr-login-card .qr-input:focus {
+  border-color: #049fd9;
+  background: #fff;
+}
+.qr-login-card .qr-error {
+  color: #e53935;
 }
 
 /* ── Admin Layout ── */
