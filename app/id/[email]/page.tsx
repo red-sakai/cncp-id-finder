@@ -135,34 +135,45 @@ export default function PublicIdPage() {
     ctx.stroke();
   };
 
-  const endDraw = async (e: React.MouseEvent | React.TouchEvent) => {
+  const endDraw = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
     setIsDrawing(false);
-    // Auto-save signature
+  };
+
+  const [sigSaving, setSigSaving] = useState(false);
+
+  const saveSignature = async () => {
     const canvas = sigCanvasRef.current;
-    if (canvas) {
+    if (!canvas) return;
+    setSigSaving(true);
+    try {
       const imageData = canvas.toDataURL("image/png");
-      try {
-        const res = await fetch("/api/signature", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, imageData }),
-        });
-        if (res.ok) {
-          const { signatureUrl } = await res.json();
-          setSavedSignatureUrl(signatureUrl);
-        }
-      } catch {
-        // ignore
+      const res = await fetch("/api/signature", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, imageData }),
+      });
+      if (res.ok) {
+        const { signatureUrl } = await res.json();
+        setSavedSignatureUrl(signatureUrl);
       }
+    } catch {
+      // ignore
+    } finally {
+      setSigSaving(false);
     }
   };
 
-  const clearSig = () => {
+  const clearSig = async () => {
     const ctx = sigCanvasRef.current?.getContext("2d");
     if (!ctx) return;
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     setSavedSignatureUrl(null);
+    try {
+      await fetch(`/api/signature?email=${encodeURIComponent(email)}`, { method: "DELETE" });
+    } catch {
+      // ignore
+    }
   };
 
   if (loading) {
@@ -312,7 +323,17 @@ export default function PublicIdPage() {
                 onTouchMove={draw}
                 onTouchEnd={endDraw}
               />
-              <button type="button" className="icisco-idcard-sig-clear" onClick={(e) => { e.stopPropagation(); clearSig(); }}>Clear</button>
+              <div className="icisco-idcard-sig-actions">
+                <button type="button" className="icisco-idcard-sig-clear" onClick={(e) => { e.stopPropagation(); clearSig(); }}>Clear</button>
+                <button
+                  type="button"
+                  className={`icisco-idcard-sig-save ${savedSignatureUrl ? "saved" : ""}`}
+                  onClick={(e) => { e.stopPropagation(); saveSignature(); }}
+                  disabled={sigSaving}
+                >
+                  {sigSaving ? "Saving..." : savedSignatureUrl ? "Saved" : "Save"}
+                </button>
+              </div>
               <div className="icisco-idcard-sig-line" />
               <p className="icisco-idcard-sig-name">{data.first_name} {data.last_name}</p>
               <p className="icisco-idcard-sig-role">Member</p>

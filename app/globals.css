@@ -2307,6 +2307,32 @@ a {
 .icisco-idcard-sig-clear:hover {
   color: #5a6a78;
 }
+.icisco-idcard-sig-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.icisco-idcard-sig-save {
+  background: none;
+  border: none;
+  color: #049fd9;
+  font-size: 0.55rem;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+.icisco-idcard-sig-save:hover {
+  color: #0277bd;
+}
+.icisco-idcard-sig-save.saved {
+  color: #4caf50;
+  text-decoration: none;
+  cursor: default;
+}
+.icisco-idcard-sig-save:disabled {
+  color: #8a9aa8;
+  cursor: not-allowed;
+}
 .icisco-idcard-sig-line {
   width: 100%;
   height: 1px;
