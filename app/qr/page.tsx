@@ -5,18 +5,31 @@ import QRCode from "qrcode";
 import Image from "next/image";
 
 const SESSION_KEY = "cncp-qr-auth";
-const BADGES = [
+
+const DEFAULT_BADGES: Badge[] = [
   {
     id: "welcome-to-cisco",
     name: "Welcome to Cisco",
-    image: "/badges/welcome-to-cisco-badge.png",
+    description: "Awarded to new members who join Cisco NetConnect PUP.",
+    image_url: "/badges/welcome-to-cisco-badge.png",
+    created_at: "",
   },
   {
     id: "golden-alumni",
     name: "Golden Alumni",
-    image: "/badges/golden-alumni-badge.png",
+    description: "Awarded to distinguished alumni for their continued excellence.",
+    image_url: "/badges/golden-alumni-badge.png",
+    created_at: "",
   },
 ];
+
+type Badge = {
+  id: string;
+  name: string;
+  description: string;
+  image_url: string;
+  created_at: string;
+};
 
 function getInitialAuth() {
   if (typeof window === "undefined") return false;
@@ -119,8 +132,11 @@ export default function QRPage() {
 
 function QRGenerator({ onLogout }: { onLogout: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [badges, setBadges] = useState<Badge[]>([]);
+  const [badgesLoading, setBadgesLoading] = useState(true);
   const [qrUrl, setQrUrl] = useState("");
-  const [selected, setSelected] = useState(BADGES[0].id);
+  const [selected, setSelected] = useState("");
   const [awardedBy, setAwardedBy] = useState("");
   const [token, setToken] = useState("");
   const [generating, setGenerating] = useState(false);
@@ -130,11 +146,40 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; badge_id: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const badge = BADGES.find((b) => b.id === selected) ?? BADGES[0];
+  // Badge creation state
+  const [showCreateBadge, setShowCreateBadge] = useState(false);
+  const [newBadgeName, setNewBadgeName] = useState("");
+  const [newBadgeDesc, setNewBadgeDesc] = useState("");
+  const [newBadgeImage, setNewBadgeImage] = useState<string | null>(null);
+  const [newBadgeImagePreview, setNewBadgeImagePreview] = useState<string | null>(null);
+  const [badgeCreating, setBadgeCreating] = useState(false);
+  const [badgeError, setBadgeError] = useState("");
+
+  const badge = badges.find((b) => b.id === selected) ?? badges[0];
   const byParam = awardedBy.trim();
   const scanUrl = token
     ? `https://cncp-id-finder.vercel.app/scan?token=${token}`
     : "";
+
+  const fetchBadges = async () => {
+    setBadgesLoading(true);
+    try {
+      const res = await fetch("/api/badge-definitions");
+      if (res.ok) {
+        const data = await res.json();
+        const custom = (data.badges ?? []) as Badge[];
+        const merged = [...custom, ...DEFAULT_BADGES];
+        setBadges(merged);
+        if (merged.length > 0 && !selected) {
+          setSelected(merged[0].id);
+        }
+      }
+    } catch {
+      // ignore
+    } finally {
+      setBadgesLoading(false);
+    }
+  };
 
   const fetchTokens = async () => {
     setTokensLoading(true);
@@ -152,8 +197,87 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
   };
 
   useEffect(() => {
+    fetchBadges();
     fetchTokens();
   }, []);
+
+  const handleBadgeImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setBadgeError("");
+
+    // Validate PNG
+    if (file.type !== "image/png") {
+      setBadgeError("Only PNG images are allowed.");
+      e.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new window.Image();
+      img.onload = () => {
+        // Validate 1:1 aspect ratio
+        if (img.width !== img.height) {
+          setBadgeError(`Image must be 1:1 ratio. Yours is ${img.width}x${img.height}.`);
+          e.target.value = "";
+          return;
+        }
+        setNewBadgeImage(ev.target?.result as string);
+        setNewBadgeImagePreview(ev.target?.result as string);
+      };
+      img.src = ev.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const handleCreateBadge = async () => {
+    setBadgeError("");
+    if (!newBadgeName.trim()) {
+      setBadgeError("Badge name is required.");
+      return;
+    }
+    if (!newBadgeDesc.trim()) {
+      setBadgeError("Badge description is required.");
+      return;
+    }
+    if (!newBadgeImage) {
+      setBadgeError("Badge image is required.");
+      return;
+    }
+
+    setBadgeCreating(true);
+    try {
+      const res = await fetch("/api/badge-definitions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newBadgeName.trim(),
+          description: newBadgeDesc.trim(),
+          imageData: newBadgeImage,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        await fetchBadges();
+        setSelected(data.id);
+        setShowCreateBadge(false);
+        setNewBadgeName("");
+        setNewBadgeDesc("");
+        setNewBadgeImage(null);
+        setNewBadgeImagePreview(null);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setBadgeError(body.error || "Failed to create badge.");
+      }
+    } catch {
+      setBadgeError("Network error. Please try again.");
+    } finally {
+      setBadgeCreating(false);
+    }
+  };
 
   const handleConfirm = async () => {
     setGenerating(true);
@@ -224,7 +348,7 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
   const handleDownload = () => {
     if (!qrUrl) return;
     const link = document.createElement("a");
-    link.download = `cncp-${badge.id}-qr.png`;
+    link.download = `cncp-${badge?.id ?? "badge"}-qr.png`;
     link.href = qrUrl;
     link.click();
   };
@@ -250,24 +374,40 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
 
         <div className="qr-admin-body">
           <div className="qr-admin-main">
+            {/* QR Generator Section */}
             <div className="qr-section">
               <h2 className="qr-section-title">Generate QR Code</h2>
               <p className="qr-section-desc">Select a badge and enter the awardee name to generate a scannable QR code.</p>
 
-              <div className="qr-badge-select">
-                {BADGES.map((b) => (
+              {badgesLoading ? (
+                <div className="qr-empty-state">
+                  <span className="qr-spinner" />
+                </div>
+              ) : (
+                <div className="qr-badge-select">
+                  {badges.map((b) => (
+                    <button
+                      key={b.id}
+                      type="button"
+                      className={`qr-badge-option ${selected === b.id ? "active" : ""}`}
+                      onClick={() => { setSelected(b.id); handleReset(); }}
+                      disabled={generating}
+                    >
+                      <Image src={b.image_url} alt={b.name} width={48} height={48} draggable={false} />
+                      <span className="qr-badge-option-name">{b.name}</span>
+                    </button>
+                  ))}
                   <button
-                    key={b.id}
                     type="button"
-                    className={`qr-badge-option ${selected === b.id ? "active" : ""}`}
-                    onClick={() => { setSelected(b.id); handleReset(); }}
+                    className="qr-badge-option qr-badge-add"
+                    onClick={() => setShowCreateBadge(true)}
                     disabled={generating}
                   >
-                    <Image src={b.image} alt={b.name} width={48} height={48} draggable={false} />
-                    <span className="qr-badge-option-name">{b.name}</span>
+                    <div className="qr-badge-add-icon">+</div>
+                    <span className="qr-badge-option-name">Add Badge</span>
                   </button>
-                ))}
-              </div>
+                </div>
+              )}
 
               <div className="qr-field">
                 <label className="qr-field-label" htmlFor="awarded-by">Awarded by</label>
@@ -287,7 +427,7 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                   type="button"
                   className="qr-btn qr-btn-primary qr-btn-full"
                   onClick={handleConfirm}
-                  disabled={generating}
+                  disabled={generating || badges.length === 0}
                 >
                   {generating ? (
                     <span className="qr-btn-loading">
@@ -319,6 +459,7 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
           </div>
 
           <aside className="qr-admin-sidebar">
+            {/* Created QR Codes */}
             <div className="qr-section">
               <div className="qr-section-header">
                 <h2 className="qr-section-title">Created QR Codes</h2>
@@ -337,11 +478,15 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
               ) : (
                 <div className="qr-tokens-list">
                   {tokens.map((t) => {
-                    const b = BADGES.find((badge) => badge.id === t.badge_id);
+                    const b = badges.find((badge) => badge.id === t.badge_id);
                     return (
                       <div key={t.id} className="qr-token-row">
                         <div className="qr-token-info">
-                          <Image src={b?.image ?? ""} alt="" width={28} height={28} className="qr-token-icon" draggable={false} />
+                          {b?.image_url ? (
+                            <Image src={b.image_url} alt="" width={28} height={28} className="qr-token-icon" draggable={false} />
+                          ) : (
+                            <div className="qr-token-icon qr-token-icon-placeholder" />
+                          )}
                           <div className="qr-token-details">
                             <span className="qr-token-name">{b?.name ?? t.badge_id}</span>
                             <span className="qr-token-meta">
@@ -372,6 +517,97 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
         </div>
       </div>
 
+      {/* Create Badge Modal */}
+      {showCreateBadge && (
+        <div className="qr-confirm-overlay" onClick={() => !badgeCreating && setShowCreateBadge(false)}>
+          <div className="qr-confirm-box" onClick={(e) => e.stopPropagation()}>
+            <p className="qr-confirm-title">Add New Badge</p>
+            <p className="qr-confirm-desc">Create a new badge with an icon, name, and description.</p>
+
+            <div className="qr-create-badge-form">
+              <div className="qr-field">
+                <label className="qr-field-label">Badge Icon</label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png"
+                  onChange={handleBadgeImageUpload}
+                  className="qr-file-input"
+                  disabled={badgeCreating}
+                />
+                {newBadgeImagePreview ? (
+                  <div className="qr-badge-preview">
+                    <Image src={newBadgeImagePreview} alt="Badge preview" width={64} height={64} draggable={false} />
+                    <button
+                      type="button"
+                      className="qr-badge-preview-remove"
+                      onClick={() => { setNewBadgeImage(null); setNewBadgeImagePreview(null); }}
+                      disabled={badgeCreating}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="qr-btn qr-btn-secondary qr-btn-full"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={badgeCreating}
+                  >
+                    Choose PNG (1:1 ratio)
+                  </button>
+                )}
+              </div>
+
+              <div className="qr-field">
+                <label className="qr-field-label" htmlFor="badge-name">Badge Name</label>
+                <input
+                  id="badge-name"
+                  type="text"
+                  value={newBadgeName}
+                  onChange={(e) => setNewBadgeName(e.target.value)}
+                  placeholder="e.g. Top Performer"
+                  className="qr-input"
+                  disabled={badgeCreating}
+                />
+              </div>
+
+              <div className="qr-field">
+                <label className="qr-field-label" htmlFor="badge-desc">Description</label>
+                <textarea
+                  id="badge-desc"
+                  value={newBadgeDesc}
+                  onChange={(e) => setNewBadgeDesc(e.target.value)}
+                  placeholder="What is this badge for?"
+                  className="qr-input qr-textarea"
+                  rows={3}
+                  disabled={badgeCreating}
+                />
+              </div>
+
+              {badgeError && <p className="qr-error">{badgeError}</p>}
+            </div>
+
+            <div className="qr-confirm-actions">
+              <button type="button" className="qr-btn qr-btn-ghost" onClick={() => setShowCreateBadge(false)} disabled={badgeCreating}>
+                Cancel
+              </button>
+              <button type="button" className="qr-btn qr-btn-primary" onClick={handleCreateBadge} disabled={badgeCreating}>
+                {badgeCreating ? (
+                  <span className="qr-btn-loading">
+                    <span className="qr-spinner" />
+                    Creating...
+                  </span>
+                ) : (
+                  "Create Badge"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete QR Confirmation Modal */}
       {deleteTarget && (
         <div className="qr-confirm-overlay" onClick={() => !deleting && setDeleteTarget(null)}>
           <div className="qr-confirm-box" onClick={(e) => e.stopPropagation()}>
@@ -384,7 +620,7 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
             </div>
             <p className="qr-confirm-title">Delete QR Code?</p>
             <p className="qr-confirm-desc">
-              The <strong>{BADGES.find((b) => b.id === deleteTarget.badge_id)?.name ?? deleteTarget.badge_id}</strong> badge token will be permanently removed. This action cannot be undone.
+              The <strong>{badges.find((b) => b.id === deleteTarget.badge_id)?.name ?? deleteTarget.badge_id}</strong> badge token will be permanently removed. This action cannot be undone.
             </p>
             <div className="qr-confirm-actions">
               <button type="button" className="qr-btn qr-btn-ghost" onClick={() => setDeleteTarget(null)} disabled={deleting}>

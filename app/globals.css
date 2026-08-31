@@ -3557,6 +3557,72 @@ html.dark .footer-legal-links a:hover {
   }
 }
 
+/* ── Badge Creation Form ── */
+.qr-badge-add {
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.2);
+  background: transparent;
+}
+.qr-badge-add:hover {
+  border-color: #049fd9;
+  background: rgba(4, 159, 217, 0.06);
+}
+.qr-badge-add-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: rgba(255, 255, 255, 0.4);
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+}
+.qr-badge-add:hover .qr-badge-add-icon {
+  color: #049fd9;
+  border-color: #049fd9;
+}
+.qr-create-badge-form {
+  text-align: left;
+  margin-bottom: 1rem;
+}
+.qr-file-input {
+  display: none;
+}
+.qr-badge-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+}
+.qr-badge-preview img {
+  border-radius: 0.35rem;
+}
+.qr-badge-preview-remove {
+  background: none;
+  border: none;
+  color: #e53935;
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.qr-badge-preview-remove:hover {
+  color: #c62828;
+}
+.qr-textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+.qr-token-icon-placeholder {
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 0.35rem;
+}
+
 /* ─── Badge Help Tooltip ─── */
 .icisco-idcard-badges-title {
   display: inline-flex;
