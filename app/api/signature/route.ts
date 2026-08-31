@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-// POST /api/signature — Upload a signature image (base64 PNG)
+// POST /api/signature — Save a signature (base64 data URL)
 export async function POST(request: NextRequest) {
   try {
     const { email, imageData } = await request.json();
@@ -15,32 +15,6 @@ export async function POST(request: NextRequest) {
 
     const trimmed = email.trim().toLowerCase();
 
-    // Strip data URL prefix if present (e.g. "data:image/png;base64,...")
-    const base64Clean = imageData.replace(/^data:image\/\w+;base64,/, "");
-    const buffer = Buffer.from(base64Clean, "base64");
-
-    const filePath = `signatures/${trimmed}.png`;
-
-    // Upsert (overwrite if exists)
-    const { error: uploadError } = await supabase.storage
-      .from("signatures")
-      .upload(filePath, buffer, {
-        contentType: "image/png",
-        upsert: true,
-      });
-
-    if (uploadError) {
-      return NextResponse.json({ error: uploadError.message }, { status: 500 });
-    }
-
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from("signatures")
-      .getPublicUrl(filePath);
-
-    const signatureUrl = urlData.publicUrl;
-
-    // Save URL to digital_ids table
     const { data: existing } = await supabase
       .from("digital_ids")
       .select("id")
@@ -48,23 +22,29 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (existing && existing.length > 0) {
-      await supabase
+      const { error } = await supabase
         .from("digital_ids")
-        .update({ signature_url: signatureUrl })
+        .update({ signature_url: imageData })
         .eq("email", trimmed);
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
     } else {
-      await supabase
+      const { error } = await supabase
         .from("digital_ids")
-        .insert({ email: trimmed, card_style: "white", is_public: false, signature_url: signatureUrl });
+        .insert({ email: trimmed, card_style: "white", is_public: false, signature_url: imageData });
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
     }
 
-    return NextResponse.json({ ok: true, signatureUrl });
+    return NextResponse.json({ ok: true, signatureUrl: imageData });
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 }
 
-// GET /api/signature?email=... — Get saved signature URL
+// GET /api/signature?email=... — Get saved signature
 export async function GET(request: NextRequest) {
   const email = request.nextUrl.searchParams.get("email");
 
@@ -100,13 +80,15 @@ export async function DELETE(request: NextRequest) {
   }
 
   const trimmed = email.trim().toLowerCase();
-  const filePath = `signatures/${trimmed}.png`;
 
-  await supabase.storage.from("signatures").remove([filePath]);
-  await supabase
+  const { error } = await supabase
     .from("digital_ids")
     .update({ signature_url: null })
     .eq("email", trimmed);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true });
 }
