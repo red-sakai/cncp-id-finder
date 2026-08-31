@@ -5,7 +5,16 @@ export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get("token");
 
   if (!token || typeof token !== "string") {
-    return NextResponse.json({ error: "Invalid token" }, { status: 400 });
+    const { data, error } = await supabase
+      .from("badge_tokens")
+      .select("id, token, badge_id, awarded_by, created_at")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ tokens: data ?? [] });
   }
 
   const { data, error } = await supabase
@@ -53,4 +62,23 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ token });
+}
+
+export async function DELETE(request: NextRequest) {
+  const { id } = await request.json();
+
+  if (!id || typeof id !== "string") {
+    return NextResponse.json({ error: "Invalid token ID" }, { status: 400 });
+  }
+
+  const { error } = await supabase
+    .from("badge_tokens")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ deleted: true });
 }
