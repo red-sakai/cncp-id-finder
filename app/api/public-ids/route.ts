@@ -18,10 +18,21 @@ export async function GET() {
     return NextResponse.json({ ids: [] });
   }
 
-  const { data: users } = await supabase
+  // Fetch users from both tables
+  const { data: executives } = await supabase
+    .from("executives_personal_info")
+    .select("first_name, last_name, email, course_year_section, membership_type")
+    .in("email", emails);
+
+  const { data: registrations } = await supabase
     .from("registration_personal_info")
     .select("first_name, last_name, email, course_year_section, membership_type")
     .in("email", emails);
+
+  // Combine users from both tables (executives take priority)
+  const userMap = new Map<string, any>();
+  (registrations ?? []).forEach((u) => userMap.set(u.email, u));
+  (executives ?? []).forEach((u) => userMap.set(u.email, u));
 
   const { data: allBadges } = await supabase
     .from("user_badges")
@@ -29,7 +40,6 @@ export async function GET() {
     .in("email", emails)
     .order("awarded_at", { ascending: true });
 
-  const userMap = new Map((users ?? []).map((u) => [u.email, u]));
   const badgeMap = new Map<string, string[]>();
   (allBadges ?? []).forEach((b) => {
     if (!badgeMap.has(b.email)) badgeMap.set(b.email, []);

@@ -10,14 +10,30 @@ export async function POST(request: NextRequest) {
 
   const trimmed = email.trim().toLowerCase();
 
-  const { data, error } = await supabase
-    .from("registration_personal_info")
+  // Try executives_personal_info first
+  let { data, error } = await supabase
+    .from("executives_personal_info")
     .select("first_name, last_name, email, course_year_section, membership_type")
     .eq("email", trimmed)
     .limit(1);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // If not found in executives, try registration_personal_info
+  if (!data || data.length === 0) {
+    const result = await supabase
+      .from("registration_personal_info")
+      .select("first_name, last_name, email, course_year_section, membership_type")
+      .eq("email", trimmed)
+      .limit(1);
+
+    if (result.error) {
+      return NextResponse.json({ error: result.error.message }, { status: 500 });
+    }
+
+    data = result.data;
   }
 
   if (!data || data.length === 0) {
