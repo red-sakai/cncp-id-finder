@@ -17,12 +17,8 @@ export async function POST(request: NextRequest) {
     .eq("email", trimmed)
     .limit(1);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  // If not found in executives, try registration_personal_info
-  if (!data || data.length === 0) {
+  // If not found in executives (or table unavailable), try registration_personal_info
+  if (error || !data || data.length === 0) {
     const result = await supabase
       .from("registration_personal_info")
       .select("first_name, last_name, email, course_year_section, membership_type")
