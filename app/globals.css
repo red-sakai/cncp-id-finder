@@ -484,10 +484,34 @@ a {
 }
 
 .sky-night {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1.4px, transparent 1.7px),
-    radial-gradient(640px 320px at 78% 10%, rgba(96, 146, 226, 0.2), transparent 70%),
-    linear-gradient(180deg, #050d1e 0%, #081729 42%, #0c2038 76%, #133049 100%);
-  background-size: 20px 20px, 100% 100%, 100% 100%;
+  background-image:
+    /* Galaxy core — bright glowing center */
+    radial-gradient(260px 160px at 62% 30%, rgba(255, 230, 255, 0.35), transparent 50%),
+    radial-gradient(180px 120px at 60% 28%, rgba(220, 180, 255, 0.45), transparent 45%),
+    radial-gradient(100px 70px at 58% 27%, rgba(255, 245, 255, 0.55), transparent 40%),
+    /* Galaxy spiral arms — sweeping bands of purple-blue light */
+    conic-gradient(from 25deg at 60% 30%,
+      transparent 0deg,
+      rgba(160, 120, 255, 0.18) 25deg,
+      rgba(200, 160, 255, 0.28) 50deg,
+      rgba(140, 100, 240, 0.15) 80deg,
+      transparent 110deg,
+      transparent 200deg,
+      rgba(120, 80, 220, 0.12) 235deg,
+      rgba(180, 140, 255, 0.22) 270deg,
+      rgba(140, 100, 240, 0.1) 310deg,
+      transparent 340deg
+    ),
+    /* Nebula clouds — vivid colored gas clouds */
+    radial-gradient(500px 320px at 20% 15%, rgba(120, 40, 220, 0.45), transparent 55%),
+    radial-gradient(420px 280px at 80% 55%, rgba(200, 60, 180, 0.35), transparent 50%),
+    radial-gradient(380px 260px at 45% 75%, rgba(40, 100, 240, 0.38), transparent 50%),
+    radial-gradient(300px 220px at 8% 60%, rgba(0, 200, 200, 0.22), transparent 45%),
+    radial-gradient(350px 240px at 92% 20%, rgba(160, 60, 240, 0.3), transparent 50%),
+    radial-gradient(280px 200px at 70% 85%, rgba(100, 40, 200, 0.25), transparent 50%),
+    /* Deep space base */
+    linear-gradient(180deg, #060214 0%, #0c0628 25%, #100a38 50%, #0a0630 75%, #040218 100%);
+  background-size: 100% 100%;
 }
 
 .sun {
@@ -2467,7 +2491,7 @@ a {
   border-radius: 999px;
   background: #ffffff;
   box-shadow: 0 0 6px 1px rgba(255, 255, 255, 0.75);
-  opacity: 0.5;
+  opacity: 0.6;
   animation: starTwinkle var(--tw-dur, 3s) ease-in-out infinite;
   animation-delay: var(--tw-delay, 0s);
 }
@@ -2700,15 +2724,15 @@ a {
 /* ---------- Dark mode ---------- */
 
 html.dark {
-  scrollbar-color: rgba(4, 159, 217, 0.55) rgba(5, 28, 44, 0.9);
+  scrollbar-color: rgba(140, 100, 220, 0.55) rgba(6, 2, 20, 0.9);
 }
 
 html.dark ::-webkit-scrollbar-track {
-  background: rgba(5, 28, 44, 0.9);
+  background: rgba(6, 2, 20, 0.9);
 }
 
 html.dark ::-webkit-scrollbar-thumb {
-  border-color: rgba(5, 28, 44, 0.9);
+  border-color: rgba(6, 2, 20, 0.9);
 }
 
 html.dark :focus-visible {
@@ -2716,27 +2740,72 @@ html.dark :focus-visible {
 }
 
 html.dark body {
-  background: radial-gradient(1200px 800px at 80% -10%, rgba(4, 159, 217, 0.3), transparent 60%),
-    radial-gradient(900px 600px at -10% 20%, rgba(0, 188, 235, 0.2), transparent 55%),
-    linear-gradient(160deg, var(--bg-900), var(--bg-800) 45%, var(--bg-700));
+  background-image:
+    /* Galaxy core glow */
+    radial-gradient(300px 200px at 62% 12%, rgba(220, 180, 255, 0.3), transparent 55%),
+    radial-gradient(160px 100px at 60% 10%, rgba(255, 240, 255, 0.2), transparent 45%),
+    /* Nebula clouds — vivid */
+    radial-gradient(600px 400px at 20% 25%, rgba(120, 40, 220, 0.4), transparent 50%),
+    radial-gradient(500px 350px at 80% 50%, rgba(200, 60, 180, 0.32), transparent 45%),
+    radial-gradient(450px 300px at 50% 70%, rgba(40, 100, 240, 0.35), transparent 45%),
+    radial-gradient(350px 250px at 8% 75%, rgba(0, 200, 200, 0.2), transparent 40%),
+    radial-gradient(400px 300px at 90% 15%, rgba(160, 60, 240, 0.28), transparent 45%),
+    radial-gradient(300px 220px at 70% 90%, rgba(100, 40, 200, 0.22), transparent 45%),
+    /* Deep space base */
+    linear-gradient(160deg, #060214 0%, #0c0628 30%, #100a38 55%, #0a0630 80%, #040218 100%);
   color: var(--text-100);
 }
 
 html.dark body::before {
-  background: radial-gradient(420px 360px at 12% 18%, rgba(0, 188, 235, 0.18), transparent 62%),
-    radial-gradient(520px 440px at 86% 12%, rgba(4, 159, 217, 0.22), transparent 64%),
-    radial-gradient(360px 320px at 72% 76%, rgba(63, 192, 240, 0.16), transparent 66%),
-    radial-gradient(320px 280px at 22% 82%, rgba(1, 124, 173, 0.2), transparent 62%);
+  background:
+    /* Nebula wisps — vivid colored clouds */
+    radial-gradient(500px 320px at 30% 20%, rgba(160, 60, 255, 0.28), transparent 55%),
+    radial-gradient(400px 280px at 75% 50%, rgba(220, 80, 200, 0.22), transparent 50%),
+    radial-gradient(350px 240px at 15% 65%, rgba(60, 140, 240, 0.2), transparent 50%),
+    radial-gradient(300px 200px at 85% 15%, rgba(0, 220, 220, 0.15), transparent 45%),
+    radial-gradient(280px 200px at 60% 80%, rgba(180, 80, 240, 0.18), transparent 50%);
+}
+
+html.dark body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    /* Galaxy spiral arm — sweeping band */
+    conic-gradient(from 40deg at 60% 28%,
+      transparent 0deg,
+      rgba(160, 120, 255, 0.12) 20deg,
+      rgba(200, 160, 255, 0.2) 50deg,
+      rgba(160, 120, 255, 0.1) 85deg,
+      transparent 115deg,
+      transparent 210deg,
+      rgba(140, 100, 240, 0.08) 245deg,
+      rgba(180, 140, 255, 0.15) 280deg,
+      rgba(160, 120, 255, 0.08) 315deg,
+      transparent 345deg
+    ),
+    /* Dust lane */
+    linear-gradient(130deg,
+      transparent 35%,
+      rgba(4, 1, 12, 0.2) 47%,
+      rgba(4, 1, 12, 0.3) 50%,
+      rgba(4, 1, 12, 0.2) 53%,
+      transparent 65%
+    );
 }
 
 html.dark .hero-bg::after {
-  background: linear-gradient(180deg, rgba(5, 28, 44, 0.3), transparent 24%),
-    linear-gradient(180deg, transparent 80%, rgba(5, 28, 44, 0.55) 92%, #051c2c 100%);
+  background: linear-gradient(180deg, rgba(6, 2, 20, 0.15), transparent 24%),
+    linear-gradient(180deg, transparent 80%, rgba(6, 2, 20, 0.4) 92%, #060214 100%);
 }
 
 html.dark .loader {
-  background: radial-gradient(800px 400px at 50% 0%, rgba(4, 159, 217, 0.32), transparent 60%),
-    linear-gradient(160deg, rgba(5, 28, 44, 0.98), rgba(8, 42, 67, 0.98));
+  background:
+    radial-gradient(500px 300px at 50% 30%, rgba(140, 80, 220, 0.4), transparent 55%),
+    radial-gradient(350px 250px at 30% 60%, rgba(60, 100, 240, 0.3), transparent 50%),
+    linear-gradient(160deg, #060214 0%, #0c0628 50%, #100a38);
 }
 
 html.dark .loader-dot {
@@ -2745,9 +2814,9 @@ html.dark .loader-dot {
 }
 
 html.dark .nav.scrolled {
-  background: linear-gradient(90deg, rgba(5, 28, 44, 0.97), rgba(13, 39, 77, 0.96));
-  border-bottom-color: rgba(4, 159, 217, 0.35);
-  box-shadow: 0 18px 50px rgba(3, 20, 38, 0.55);
+  background: linear-gradient(90deg, rgba(6, 2, 20, 0.95), rgba(10, 4, 32, 0.94));
+  border-bottom-color: rgba(140, 100, 220, 0.3);
+  box-shadow: 0 18px 50px rgba(4, 1, 12, 0.6);
 }
 
 html.dark .nav.scrolled .logo-text {
@@ -2771,15 +2840,15 @@ html.dark .nav.scrolled .nav-link:hover {
 }
 
 html.dark .theme-toggle {
-  background: rgba(5, 28, 44, 0.55);
-  border-color: rgba(85, 207, 255, 0.45);
+  background: rgba(6, 2, 20, 0.6);
+  border-color: rgba(160, 120, 240, 0.4);
   color: #ffd76a;
-  box-shadow: 0 8px 22px rgba(3, 20, 38, 0.45);
+  box-shadow: 0 8px 22px rgba(4, 1, 12, 0.5);
 }
 
 html.dark .footer {
-  background: linear-gradient(180deg, #0d274d 0%, #081c38 100%);
-  border-top-color: rgba(4, 159, 217, 0.35);
+  background: linear-gradient(180deg, #0a0420 0%, #060214 100%);
+  border-top-color: rgba(140, 100, 220, 0.25);
 }
 
 html.dark .footer-brand p {
@@ -2787,9 +2856,9 @@ html.dark .footer-brand p {
 }
 
 html.dark .footer-socials a {
-  background: rgba(5, 28, 44, 0.55);
-  border-color: rgba(85, 207, 255, 0.35);
-  color: #a7e5ff;
+  background: rgba(6, 2, 20, 0.6);
+  border-color: rgba(160, 120, 240, 0.3);
+  color: #c4b8ff;
   box-shadow: none;
 }
 
@@ -2800,7 +2869,7 @@ html.dark .footer-socials a:hover {
 }
 
 html.dark .footer-col h3 {
-  color: #7fd8ff;
+  color: #b8a8f0;
 }
 
 html.dark .footer-col a,
@@ -2813,8 +2882,8 @@ html.dark .footer-col a:hover {
 }
 
 html.dark .footer-legal {
-  border-top-color: rgba(159, 224, 255, 0.14);
-  color: rgba(188, 217, 236, 0.72);
+  border-top-color: rgba(140, 100, 220, 0.12);
+  color: rgba(180, 170, 220, 0.65);
 }
 
 html.dark .footer-legal-links a:hover {
