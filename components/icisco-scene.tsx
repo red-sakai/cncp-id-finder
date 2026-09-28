@@ -99,6 +99,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const [viewingPublicId, setViewingPublicId] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(false);
   const [publicToggleLoading, setPublicToggleLoading] = useState(false);
+  const [publicToggleError, setPublicToggleError] = useState<string | null>(null);
   const [savedSignatureUrl, setSavedSignatureUrl] = useState<string | null>(null);
 
   const handleLookup = useCallback(async () => {
@@ -106,6 +107,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     if (!email) return;
     setLookupLoading(true);
     setLookupError(null);
+    setPublicToggleError(null);
     setLookupResult(null);
     setIdFinderPhase("prompt");
     try {
@@ -1351,27 +1353,47 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             )}
 
             {lookupResult && !viewingPublicId && (
-              <div className="icisco-public-toggle">
-                <span className="icisco-public-toggle-label">Show my ID publicly</span>
-                <button
-                  type="button"
-                  className={`icisco-toggle-switch ${isPublic ? "on" : ""}`}
-                  disabled={publicToggleLoading}
-                  onClick={() => {
-                    setPublicToggleLoading(true);
-                    const newVal = !isPublic;
-                    fetch("/api/digital-id", {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ email: lookupResult.email, is_public: newVal }),
-                    })
-                      .then(() => setIsPublic(newVal))
-                      .finally(() => setPublicToggleLoading(false));
-                  }}
-                >
-                  <span className="icisco-toggle-knob" />
-                </button>
-              </div>
+              <>
+                <div className="icisco-public-toggle">
+                  <span className="icisco-public-toggle-label">Show my ID publicly</span>
+                  <button
+                    type="button"
+                    className={`icisco-toggle-switch ${isPublic ? "on" : ""}`}
+                    disabled={publicToggleLoading}
+                    onClick={async () => {
+                      const newVal = !isPublic;
+                      setPublicToggleLoading(true);
+                      setPublicToggleError(null);
+                      try {
+                        const res = await fetch("/api/digital-id", {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ email: lookupResult.email, is_public: newVal }),
+                        });
+                        if (res.ok) {
+                          setIsPublic(newVal);
+                          fetch("/api/public-ids")
+                            .then((r) => r.json())
+                            .then((d) => setPublicIds(d.ids ?? []))
+                            .catch(() => {});
+                        } else {
+                          const body = await res.json().catch(() => ({}));
+                          setPublicToggleError(body.error || "Couldn't update visibility. Please try again.");
+                        }
+                      } catch {
+                        setPublicToggleError("Network error. Please try again.");
+                      } finally {
+                        setPublicToggleLoading(false);
+                      }
+                    }}
+                  >
+                    <span className="icisco-toggle-knob" />
+                  </button>
+                </div>
+                {publicToggleError && (
+                  <p className="icisco-idfinder-error">{publicToggleError}</p>
+                )}
+              </>
             )}
 
             {!viewingPublicId && (
