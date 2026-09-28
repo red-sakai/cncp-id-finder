@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-const VALID_BADGES = ["welcome-to-cisco", "golden-alumni"];
-
 export async function GET(request: NextRequest) {
   const email = request.nextUrl.searchParams.get("email");
 
@@ -29,7 +27,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid email" }, { status: 400 });
   }
 
-  if (!badgeId || !VALID_BADGES.includes(badgeId)) {
+  if (!badgeId || typeof badgeId !== "string") {
+    return NextResponse.json({ error: "Invalid badge" }, { status: 400 });
+  }
+
+  const { data: definition, error: defError } = await supabase
+    .from("badge_definitions")
+    .select("id")
+    .eq("id", badgeId)
+    .limit(1);
+
+  if (defError) {
+    return NextResponse.json({ error: defError.message }, { status: 500 });
+  }
+  if (!definition || definition.length === 0) {
     return NextResponse.json({ error: "Invalid badge" }, { status: 400 });
   }
 

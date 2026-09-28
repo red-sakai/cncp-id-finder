@@ -131,12 +131,14 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
   const [awardedBy, setAwardedBy] = useState("");
   const [token, setToken] = useState("");
   const [generating, setGenerating] = useState(false);
+  const [genError, setGenError] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [tokens, setTokens] = useState<Token[]>([]);
   const [tokensLoading, setTokensLoading] = useState(false);
   const [viewingId, setViewingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; badge_id: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   // Badge creation state
   const [showCreateBadge, setShowCreateBadge] = useState(false);
@@ -276,6 +278,7 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
     setViewingId(null);
     setToken("");
     setConfirmed(false);
+    setGenError("");
     try {
       const res = await fetch("/api/tokens", {
         method: "POST",
@@ -290,9 +293,12 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
         setToken(data.token);
         setConfirmed(true);
         fetchTokens();
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setGenError(body.error || "Could not create the QR code. Please try again.");
       }
     } catch {
-      // ignore
+      setGenError("Network error. Please try again.");
     } finally {
       setGenerating(false);
     }
@@ -301,6 +307,7 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
+    setDeleteError("");
     try {
       const res = await fetch("/api/tokens", {
         method: "DELETE",
@@ -313,9 +320,12 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
           handleReset();
         }
         setDeleteTarget(null);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setDeleteError(body.error || "Failed to delete the QR code. Please try again.");
       }
     } catch {
-      // ignore
+      setDeleteError("Network error. Please try again.");
     } finally {
       setDeleting(false);
     }
@@ -326,6 +336,7 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
     setConfirmed(false);
     setQrUrl("");
     setViewingId(null);
+    setGenError("");
   };
 
   const handleViewToken = (t: Token) => {
@@ -434,6 +445,8 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                 />
               </div>
 
+              {genError && <p className="qr-error">{genError}</p>}
+
               {!confirmed ? (
                 <button
                   type="button"
@@ -524,7 +537,7 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                         <button
                           type="button"
                           className="qr-token-delete-btn"
-                          onClick={() => setDeleteTarget({ id: t.id, badge_id: t.badge_id })}
+                          onClick={() => { setDeleteError(""); setDeleteTarget({ id: t.id, badge_id: t.badge_id }); }}
                           title="Delete QR code"
                         >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -647,6 +660,7 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
             <p className="qr-confirm-desc">
               The <strong>{badges.find((b) => b.id === deleteTarget.badge_id)?.name ?? deleteTarget.badge_id}</strong> badge token will be permanently removed. This action cannot be undone.
             </p>
+            {deleteError && <p className="qr-error">{deleteError}</p>}
             <div className="qr-confirm-actions">
               <button type="button" className="qr-btn qr-btn-ghost" onClick={() => setDeleteTarget(null)} disabled={deleting}>
                 Cancel

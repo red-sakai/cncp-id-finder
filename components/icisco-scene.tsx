@@ -81,6 +81,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const [earnedBadges, setEarnedBadges] = useState<Set<string>>(new Set());
   const [badgeMeta, setBadgeMeta] = useState<Record<string, { awarded_by?: string; awarded_at?: string }>>({});
   const [showCongrats, setShowCongrats] = useState(false);
+  const [awardError, setAwardError] = useState(false);
   const [congratsBadge, setCongratsBadge] = useState<string>("welcome-to-cisco");
   const [selectedBadge, setSelectedBadge] = useState<string | null>(null);
   const [zoomedBadgeImg, setZoomedBadgeImg] = useState<{ src: string; alt: string } | null>(null);
@@ -601,15 +602,20 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             }
           ).then(setQrDataUrl);
           if (!badges.has(awarded)) {
-            await fetch("/api/badges", {
+            const awardRes = await fetch("/api/badges", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ email, badgeId: awarded, awardedBy: validBy }),
             });
-            setEarnedBadges((prev) => new Set([...prev, awarded]));
-            setCongratsBadge(awarded);
-            setShowCongrats(true);
-            setTimeout(() => setShowCongrats(false), 4000);
+            if (awardRes.ok) {
+              setEarnedBadges((prev) => new Set([...prev, awarded]));
+              setCongratsBadge(awarded);
+              setShowCongrats(true);
+              setTimeout(() => setShowCongrats(false), 4000);
+            } else {
+              setAwardError(true);
+              setTimeout(() => setAwardError(false), 6000);
+            }
           }
         }
       };
@@ -1121,7 +1127,18 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                             )}
                           </div>
                         ));
-                      })()}
+          })()}
+
+          {awardError && (
+            <div className="icisco-congrats-overlay">
+              <div className="icisco-congrats-card icisco-award-error-card">
+                <p className="icisco-congrats-title">Claim not saved</p>
+                <p className="icisco-congrats-text">
+                  We couldn&apos;t record your badge. Please try scanning again.
+                </p>
+              </div>
+            </div>
+          )}
                     </div>
                   </div>
                   <div className="icisco-idcard-footer">
