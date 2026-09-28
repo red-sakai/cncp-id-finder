@@ -3513,11 +3513,29 @@ html.dark .footer-legal-links a:hover {
 .qr-token-row:hover {
   background: rgba(255, 255, 255, 0.07);
 }
+.qr-token-row.active {
+  border-color: #049fd9;
+  background: rgba(4, 159, 217, 0.12);
+}
 .qr-token-info {
   display: flex;
   align-items: center;
   gap: 0.65rem;
   min-width: 0;
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.qr-token-info:focus-visible {
+  outline: 2px solid #049fd9;
+  outline-offset: 2px;
+  border-radius: 0.35rem;
 }
 .qr-token-icon {
   border-radius: 0.35rem;

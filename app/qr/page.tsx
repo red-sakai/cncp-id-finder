@@ -6,28 +6,19 @@ import Image from "next/image";
 
 const SESSION_KEY = "cncp-qr-auth";
 
-const DEFAULT_BADGES: Badge[] = [
-  {
-    id: "welcome-to-cisco",
-    name: "Welcome to Cisco",
-    description: "Awarded to new members who join Cisco NetConnect PUP.",
-    image_url: "/badges/welcome-to-cisco-badge.png",
-    created_at: "",
-  },
-  {
-    id: "golden-alumni",
-    name: "Golden Alumni",
-    description: "Awarded to distinguished alumni for their continued excellence.",
-    image_url: "/badges/golden-alumni-badge.png",
-    created_at: "",
-  },
-];
-
 type Badge = {
   id: string;
   name: string;
   description: string;
   image_url: string;
+  created_at: string;
+};
+
+type Token = {
+  id: string;
+  token: string;
+  badge_id: string;
+  awarded_by?: string;
   created_at: string;
 };
 
@@ -141,8 +132,9 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
   const [token, setToken] = useState("");
   const [generating, setGenerating] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
-  const [tokens, setTokens] = useState<{ id: string; token: string; badge_id: string; awarded_by?: string; created_at: string }[]>([]);
+  const [tokens, setTokens] = useState<Token[]>([]);
   const [tokensLoading, setTokensLoading] = useState(false);
+  const [viewingId, setViewingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; badge_id: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -157,6 +149,7 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
 
   const badge = badges.find((b) => b.id === selected) ?? badges[0];
   const byParam = awardedBy.trim();
+  const viewed = tokens.find((t) => t.id === viewingId) ?? null;
   const scanUrl = token
     ? `https://cncp-id-finder.vercel.app/scan?token=${token}`
     : "";
@@ -167,11 +160,10 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
       const res = await fetch("/api/badge-definitions");
       if (res.ok) {
         const data = await res.json();
-        const custom = (data.badges ?? []) as Badge[];
-        const merged = [...custom, ...DEFAULT_BADGES];
-        setBadges(merged);
-        if (merged.length > 0 && !selected) {
-          setSelected(merged[0].id);
+        const fromDb = (data.badges ?? []) as Badge[];
+        setBadges(fromDb);
+        if (fromDb.length > 0 && !selected) {
+          setSelected(fromDb[0].id);
         }
       }
     } catch {
@@ -281,6 +273,7 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
 
   const handleConfirm = async () => {
     setGenerating(true);
+    setViewingId(null);
     setToken("");
     setConfirmed(false);
     try {
@@ -316,6 +309,9 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
       });
       if (res.ok) {
         setTokens((prev) => prev.filter((t) => t.id !== deleteTarget.id));
+        if (viewingId === deleteTarget.id) {
+          handleReset();
+        }
         setDeleteTarget(null);
       }
     } catch {
@@ -329,6 +325,15 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
     setToken("");
     setConfirmed(false);
     setQrUrl("");
+    setViewingId(null);
+  };
+
+  const handleViewToken = (t: Token) => {
+    setViewingId(t.id);
+    setSelected(t.badge_id);
+    setToken(t.token);
+    setQrUrl("");
+    setConfirmed(true);
   };
 
   useEffect(() => {
@@ -348,7 +353,8 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
   const handleDownload = () => {
     if (!qrUrl) return;
     const link = document.createElement("a");
-    link.download = `cncp-${badge?.id ?? "badge"}-qr.png`;
+    const badgeId = viewed?.badge_id ?? badge?.id ?? "badge";
+    link.download = `cncp-${badgeId}-qr.png`;
     link.href = qrUrl;
     link.click();
   };
@@ -376,8 +382,14 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
           <div className="qr-admin-main">
             {/* QR Generator Section */}
             <div className="qr-section">
-              <h2 className="qr-section-title">Generate QR Code</h2>
-              <p className="qr-section-desc">Select a badge and enter the awardee name to generate a scannable QR code.</p>
+              <h2 className="qr-section-title">
+                {viewingId ? "View QR Code" : "Generate QR Code"}
+              </h2>
+              <p className="qr-section-desc">
+                {viewingId
+                  ? "This QR code was generated earlier. Download it or go back to generate a new one."
+                  : "Select a badge and enter the awardee name to generate a scannable QR code."}
+              </p>
 
               {badgesLoading ? (
                 <div className="qr-empty-state">
@@ -444,13 +456,21 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                     <canvas ref={canvasRef} className="qr-canvas" />
                   </div>
                   <p className="qr-url">{scanUrl}</p>
-                  <p className="qr-single-use">Each person who scans this QR code gets their own badge.</p>
+                  <p className="qr-single-use">
+                    {viewed
+                      ? [
+                          badges.find((b) => b.id === viewed.badge_id)?.name ?? viewed.badge_id,
+                          viewed.awarded_by ? `by ${viewed.awarded_by}` : "No awardee",
+                          new Date(viewed.created_at).toLocaleDateString(),
+                        ].join(" · ")
+                      : "Each person who scans this QR code gets their own badge."}
+                  </p>
                   <div className="qr-actions">
                     <button type="button" className="qr-btn qr-btn-primary" onClick={handleDownload} disabled={!qrUrl}>
                       Download QR
                     </button>
                     <button type="button" className="qr-btn qr-btn-secondary" onClick={handleReset}>
-                      Generate New
+                      {viewed ? "Back to Generator" : "Generate New"}
                     </button>
                   </div>
                 </div>
@@ -480,22 +500,27 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                   {tokens.map((t) => {
                     const b = badges.find((badge) => badge.id === t.badge_id);
                     return (
-                      <div key={t.id} className="qr-token-row">
-                        <div className="qr-token-info">
+                      <div key={t.id} className={`qr-token-row ${viewingId === t.id ? "active" : ""}`}>
+                        <button
+                          type="button"
+                          className="qr-token-info"
+                          onClick={() => handleViewToken(t)}
+                          title="View QR code"
+                        >
                           {b?.image_url ? (
                             <Image src={b.image_url} alt="" width={28} height={28} className="qr-token-icon" draggable={false} />
                           ) : (
-                            <div className="qr-token-icon qr-token-icon-placeholder" />
+                            <span className="qr-token-icon qr-token-icon-placeholder" />
                           )}
-                          <div className="qr-token-details">
+                          <span className="qr-token-details">
                             <span className="qr-token-name">{b?.name ?? t.badge_id}</span>
                             <span className="qr-token-meta">
                               {t.awarded_by ? `by ${t.awarded_by}` : "No awardee"}
                               <span className="qr-token-dot">&#183;</span>
                               {new Date(t.created_at).toLocaleDateString()}
                             </span>
-                          </div>
-                        </div>
+                          </span>
+                        </button>
                         <button
                           type="button"
                           className="qr-token-delete-btn"
