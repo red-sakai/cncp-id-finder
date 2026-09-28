@@ -3933,8 +3933,20 @@ html.dark .footer-legal-links a:hover {
   gap: 0.6rem;
   padding: 0.5rem;
   width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
   overflow-y: auto;
   max-height: 100%;
+}
+@media (min-width: 640px) {
+  .icisco-public-ids-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+@media (min-width: 1024px) {
+  .icisco-public-ids-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
 }
 .icisco-public-id-card {
   display: flex;
@@ -3942,6 +3954,7 @@ html.dark .footer-legal-links a:hover {
   align-items: center;
   gap: 0.3rem;
   padding: 0.75rem 0.5rem;
+  min-width: 0;
   border-radius: 0.75rem;
   border: 1.5px solid #e0e8ef;
   background: #fff;
@@ -4014,11 +4027,19 @@ html.dark .footer-legal-links a:hover {
   color: #1a2a3a;
   margin: 0;
   text-align: center;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .icisco-public-id-type {
   font-size: 0.55rem;
   color: #607d8b;
   margin: 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .icisco-public-id-badges {
   display: flex;
