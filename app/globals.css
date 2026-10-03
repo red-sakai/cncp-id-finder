@@ -3477,6 +3477,38 @@ html.dark .footer-legal-links a:hover {
   flex: 1;
 }
 
+/* ── Expiry Field ── */
+.qr-expiry-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.qr-expiry-row .qr-input {
+  flex: 1;
+  min-width: 0;
+  color-scheme: dark;
+}
+.qr-expiry-never {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+.qr-expiry-never input {
+  accent-color: #049fd9;
+  cursor: pointer;
+}
+@media (max-width: 640px) {
+  .qr-expiry-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 /* ── Tokens List ── */
 .qr-empty-state {
   display: flex;
@@ -3566,6 +3598,9 @@ html.dark .footer-legal-links a:hover {
 }
 .qr-token-dot {
   margin: 0 0.3rem;
+}
+.qr-token-expired {
+  color: #e53935;
 }
 .qr-token-delete-btn {
   background: none;

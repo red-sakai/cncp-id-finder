@@ -44,8 +44,9 @@ function ScanForm() {
           setTokenBy(data.awardedBy ?? "");
           setTokenValid(true);
         } else {
+          const body = await res.json().catch(() => ({}));
           setTokenValid(false);
-          setError("Invalid QR code.");
+          setError(body.error || "Invalid QR code.");
         }
       } catch {
         if (!cancelled) {

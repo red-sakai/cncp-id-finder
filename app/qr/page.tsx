@@ -20,6 +20,8 @@ type Token = {
   badge_id: string;
   awarded_by?: string;
   created_at: string;
+  expires_at?: string | null;
+  expired?: boolean;
 };
 
 function getInitialAuth() {
@@ -129,6 +131,8 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
   const [qrUrl, setQrUrl] = useState("");
   const [selected, setSelected] = useState("");
   const [awardedBy, setAwardedBy] = useState("");
+  const [expiryDate, setExpiryDate] = useState("");
+  const [noExpiry, setNoExpiry] = useState(true);
   const [token, setToken] = useState("");
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState("");
@@ -181,7 +185,13 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
       const res = await fetch("/api/tokens");
       if (res.ok) {
         const data = await res.json();
-        setTokens(data.tokens ?? []);
+        const now = Date.now();
+        setTokens(
+          ((data.tokens ?? []) as Token[]).map((t) => ({
+            ...t,
+            expired: !!t.expires_at && new Date(t.expires_at).getTime() <= now,
+          }))
+        );
       }
     } catch {
       // ignore
@@ -274,6 +284,20 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
   };
 
   const handleConfirm = async () => {
+    let expiresAt: string | null = null;
+    if (!noExpiry) {
+      if (!expiryDate) {
+        setGenError("Select an expiry date, or check Never expires.");
+        return;
+      }
+      const parsed = new Date(`${expiryDate}T23:59:59`);
+      if (Number.isNaN(parsed.getTime()) || parsed.getTime() <= Date.now()) {
+        setGenError("Expiry date must be in the future.");
+        return;
+      }
+      expiresAt = parsed.toISOString();
+    }
+
     setGenerating(true);
     setViewingId(null);
     setToken("");
@@ -286,6 +310,7 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
         body: JSON.stringify({
           badgeId: badge.id,
           awardedBy: byParam || undefined,
+          expiresAt,
         }),
       });
       if (res.ok) {
@@ -445,6 +470,30 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                 />
               </div>
 
+              <div className="qr-field">
+                <label className="qr-field-label" htmlFor="qr-expiry">Expiry date</label>
+                <div className="qr-expiry-row">
+                  <input
+                    id="qr-expiry"
+                    type="date"
+                    value={expiryDate}
+                    min={new Date().toISOString().slice(0, 10)}
+                    onChange={(e) => setExpiryDate(e.target.value)}
+                    className="qr-input"
+                    disabled={generating || confirmed || noExpiry}
+                  />
+                  <label className="qr-expiry-never">
+                    <input
+                      type="checkbox"
+                      checked={noExpiry}
+                      onChange={(e) => setNoExpiry(e.target.checked)}
+                      disabled={generating || confirmed}
+                    />
+                    Never expires
+                  </label>
+                </div>
+              </div>
+
               {genError && <p className="qr-error">{genError}</p>}
 
               {!confirmed ? (
@@ -475,6 +524,11 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                           badges.find((b) => b.id === viewed.badge_id)?.name ?? viewed.badge_id,
                           viewed.awarded_by ? `by ${viewed.awarded_by}` : "No awardee",
                           new Date(viewed.created_at).toLocaleDateString(),
+                          viewed.expires_at
+                            ? viewed.expired
+                              ? "Expired"
+                              : `Expires ${new Date(viewed.expires_at).toLocaleDateString()}`
+                            : "Never expires",
                         ].join(" · ")
                       : "Each person who scans this QR code gets their own badge."}
                   </p>
@@ -512,6 +566,7 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                 <div className="qr-tokens-list">
                   {tokens.map((t) => {
                     const b = badges.find((badge) => badge.id === t.badge_id);
+                    const expired = !!t.expired;
                     return (
                       <div key={t.id} className={`qr-token-row ${viewingId === t.id ? "active" : ""}`}>
                         <button
@@ -531,6 +586,14 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                               {t.awarded_by ? `by ${t.awarded_by}` : "No awardee"}
                               <span className="qr-token-dot">&#183;</span>
                               {new Date(t.created_at).toLocaleDateString()}
+                              <span className="qr-token-dot">&#183;</span>
+                              <span className={expired ? "qr-token-expired" : ""}>
+                                {expired
+                                  ? "Expired"
+                                  : t.expires_at
+                                    ? `Exp. ${new Date(t.expires_at).toLocaleDateString()}`
+                                    : "Never expires"}
+                              </span>
                             </span>
                           </span>
                         </button>
