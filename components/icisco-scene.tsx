@@ -139,6 +139,9 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const [walletPhone, setWalletPhone] = useState("");
   const [walletLoading, setWalletLoading] = useState(false);
   const [walletError, setWalletError] = useState<string | null>(null);
+  // Guest cards send people back to the sign-in slip, so the email field is
+  // the target rather than a second copy of the form.
+  const shopEmailRef = useRef<HTMLInputElement>(null);
 
   const openShop = useCallback(() => {
     setActiveApp("shop");
@@ -162,9 +165,9 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const openWallet = useCallback(async () => {
     const email = walletEmail.trim();
     const phone = walletPhone.trim();
-    if (!email || phone.replace(/\D/g, "").length < 7) {
+    if (!email || !/^09\d{9}$/.test(phone)) {
       setWalletError(
-        "Enter the email address and the phone number on the account."
+        "Enter the email address and an 11-digit phone number starting with 09."
       );
       return;
     }
@@ -962,7 +965,12 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
               onClick={openShop}
             >
               <span className="icisco-app-icon icisco-app-tile" aria-hidden="true">
-                <span className="icisco-app-glyph">🛍️</span>
+                <span className="icisco-app-glyph">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4.5 8h15l-1.1 10.1a2 2 0 0 1-2 1.9H7.6a2 2 0 0 1-2-1.9L4.5 8Z" />
+                    <path d="M8.6 10V6.7a3.4 3.4 0 0 1 6.8 0V10" />
+                  </svg>
+                </span>
               </span>
               <span className="icisco-app-label">Shop</span>
             </button>
@@ -1658,31 +1666,39 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             <span className="icisco-app-title">Shop</span>
           </div>
 
+          <div className="icisco-shop">
+            <div className="icisco-shop-inner">
           {!wallet ? (
-            <div className="icisco-shop-empty">
-              <div className="icisco-wallet-brand">
+            <section
+              className="icisco-counter"
+              aria-labelledby="shop-signin-title"
+            >
+              <div className="icisco-counter-head">
                 <Image
                   src="/cncp-logo-transparent.png"
                   alt=""
-                  width={46}
-                  height={33}
-                  className="icisco-wallet-brand-img"
+                  width={44}
+                  height={31}
+                  className="icisco-counter-logo"
                   draggable={false}
                 />
-                <span className="icisco-wallet-brand-text">
-                  <span className="icisco-wallet-brand-name">Ciscoins Wallet</span>
-                  <span className="icisco-wallet-brand-sub">
+                <div>
+                  <p className="icisco-counter-store">Ciscoins Store</p>
+                  <p className="icisco-counter-sub">
                     Cisco NetConnect PUP - Manila
-                  </span>
-                </span>
+                  </p>
+                </div>
               </div>
-
-              <div className="icisco-shop-panel">
-                <p className="icisco-shop-empty-title">Open your wallet</p>
-                <p className="icisco-shop-empty-text">
-                  Type the email address and phone number on your account. That is
-                  how we know the Ciscoins are yours.
-                </p>
+              <div className="icisco-counter-body">
+                <div className="icisco-counter-copy">
+                  <h1 className="icisco-counter-title" id="shop-signin-title">
+                    Sign in to buy
+                  </h1>
+                  <p className="icisco-counter-text">
+                    Enter the email and phone number on your CNCP ID. Both have
+                    to match before we show your Ciscoins.
+                  </p>
+                </div>
                 <form
                   className="icisco-shop-form"
                   onSubmit={(e) => {
@@ -1690,191 +1706,310 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                     openWallet();
                   }}
                 >
-                  <label className="icisco-shop-label" htmlFor="shop-wallet-email">
-                    Email address
-                  </label>
-                  <input
-                    id="shop-wallet-email"
-                    className="icisco-shop-input"
-                    type="email"
-                    autoComplete="off"
-                    placeholder="you@example.com"
-                    value={walletEmail}
-                    disabled={walletLoading}
-                    onChange={(e) => {
-                      setWalletEmail(e.target.value);
-                      setWalletError(null);
-                    }}
-                  />
-                  <label className="icisco-shop-label" htmlFor="shop-wallet-phone">
-                    Phone number
-                  </label>
-                  <input
-                    id="shop-wallet-phone"
-                    className="icisco-shop-input"
-                    type="tel"
-                    inputMode="tel"
-                    autoComplete="off"
-                    placeholder="09XX XXX XXXX"
-                    value={walletPhone}
-                    disabled={walletLoading}
-                    aria-describedby="shop-wallet-phone-hint"
-                    onChange={(e) => {
-                      setWalletPhone(e.target.value);
-                      setWalletError(null);
-                    }}
-                  />
-                  <p className="icisco-shop-field-hint" id="shop-wallet-phone-hint">
-                    Checked against the number saved on your CNCP ID.
-                  </p>
+                  <div className="icisco-counter-fields">
+                    <div className="icisco-shop-field">
+                      <label
+                        className="icisco-shop-label"
+                        htmlFor="shop-wallet-email"
+                      >
+                        Email
+                      </label>
+                      <input
+                        ref={shopEmailRef}
+                        id="shop-wallet-email"
+                        className="icisco-shop-input"
+                        type="email"
+                        name="email"
+                        inputMode="email"
+                        autoComplete="off"
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        required
+                        placeholder="you@example.com"
+                        value={walletEmail}
+                        disabled={walletLoading}
+                        onChange={(e) => {
+                          setWalletEmail(e.target.value);
+                          setWalletError(null);
+                        }}
+                      />
+                    </div>
+                    <div className="icisco-shop-field">
+                      <label
+                        className="icisco-shop-label"
+                        htmlFor="shop-wallet-phone"
+                      >
+                        Phone
+                      </label>
+                      <input
+                        id="shop-wallet-phone"
+                        className="icisco-shop-input"
+                        type="tel"
+                        name="phone"
+                        inputMode="numeric"
+                        autoComplete="off"
+                        maxLength={11}
+                        pattern="09[0-9]{9}"
+                        title="11 digits, starting with 09"
+                        required
+                        placeholder="09XX XXX XXXX"
+                        value={walletPhone}
+                        disabled={walletLoading}
+                        aria-describedby="shop-wallet-phone-hint"
+                        onChange={(e) => {
+                          setWalletPhone(
+                            e.target.value.replace(/\D/g, "").slice(0, 11)
+                          );
+                          setWalletError(null);
+                        }}
+                      />
+                      <p
+                        className="icisco-shop-field-hint"
+                        id="shop-wallet-phone-hint"
+                      >
+                        11 digits, starting with 09.
+                      </p>
+                    </div>
+                  </div>
                   {walletError && (
                     <p className="icisco-shop-msg error" role="alert">
                       {walletError}
                     </p>
                   )}
-                  <button
-                    type="submit"
-                    className="icisco-shop-cta"
-                    disabled={walletLoading}
-                  >
-                    {walletLoading ? "Checking…" : "Open my wallet"}
-                  </button>
+                  <div className="icisco-counter-actions">
+                    <button
+                      type="submit"
+                      className="icisco-shop-cta"
+                      disabled={walletLoading}
+                    >
+                      {walletLoading ? "Checking…" : "Open wallet"}
+                    </button>
+                    <button
+                      type="button"
+                      className="icisco-shop-link"
+                      onClick={() => setActiveApp("id-finder")}
+                    >
+                      No CNCP ID? Find it
+                    </button>
+                  </div>
                 </form>
               </div>
-
+            </section>
+          ) : (
+            <section className="icisco-wallet" aria-label="Ciscoins wallet">
+              <div className="icisco-wallet-member">
+                <p className="icisco-wallet-store">Ciscoins Store</p>
+                <p className="icisco-wallet-name">
+                  {wallet.first_name} {wallet.last_name}
+                </p>
+                <p className="icisco-wallet-email">{wallet.email}</p>
+              </div>
+              <div className="icisco-wallet-balance">
+                <span className="icisco-wallet-balance-label">
+                  Ciscoins balance
+                </span>
+                <p className="icisco-wallet-balance-figure">
+                  {typeof wallet.ciscoins === "number" ? (
+                    <>
+                      <span className="icisco-wallet-balance-amount">
+                        {wallet.ciscoins.toLocaleString("en-US")}
+                      </span>
+                      <span className="icisco-wallet-balance-unit">
+                        Ciscoins
+                      </span>
+                    </>
+                  ) : (
+                    <span className="icisco-wallet-balance-amount is-unknown">
+                      Unavailable
+                    </span>
+                  )}
+                </p>
+              </div>
               <button
                 type="button"
-                className="icisco-shop-link"
-                onClick={() => setActiveApp("id-finder")}
+                className="icisco-wallet-lock"
+                onClick={lockWallet}
               >
-                No CNCP ID yet? Open ID Finder
+                Lock wallet
               </button>
+            </section>
+          )}
 
-              <Image
-                src="/waving-axolotl.png"
-                alt=""
-                width={120}
-                height={120}
-                className="icisco-wallet-mascot"
-                draggable={false}
-              />
+          <div className="icisco-shop-heading">
+            <div>
+              <h2 className="icisco-shop-heading-title">On the shelf</h2>
+              <p className="icisco-shop-heading-sub">
+                Buy here, then claim it at CEA 317.
+              </p>
+            </div>
+            {!shopLoading && shopItems.length > 0 && (
+              <span className="icisco-shop-count">
+                {shopItems.length} {shopItems.length === 1 ? "item" : "items"}
+              </span>
+            )}
+          </div>
+
+          {shopMessage && (
+            <p
+              className={`icisco-shop-msg ${shopMessage.kind}`}
+              role={shopMessage.kind === "error" ? "alert" : "status"}
+            >
+              {shopMessage.text}
+            </p>
+          )}
+
+          {shopLoading ? (
+            <>
+              <p className="icisco-shop-hint" role="status">
+                Loading the shelf…
+              </p>
+              <div className="icisco-shop-grid" aria-hidden="true">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div className="icisco-shop-card is-skeleton" key={index}>
+                    <div className="icisco-shop-media" />
+                    <div className="icisco-shop-info">
+                      <span className="icisco-skeleton-line wide" />
+                      <span className="icisco-skeleton-line" />
+                      <span className="icisco-skeleton-line short" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : shopItems.length === 0 ? (
+            <div className="icisco-shop-empty-state">
+              <span className="icisco-shop-empty-icon" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M4.5 8h15l-1.1 10.1a2 2 0 0 1-2 1.9H7.6a2 2 0 0 1-2-1.9L4.5 8Z" />
+                  <path d="M8.6 10V6.7a3.4 3.4 0 0 1 6.8 0V10" />
+                </svg>
+              </span>
+              <p className="icisco-shop-empty-title">The shelf is empty.</p>
+              <p className="icisco-shop-empty-text">
+                Booth admins stock it before each event. Check back soon, or
+                ask at the table.
+              </p>
             </div>
           ) : (
-            <div className="icisco-shop">
-              <div className="icisco-shop-head">
-                <div className="icisco-shop-who">
-                  <p className="icisco-shop-member">
-                    {wallet.first_name} {wallet.last_name}
-                  </p>
-                  <p className="icisco-shop-balance">
-                    <span className="icisco-shop-balance-amount">
-                      {typeof wallet.ciscoins === "number"
-                        ? wallet.ciscoins.toLocaleString("en-US")
-                        : "Unavailable"}
-                    </span>
-                    {typeof wallet.ciscoins === "number" && (
-                      <span className="icisco-shop-balance-unit">Ciscoins</span>
-                    )}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="icisco-shop-lock"
-                  onClick={lockWallet}
-                >
-                  Lock
-                </button>
-              </div>
-
-              {shopMessage && (
-                <p
-                  className={`icisco-shop-msg ${shopMessage.kind}`}
-                  role="status"
-                >
-                  {shopMessage.text}
-                </p>
-              )}
-
-              {shopLoading ? (
-                <p className="icisco-shop-hint">Loading the shop…</p>
-              ) : shopItems.length === 0 ? (
-                <p className="icisco-shop-hint">
-                  Nothing for sale right now. Ask a booth admin to put items on
-                  sale.
-                </p>
-              ) : (
-                <div className="icisco-shop-grid">
-                  {shopItems.map((item) => {
-                    const affordable =
-                      typeof wallet.ciscoins === "number" &&
-                      wallet.ciscoins >= item.price;
-                    const localImage =
-                      item.image_url && item.image_url.startsWith("/")
-                        ? item.image_url
-                        : null;
-                    return (
-                      <div className="icisco-shop-card" key={item.id}>
-                        {localImage ? (
-                          <Image
-                            src={localImage}
-                            alt=""
-                            width={64}
-                            height={64}
-                            className="icisco-shop-img"
-                            draggable={false}
-                          />
-                        ) : (
-                          <span className="icisco-shop-tile" aria-hidden="true">
-                            {item.name.slice(0, 1).toUpperCase()}
+            <div className="icisco-shop-grid">
+              {shopItems.map((item) => {
+                const balance = wallet?.ciscoins;
+                const balanceKnown = typeof balance === "number";
+                const affordable =
+                  typeof balance === "number" && balance >= item.price;
+                const shortBy =
+                  typeof balance === "number"
+                    ? Math.max(item.price - balance, 0)
+                    : 0;
+                const localImage =
+                  item.image_url && item.image_url.startsWith("/")
+                    ? item.image_url
+                    : null;
+                return (
+                  <article
+                    className={`icisco-shop-card ${
+                      !wallet ? "is-guest" : !affordable ? "is-short" : ""
+                    }`}
+                    key={item.id}
+                  >
+                    <div className="icisco-shop-media">
+                      {localImage ? (
+                        <Image
+                          src={localImage}
+                          alt={item.name}
+                          fill
+                          sizes="(max-width: 48rem) 50vw, (max-width: 75rem) 33vw, 24rem"
+                          className="icisco-shop-img"
+                          draggable={false}
+                        />
+                      ) : (
+                        <div
+                          className="icisco-shop-placeholder"
+                          aria-hidden="true"
+                        >
+                          <svg
+                            className="icisco-shop-placeholder-icon"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M4.5 8h15l-1.1 10.1a2 2 0 0 1-2 1.9H7.6a2 2 0 0 1-2-1.9L4.5 8Z" />
+                            <path d="M8.6 10V6.7a3.4 3.4 0 0 1 6.8 0V10" />
+                          </svg>
+                          <span className="icisco-shop-placeholder-text">
+                            Photo coming soon
                           </span>
-                        )}
-                        <div className="icisco-shop-info">
-                          <p className="icisco-shop-name">{item.name}</p>
-                          {item.description && (
-                            <p className="icisco-shop-desc">
-                              {item.description}
-                            </p>
-                          )}
                         </div>
-                        <div className="icisco-shop-buy">
-                          <span className="icisco-shop-price">
-                            <span
-                              className={`icisco-shop-price-amount ${
-                                affordable ? "" : "short"
-                              }`}
-                            >
-                              {item.price.toLocaleString("en-US")}
-                            </span>
-                            <span className="icisco-shop-price-label">
-                              Ciscoins
-                            </span>
+                      )}
+                    </div>
+                    <div className="icisco-shop-info">
+                      <h3 className="icisco-shop-name">{item.name}</h3>
+                      {item.description && (
+                        <p className="icisco-shop-desc">{item.description}</p>
+                      )}
+                      <div className="icisco-shop-buy">
+                        <span className="icisco-shop-price">
+                          <span className="icisco-shop-price-amount">
+                            {item.price.toLocaleString("en-US")}
                           </span>
+                          <span className="icisco-shop-price-label">
+                            Ciscoins
+                          </span>
+                        </span>
+                        {!wallet ? (
                           <button
                             type="button"
-                            className={`icisco-shop-btn ${
-                              affordable ? "" : "short"
-                            }`}
-                            disabled={buyingId !== null}
+                            className="icisco-shop-btn"
+                            onClick={() => {
+                              shopEmailRef.current?.focus();
+                              shopEmailRef.current?.scrollIntoView({
+                                block: "center",
+                                behavior: "smooth",
+                              });
+                            }}
+                          >
+                            Sign in
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="icisco-shop-btn"
+                            disabled={buyingId !== null || !affordable}
                             onClick={() => buyItem(item)}
                           >
                             {buyingId === item.id
                               ? "Paying…"
+                              : !balanceKnown
+                              ? "Balance unavailable"
                               : affordable
                               ? "Buy"
-                              : "Not enough"}
+                              : `Need ${shortBy.toLocaleString("en-US")} more`}
                           </button>
-                        </div>
+                        )}
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              <p className="icisco-shop-footnote">
-                Pick the item up at the booth. This purchase is your receipt.
-              </p>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
+
+          <p className="icisco-shop-footnote">
+            If you ordered, wait for the email confirmation and claim it at CEA
+            317.
+          </p>
+            </div>
+          </div>
         </div>
       )}
 

@@ -15,8 +15,8 @@ export type WalletCheck =
   | { ok: true; member: WalletMember }
   | { ok: false; status: number; error: string };
 
-// Digits only, then the last ten: that tail lines up whether the member
-// wrote 09692946559, 9692946559 or +63 969 294 6559.
+// Stored numbers may include +63 or spaces, so both sides are reduced to the
+// last ten digits before they are compared.
 const phoneTail = (raw: string) => raw.replace(/\D/g, "").slice(-10);
 
 export async function checkWallet(rawEmail: string, rawPhone: string): Promise<WalletCheck> {
@@ -25,8 +25,14 @@ export async function checkWallet(rawEmail: string, rawPhone: string): Promise<W
   if (!email) {
     return { ok: false, status: 400, error: "Enter the email address on the account." };
   }
-  if (rawPhone.replace(/\D/g, "").length < 7) {
-    return { ok: false, status: 400, error: "Enter the phone number on the account." };
+
+  const phoneDigits = rawPhone.replace(/\D/g, "");
+  if (!/^09\d{9}$/.test(phoneDigits)) {
+    return {
+      ok: false,
+      status: 400,
+      error: "Enter an 11-digit phone number starting with 09.",
+    };
   }
 
   // Same member resolution as /api/lookup: executives first, then registration.
@@ -65,7 +71,7 @@ export async function checkWallet(rawEmail: string, rawPhone: string): Promise<W
     };
   }
 
-  if (phoneTail(member.phone) !== phoneTail(rawPhone)) {
+  if (phoneTail(member.phone) !== phoneDigits.slice(-10)) {
     return { ok: false, status: 401, error: "That email address and phone number do not match." };
   }
 
