@@ -248,9 +248,9 @@ export default function WireZipGame() {
     <div className="wirezip">
       <div className="wirezip-header">
         <div className="wirezip-title-row">
-          <svg className="wirezip-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#049fd9" strokeWidth="2">
+          <svg className="wirezip-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#8b5cf6" strokeWidth="2">
             <path d="M12 2v6m0 8v6M2 12h6m8 0h6" strokeLinecap="round" />
-            <circle cx="12" cy="12" r="3" fill="#049fd9" stroke="none" />
+            <circle cx="12" cy="12" r="3" fill="#8b5cf6" stroke="none" />
           </svg>
           <span className="wirezip-title">Wire Zip</span>
         </div>
@@ -304,10 +304,10 @@ export default function WireZipGame() {
                     .filter(Boolean)
                     .join(" ")}
                   style={{
-                    borderTop: wallTop ? "3px solid #049fd9" : undefined,
-                    borderBottom: wallBottom ? "3px solid #049fd9" : undefined,
-                    borderLeft: wallLeft ? "3px solid #049fd9" : undefined,
-                    borderRight: wallRight ? "3px solid #049fd9" : undefined,
+                    borderTop: wallTop ? "3px solid #8b5cf6" : undefined,
+                    borderBottom: wallBottom ? "3px solid #8b5cf6" : undefined,
+                    borderLeft: wallLeft ? "3px solid #8b5cf6" : undefined,
+                    borderRight: wallRight ? "3px solid #8b5cf6" : undefined,
                   }}
                   onPointerDown={(e) => {
                     e.preventDefault();

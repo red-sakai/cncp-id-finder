@@ -898,20 +898,38 @@ a {
   inset: 0;
   opacity: 0;
   pointer-events: none;
-  /* Sleek dark display background */
-  background-color: #030a14;
+  /* Deep-space display background */
+  background-color: #060214;
   background-image:
-    /* Central radial glow */
-    radial-gradient(700px 420px at 50% 45%, rgba(4, 159, 217, 0.14), transparent 70%),
-    /* Secondary glow — upper-left */
-    radial-gradient(350px 250px at 20% 25%, rgba(0, 188, 235, 0.06), transparent 60%),
-    /* Tertiary glow — lower-right */
-    radial-gradient(300px 220px at 80% 70%, rgba(4, 159, 217, 0.05), transparent 55%),
-    /* Fine dot matrix — like an LCD subpixel grid */
-    radial-gradient(circle, rgba(4, 159, 217, 0.08) 0.8px, transparent 0.8px),
+    /* Central nebula glow */
+    radial-gradient(700px 420px at 50% 45%, rgba(124, 92, 255, 0.22), transparent 70%),
+    /* Cool glow — upper-left */
+    radial-gradient(380px 260px at 20% 25%, rgba(56, 189, 248, 0.1), transparent 60%),
+    /* Violet glow — lower-right */
+    radial-gradient(320px 240px at 80% 70%, rgba(168, 85, 247, 0.12), transparent 55%),
+    /* Sparse stars */
+    radial-gradient(circle at 14% 22%, rgba(255, 255, 255, 0.55) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 72% 16%, rgba(196, 184, 255, 0.5) 0 1.2px, transparent 1.8px),
+    radial-gradient(circle at 28% 68%, rgba(255, 255, 255, 0.4) 0 0.9px, transparent 1.5px),
+    radial-gradient(circle at 86% 57%, rgba(184, 168, 240, 0.45) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 58% 84%, rgba(255, 255, 255, 0.35) 0 0.8px, transparent 1.4px),
+    radial-gradient(circle at 44% 34%, rgba(196, 184, 255, 0.4) 0 0.9px, transparent 1.5px),
+    /* Fine dot matrix */
+    radial-gradient(circle, rgba(140, 100, 220, 0.1) 0.8px, transparent 0.8px),
     /* Base gradient */
-    linear-gradient(165deg, #030a14 0%, #061424 35%, #091e36 60%, #04101e 100%);
-  background-size: 100% 100%, 100% 100%, 100% 100%, 4px 4px, 100% 100%;
+    linear-gradient(165deg, #040218 0%, #0c0628 35%, #100a38 60%, #0a0630 100%);
+  background-size:
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    4px 4px,
+    100% 100%;
 }
 
 /* Soft vignette — darkens edges so center content pops */
@@ -922,8 +940,8 @@ a {
   background: radial-gradient(
     ellipse 70% 60% at 50% 48%,
     transparent 0%,
-    rgba(3, 10, 20, 0.25) 70%,
-    rgba(3, 10, 20, 0.6) 100%
+    rgba(4, 2, 18, 0.28) 70%,
+    rgba(4, 2, 18, 0.68) 100%
   );
 }
 
@@ -936,8 +954,8 @@ a {
     0deg,
     transparent,
     transparent 3px,
-    rgba(4, 159, 217, 0.012) 3px,
-    rgba(4, 159, 217, 0.012) 4px
+    rgba(124, 92, 255, 0.02) 3px,
+    rgba(124, 92, 255, 0.02) 4px
   );
   pointer-events: none;
 }
@@ -947,11 +965,11 @@ a {
   inset: 0;
   display: grid;
   place-items: center;
-  color: #f2f9ff;
+  color: #f5f3ff;
   font-family: var(--font-display), var(--font-body), sans-serif;
   font-size: 1.05rem;
   letter-spacing: 0.08em;
-  background: rgba(5, 13, 30, 0.65);
+  background: rgba(6, 2, 20, 0.7);
 }
 
 .icisco-hint {
@@ -959,7 +977,7 @@ a {
   left: 50%;
   bottom: 6%;
   transform: translateX(-50%);
-  color: rgba(242, 249, 255, 0.85);
+  color: rgba(224, 216, 255, 0.85);
   font-size: 0.82rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -992,7 +1010,8 @@ a {
   width: min(330px, 58vw);
   animation: iciscoLogoIn 1s cubic-bezier(0.22, 1, 0.36, 1) both,
     iciscoAuraPulse 2.8s ease-in-out 1s infinite;
-  filter: drop-shadow(0 0 44px rgba(4, 159, 217, 0.4));
+  filter: brightness(1.3) saturate(1.05)
+    drop-shadow(0 0 44px rgba(124, 92, 255, 0.55));
   user-select: none;
   -webkit-user-drag: none;
 }
@@ -1010,13 +1029,15 @@ a {
 
 @keyframes iciscoAuraPulse {
   0%, 100% {
-    filter: drop-shadow(0 0 30px rgba(4, 159, 217, 0.3))
-            drop-shadow(0 0 60px rgba(4, 159, 217, 0.15));
+    filter: brightness(1.3) saturate(1.05)
+            drop-shadow(0 0 30px rgba(124, 92, 255, 0.4))
+            drop-shadow(0 0 60px rgba(168, 85, 247, 0.2));
   }
   50% {
-    filter: drop-shadow(0 0 50px rgba(4, 159, 217, 0.6))
-            drop-shadow(0 0 100px rgba(4, 159, 217, 0.3))
-            drop-shadow(0 0 140px rgba(0, 188, 235, 0.15));
+    filter: brightness(1.3) saturate(1.05)
+            drop-shadow(0 0 50px rgba(124, 92, 255, 0.68))
+            drop-shadow(0 0 100px rgba(168, 85, 247, 0.36))
+            drop-shadow(0 0 140px rgba(56, 189, 248, 0.18));
   }
 }
 
@@ -1028,10 +1049,14 @@ a {
   left: 30px;
   bottom: calc(12% + 170px);
   z-index: 11;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(18, 10, 42, 0.94);
   border-radius: 16px;
   padding: 14px 20px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(4, 159, 217, 0.12);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(167, 139, 250, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px);
   animation: peekBubbleIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
   user-select: none;
 }
@@ -1043,14 +1068,14 @@ a {
   left: 28px;
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
-  border-top: 8px solid rgba(255, 255, 255, 0.95);
+  border-top: 8px solid rgba(18, 10, 42, 0.94);
 }
 
 .icisco-peek-text {
   margin: 0;
   font-size: 0.95rem;
   line-height: 1.5;
-  color: #1a2a3a;
+  color: #ede9fe;
   font-family: var(--font-body), system-ui, sans-serif;
   white-space: nowrap;
 }
@@ -1150,11 +1175,15 @@ a {
   position: absolute;
   left: calc(50% - 200px);
   bottom: calc(12% + 160px);
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(18, 10, 42, 0.94);
   border-radius: 20px;
   padding: 20px 24px 16px;
   width: min(440px, 75vw);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(4, 159, 217, 0.15);
+  box-shadow:
+    0 12px 36px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(167, 139, 250, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px);
   animation: bubbleIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
   user-select: none;
 }
@@ -1166,7 +1195,7 @@ a {
   left: 30px;
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
-  border-top: 10px solid rgba(255, 255, 255, 0.95);
+  border-top: 10px solid rgba(18, 10, 42, 0.94);
 }
 
 @keyframes bubbleIn {
@@ -1184,13 +1213,13 @@ a {
   margin: 0;
   font-size: 1rem;
   line-height: 1.6;
-  color: #1a2a3a;
+  color: #ede9fe;
   font-family: var(--font-body), system-ui, sans-serif;
 }
 
 .icisco-cursor {
   animation: blink 0.6s step-end infinite;
-  color: var(--cisco-blue);
+  color: #c4b5fd;
   font-weight: 700;
 }
 
@@ -1206,20 +1235,20 @@ a {
   height: 32px;
   border-radius: 999px;
   border: none;
-  background: var(--cisco-blue);
+  background: #6d4df0;
   color: #fff;
   font-size: 13px;
   display: grid;
   place-items: center;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(4, 159, 217, 0.4);
+  box-shadow: 0 4px 14px rgba(109, 77, 240, 0.45);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   animation: bubbleBtnIn 0.3s ease both;
 }
 
 .icisco-bubble-advance:hover {
   transform: scale(1.15);
-  box-shadow: 0 6px 20px rgba(4, 159, 217, 0.55);
+  box-shadow: 0 6px 20px rgba(109, 77, 240, 0.6);
 }
 
 @keyframes bubbleBtnIn {
@@ -1250,6 +1279,8 @@ a {
 .icisco-home-logo {
   width: min(140px, 26vw);
   opacity: 0.95;
+  filter: brightness(1.3) saturate(1.05)
+    drop-shadow(0 0 22px rgba(150, 110, 255, 0.5));
   animation: iciscoHomeLogoIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -1309,15 +1340,15 @@ a {
 
 .icisco-app:hover .icisco-app-icon {
   transform: scale(1.09) translateY(-4px);
-  box-shadow: 0 20px 44px rgba(4, 159, 217, 0.5);
+  box-shadow: 0 20px 44px rgba(124, 92, 255, 0.5);
 }
 
 .icisco-app-label {
-  color: #ffffff;
+  color: #f5f3ff;
   font-size: 0.95rem;
   font-weight: 600;
   letter-spacing: 0.04em;
-  text-shadow: 0 2px 10px rgba(5, 13, 30, 0.65);
+  text-shadow: 0 2px 12px rgba(4, 2, 24, 0.8);
 }
 
 /* ── Home Screen Stickers ── */
@@ -1326,6 +1357,12 @@ a {
   pointer-events: none;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
   z-index: 5;
+}
+
+@media (max-width: 48rem) {
+  .icisco-sticker {
+    display: none;
+  }
 }
 
 @keyframes stickerFloat1 {
@@ -1358,7 +1395,10 @@ a {
   z-index: 50;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(160deg, #06101e 0%, #0c1c32 50%, #091522 100%);
+  background:
+    radial-gradient(600px 380px at 50% 18%, rgba(124, 92, 255, 0.16), transparent 65%),
+    radial-gradient(360px 260px at 82% 82%, rgba(56, 189, 248, 0.08), transparent 60%),
+    linear-gradient(160deg, #07031c 0%, #0c0628 50%, #0a0630 100%);
   animation: iciscoFadeIn 0.25s ease-out;
   overflow: hidden;
 }
@@ -1372,14 +1412,14 @@ a {
   align-items: center;
   gap: 0.6rem;
   padding: 0.7rem 1rem;
-  background: rgba(4, 159, 217, 0.12);
-  border-bottom: 1px solid rgba(4, 159, 217, 0.2);
+  background: rgba(124, 92, 255, 0.12);
+  border-bottom: 1px solid rgba(167, 139, 250, 0.22);
   flex-shrink: 0;
 }
 .icisco-app-back {
   background: none;
   border: none;
-  color: #049fd9;
+  color: #c4b5fd;
   font-size: 1.1rem;
   cursor: pointer;
   padding: 0.2rem 0.4rem;
@@ -1387,10 +1427,10 @@ a {
   transition: background 0.15s;
 }
 .icisco-app-back:hover {
-  background: rgba(4, 159, 217, 0.15);
+  background: rgba(124, 92, 255, 0.18);
 }
 .icisco-app-title {
-  color: #e4f1fb;
+  color: #ede9fe;
   font-size: 1rem;
   font-weight: 600;
   letter-spacing: 0.03em;
@@ -1407,9 +1447,9 @@ a {
   overflow-y: auto;
   min-height: 0;
   background:
-    radial-gradient(circle at 50% 30%, rgba(4, 159, 217, 0.06) 0%, transparent 60%),
-    repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(4, 159, 217, 0.03) 19px, rgba(4, 159, 217, 0.03) 20px),
-    repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(4, 159, 217, 0.03) 19px, rgba(4, 159, 217, 0.03) 20px);
+    radial-gradient(circle at 50% 30%, rgba(124, 92, 255, 0.08) 0%, transparent 60%),
+    repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(124, 92, 255, 0.04) 19px, rgba(124, 92, 255, 0.04) 20px),
+    repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(124, 92, 255, 0.04) 19px, rgba(124, 92, 255, 0.04) 20px);
 }
 
 /* ── Ciscoins balance ── */
@@ -1436,36 +1476,36 @@ a {
 /* ── Shop app ── */
 .icisco-app-tile {
   background:
-    radial-gradient(circle at 32% 22%, rgba(255, 255, 255, 0.28), transparent 55%),
-    linear-gradient(155deg, #ffd968, #e9ac21);
-  border: 1px solid rgba(255, 214, 110, 0.75);
+    radial-gradient(circle at 32% 22%, rgba(255, 255, 255, 0.24), transparent 55%),
+    linear-gradient(155deg, #8b6ff0, #5b3fd6);
+  border: 1px solid rgba(196, 184, 255, 0.65);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.4),
-    0 10px 26px rgba(255, 202, 40, 0.18);
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 10px 26px rgba(124, 92, 255, 0.22);
 }
 .icisco-app-glyph {
   display: grid;
   place-items: center;
-  color: #453000;
+  color: #f5c451;
 }
 .icisco-app-glyph svg {
   width: 3.05rem;
   height: 3.05rem;
 }
 .icisco-app:hover .icisco-app-tile {
-  box-shadow: 0 20px 44px rgba(255, 202, 40, 0.4);
+  box-shadow: 0 20px 44px rgba(124, 92, 255, 0.45);
 }
 
 /* The shop is a light surface inside the dark tablet so product photos read
-   as merchandise. Ink for text, Cisco blue for actions, gold for Ciscoins. */
+   as merchandise. Ink for text, violet for actions, gold for Ciscoins. */
 .icisco-shop {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   padding: clamp(0.9rem, 2.2vw, 1.5rem) clamp(0.9rem, 2.6vw, 2rem)
     clamp(1.25rem, 3vw, 2rem);
-  background: #f0f7fb;
-  color: #0d274d;
+  background: #f7f5ff;
+  color: #21183f;
 }
 .icisco-shop-inner {
   display: flex;
@@ -1488,38 +1528,38 @@ a {
   font-size: clamp(1.2rem, 2.2vw, 1.5rem);
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: #0d274d;
+  color: #21183f;
 }
 .icisco-shop-heading-sub {
   margin: 0.1rem 0 0;
   font-size: 0.78rem;
-  color: #4f6478;
+  color: #5e5478;
 }
 .icisco-shop-count {
   flex-shrink: 0;
   padding: 0.3rem 0.6rem;
   border-radius: 0.35rem;
-  border: 1px solid #d4e1ea;
+  border: 1px solid #ded8f2;
   background: #ffffff;
   font-size: 0.66rem;
   letter-spacing: 0.04em;
-  color: #4f6478;
+  color: #5e5478;
 }
 
 /* ── Counter sign-in ── */
 .icisco-counter {
   overflow: hidden;
-  border: 1px solid #d4e1ea;
+  border: 1px solid #ded8f2;
   border-radius: 0.9rem;
   background: #ffffff;
-  box-shadow: 0 1px 0 rgba(13, 39, 77, 0.04);
+  box-shadow: 0 1px 0 rgba(33, 24, 63, 0.05);
 }
 .icisco-counter-head {
   display: flex;
   align-items: center;
   gap: 0.65rem;
   padding: 0.75rem clamp(1rem, 2.4vw, 1.4rem);
-  border-bottom: 1px dashed #d4e1ea;
+  border-bottom: 1px dashed #ded8f2;
 }
 .icisco-counter-logo {
   width: 44px;
@@ -1531,12 +1571,12 @@ a {
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #0d274d;
+  color: #21183f;
 }
 .icisco-counter-sub {
   margin: 0.05rem 0 0;
   font-size: 0.72rem;
-  color: #4f6478;
+  color: #5e5478;
 }
 .icisco-counter-body {
   display: grid;
@@ -1555,14 +1595,14 @@ a {
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.025em;
-  color: #0d274d;
+  color: #21183f;
 }
 .icisco-counter-text {
   max-width: 26rem;
   margin: 0.55rem 0 0;
   font-size: 0.85rem;
   line-height: 1.55;
-  color: #4f6478;
+  color: #5e5478;
 }
 .icisco-counter-fields {
   display: grid;
@@ -1584,7 +1624,7 @@ a {
   gap: clamp(0.9rem, 2.4vw, 1.6rem);
   padding: 0.85rem clamp(1rem, 2.4vw, 1.35rem);
   border-radius: 0.9rem;
-  background: #0d274d;
+  background: #1d1240;
   color: #ffffff;
 }
 .icisco-wallet-member {
@@ -1684,7 +1724,7 @@ a {
 .icisco-shop-label {
   font-size: 0.72rem;
   font-weight: 650;
-  color: #1f3b57;
+  color: #2b2150;
 }
 .icisco-shop-input {
   width: 100%;
@@ -1692,9 +1732,9 @@ a {
   margin-top: 0.3rem;
   padding: 0.5rem 0.7rem;
   border-radius: 0.4rem;
-  border: 1px solid #b9ccd9;
+  border: 1px solid #c4b8e6;
   background: #ffffff;
-  color: #0d274d;
+  color: #21183f;
   font-family: var(--font-body), sans-serif;
   font-size: 0.92rem;
   outline: none;
@@ -1703,14 +1743,14 @@ a {
     box-shadow 0.16s ease;
 }
 .icisco-shop-input::placeholder {
-  color: #4f6478;
+  color: #5e5478;
 }
 .icisco-shop-input:hover:not(:disabled) {
-  border-color: #8fa9bb;
+  border-color: #a493d1;
 }
 .icisco-shop-input:focus {
-  border-color: #037ca8;
-  box-shadow: 0 0 0 3px rgba(3, 124, 168, 0.16);
+  border-color: #6d4df0;
+  box-shadow: 0 0 0 3px rgba(109, 77, 240, 0.22);
 }
 .icisco-shop-input:disabled {
   opacity: 0.6;
@@ -1719,14 +1759,14 @@ a {
   margin: 0.3rem 0 0;
   font-size: 0.68rem;
   line-height: 1.4;
-  color: #4f6478;
+  color: #5e5478;
 }
 .icisco-shop-cta {
   min-height: 2.75rem;
   padding: 0 1.15rem;
   border-radius: 0.4rem;
-  border: 1px solid #026c92;
-  background: #037ca8;
+  border: 1px solid #5b3fd6;
+  background: #6d4df0;
   color: #ffffff;
   font-size: 0.85rem;
   font-weight: 650;
@@ -1734,7 +1774,7 @@ a {
   transition: background 0.16s ease;
 }
 .icisco-shop-cta:hover:not(:disabled) {
-  background: #026c92;
+  background: #5b3fd6;
 }
 .icisco-shop-cta:disabled {
   opacity: 0.6;
@@ -1744,17 +1784,17 @@ a {
 .icisco-shop-link:focus-visible,
 .icisco-shop-btn:focus-visible,
 .icisco-wallet-lock:focus-visible {
-  outline: 2px solid #037ca8;
+  outline: 2px solid #6d4df0;
   outline-offset: 2px;
 }
 .icisco-wallet-lock:focus-visible {
-  outline-color: #8fd8f5;
+  outline-color: #c4b5fd;
 }
 .icisco-shop-link {
   padding: 0;
   border: 0;
   background: none;
-  color: #026c92;
+  color: #5b3fd6;
   font-size: 0.78rem;
   font-weight: 650;
   text-decoration: underline;
@@ -1762,7 +1802,7 @@ a {
   cursor: pointer;
 }
 .icisco-shop-link:hover {
-  color: #014f6b;
+  color: #4528b8;
 }
 .icisco-shop-msg {
   margin: 0;
@@ -1787,7 +1827,7 @@ a {
 .icisco-shop-hint {
   margin: 0;
   font-size: 0.78rem;
-  color: #4f6478;
+  color: #5e5478;
 }
 .icisco-shop-grid {
   display: grid;
@@ -1798,7 +1838,7 @@ a {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid #d4e1ea;
+  border: 1px solid #ded8f2;
   border-radius: 0.75rem;
   background: #ffffff;
   transition:
@@ -1806,14 +1846,14 @@ a {
     box-shadow 0.16s ease;
 }
 .icisco-shop-card:not(.is-skeleton):hover {
-  border-color: #a9c4d5;
-  box-shadow: 0 6px 18px rgba(13, 39, 77, 0.07);
+  border-color: #b6a8dd;
+  box-shadow: 0 6px 18px rgba(33, 24, 63, 0.08);
 }
 .icisco-shop-media {
   position: relative;
   aspect-ratio: 4 / 3;
   overflow: hidden;
-  background: #e3eef6;
+  background: #ece8fa;
 }
 .icisco-shop-img {
   object-fit: cover;
@@ -1826,8 +1866,8 @@ a {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background: #e3eef6;
-  color: #4f6478;
+  background: #ece8fa;
+  color: #5e5478;
 }
 .icisco-shop-placeholder-icon {
   width: 1.9rem;
@@ -1837,7 +1877,7 @@ a {
   font-size: 0.66rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #4f6478;
+  color: #5e5478;
 }
 .icisco-shop-info {
   display: flex;
@@ -1851,7 +1891,7 @@ a {
   font-size: 0.92rem;
   font-weight: 700;
   line-height: 1.3;
-  color: #0d274d;
+  color: #21183f;
 }
 .icisco-shop-desc {
   display: -webkit-box;
@@ -1862,7 +1902,7 @@ a {
   margin: 0;
   font-size: 0.76rem;
   line-height: 1.45;
-  color: #4f6478;
+  color: #5e5478;
 }
 .icisco-shop-buy {
   display: flex;
@@ -1872,7 +1912,7 @@ a {
   gap: 0.5rem 0.6rem;
   margin-top: auto;
   padding-top: 0.65rem;
-  border-top: 1px solid #dce8f0;
+  border-top: 1px solid #e7e2f7;
 }
 .icisco-shop-price {
   display: flex;
@@ -1886,24 +1926,24 @@ a {
   font-weight: 750;
   font-variant-numeric: tabular-nums;
   line-height: 1;
-  color: #0d274d;
+  color: #21183f;
 }
 .icisco-shop-card.is-short .icisco-shop-price-amount {
-  color: #4f6478;
+  color: #5e5478;
 }
 .icisco-shop-price-label {
   font-size: 0.58rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #4f6478;
+  color: #5e5478;
 }
 .icisco-shop-btn {
   flex-shrink: 0;
   min-height: 2.35rem;
   padding: 0 0.85rem;
-  border: 1px solid #026c92;
+  border: 1px solid #5b3fd6;
   border-radius: 0.4rem;
-  background: #037ca8;
+  background: #6d4df0;
   color: #ffffff;
   font-size: 0.76rem;
   font-weight: 650;
@@ -1911,23 +1951,23 @@ a {
   transition: background 0.16s ease;
 }
 .icisco-shop-btn:hover:not(:disabled) {
-  background: #026c92;
+  background: #5b3fd6;
 }
 .icisco-shop-card.is-guest .icisco-shop-btn {
   background: transparent;
-  color: #026c92;
+  color: #5b3fd6;
 }
 .icisco-shop-card.is-guest .icisco-shop-btn:hover:not(:disabled) {
-  background: #eef7fb;
+  background: #f1ecff;
 }
 .icisco-shop-btn:disabled {
   opacity: 0.55;
   cursor: default;
 }
 .icisco-shop-card.is-short .icisco-shop-btn {
-  border-color: #c2d4e0;
+  border-color: #cec3e9;
   background: transparent;
-  color: #4f6478;
+  color: #5e5478;
 }
 .icisco-shop-card.is-short .icisco-shop-btn:disabled {
   opacity: 1;
@@ -1937,7 +1977,7 @@ a {
   font-size: 0.7rem;
   line-height: 1.4;
   text-align: center;
-  color: #4f6478;
+  color: #5e5478;
 }
 .icisco-shop-empty-state {
   display: flex;
@@ -1945,7 +1985,7 @@ a {
   align-items: center;
   gap: 0.45rem;
   padding: clamp(2rem, 5vw, 3rem) 1.5rem;
-  border: 1px dashed #c2d4e0;
+  border: 1px dashed #cec3e9;
   border-radius: 0.75rem;
   background: #ffffff;
   text-align: center;
@@ -1956,10 +1996,10 @@ a {
   width: 2.9rem;
   height: 2.9rem;
   margin-bottom: 0.2rem;
-  border: 1px solid #d4e1ea;
+  border: 1px solid #ded8f2;
   border-radius: 999px;
-  background: #f0f7fb;
-  color: #4f6478;
+  background: #f7f5ff;
+  color: #5e5478;
 }
 .icisco-shop-empty-icon svg {
   width: 1.4rem;
@@ -1970,21 +2010,21 @@ a {
   font-family: var(--font-display), sans-serif;
   font-size: 1rem;
   font-weight: 700;
-  color: #0d274d;
+  color: #21183f;
 }
 .icisco-shop-empty-text {
   max-width: 24rem;
   margin: 0;
   font-size: 0.8rem;
   line-height: 1.5;
-  color: #4f6478;
+  color: #5e5478;
 }
 .icisco-shop-card.is-skeleton {
-  border-color: #dce8f0;
+  border-color: #e7e2f7;
   background: #ffffff;
 }
 .icisco-shop-card.is-skeleton .icisco-shop-media {
-  background: #e3eef6;
+  background: #ece8fa;
 }
 .icisco-skeleton-line {
   position: relative;
@@ -1992,7 +2032,7 @@ a {
   height: 0.6rem;
   overflow: hidden;
   border-radius: 999px;
-  background: #d8e7f1;
+  background: #e4ddf7;
 }
 .icisco-skeleton-line.wide {
   width: 72%;
@@ -2067,8 +2107,9 @@ a {
 
 /* ── Decorative logo ── */
 .icisco-idfinder-deco-logo {
-  opacity: 0.35;
-  filter: brightness(1.2);
+  opacity: 0.45;
+  filter: brightness(1.3) saturate(1.05)
+    drop-shadow(0 0 18px rgba(150, 110, 255, 0.45));
   margin-top: 0.3rem;
   user-select: none;
   pointer-events: none;
@@ -2090,7 +2131,7 @@ a {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  border: 2px solid rgba(4, 159, 217, 0.2);
+  border: 2px solid rgba(167, 139, 250, 0.28);
   animation: ringPulse 3s ease-in-out infinite;
   pointer-events: none;
 }
@@ -2103,7 +2144,7 @@ a {
   height: 70px !important;
   object-fit: contain;
   flex-shrink: 0;
-  filter: drop-shadow(0 4px 12px rgba(4, 159, 217, 0.3));
+  filter: drop-shadow(0 4px 14px rgba(124, 92, 255, 0.4));
   animation: axieBob 2.5s ease-in-out infinite;
   position: relative;
   z-index: 1;
@@ -2122,11 +2163,11 @@ a {
 }
 .icisco-idfinder-bubble {
   position: relative;
-  background: rgba(4, 159, 217, 0.12);
-  border: 1px solid rgba(4, 159, 217, 0.2);
+  background: rgba(124, 92, 255, 0.14);
+  border: 1px solid rgba(167, 139, 250, 0.24);
   border-radius: 12px 12px 12px 2px;
   padding: 0.5rem 0.7rem;
-  color: #c3dae8;
+  color: #d8ccff;
   font-size: 0.78rem;
   line-height: 1.4;
   max-width: 210px;
@@ -2140,8 +2181,14 @@ a {
   width: 100%;
   max-width: 300px;
 }
+.icisco-idfinder-hint {
+  color: #b8a8f0;
+  font-size: 0.72rem;
+  text-align: center;
+  margin: 0;
+}
 .icisco-idfinder-label {
-  color: #8eafc8;
+  color: #b8a8f0;
   font-size: 0.82rem;
   text-align: center;
   line-height: 1.4;
@@ -2154,27 +2201,27 @@ a {
 .icisco-idfinder-input-icon {
   position: absolute;
   left: 0.75rem;
-  color: #506878;
+  color: #8b7bb8;
   font-size: 0.9rem;
   pointer-events: none;
 }
 .icisco-idfinder-input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(4, 159, 217, 0.25);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(167, 139, 250, 0.3);
   border-radius: 10px;
   padding: 0.65rem 0.8rem 0.65rem 2.2rem;
-  color: #e4f1fb;
+  color: #f2f9ff;
   font-size: 0.88rem;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 .icisco-idfinder-input::placeholder {
-  color: #506878;
+  color: #7c6f9e;
 }
 .icisco-idfinder-input:focus {
-  border-color: #049fd9;
-  box-shadow: 0 0 0 3px rgba(4, 159, 217, 0.18);
+  border-color: #a78bfa;
+  box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.24);
 }
 .icisco-idfinder-input.shake {
   animation: inputShake 0.4s ease-out;
@@ -2188,7 +2235,7 @@ a {
 }
 
 .icisco-idfinder-btn {
-  background: linear-gradient(135deg, #049fd9 0%, #0379b4 100%);
+  background: linear-gradient(135deg, #6d4df0 0%, #5b3fd6 100%);
   color: #fff;
   font-weight: 600;
   font-size: 0.85rem;
@@ -2291,8 +2338,8 @@ a {
   width: 90px;
   height: 90px;
   border-radius: 10px;
-  background: #e8f4fd;
-  border: 1.5px solid #c5e3f4;
+  background: #f1ecff;
+  border: 1.5px solid #d8cdf8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2328,7 +2375,7 @@ a {
 .icisco-idcard-membership {
   display: inline-block;
   width: fit-content;
-  background: #049fd9;
+  background: #6d4df0;
   border-radius: 4px;
   padding: 0.12rem 0.5rem;
   color: #fff;
@@ -2346,28 +2393,32 @@ a {
 
 /* ─── Card Style Variants ─── */
 .card-style-blue .icisco-idcard-face {
-  background: linear-gradient(145deg, #e8f4fd 0%, #d0eaf8 50%, #b8ddf2 100%);
+  background: linear-gradient(145deg, #f3efff 0%, #e4dbff 50%, #d7cbff 100%);
   position: relative;
 }
 .card-style-blue .icisco-idcard-top {
-  border-bottom-color: #a8d4f0;
-  background: linear-gradient(90deg, #0277bd 0%, #4fc3f7 50%, #0277bd 100%);
+  border-bottom-color: #cbbcf5;
+  background: linear-gradient(90deg, #5b3fd6 0%, #8b6ff0 50%, #5b3fd6 100%);
 }
 .card-style-blue .icisco-idcard-top-title {
   color: #fff;
 }
+.card-style-blue .icisco-idcard-top-logo {
+  filter: brightness(0) invert(1);
+  opacity: 0.85;
+}
 .card-style-blue .icisco-idcard-membership {
-  background: #0277bd;
+  background: #5b3fd6;
 }
 .card-style-blue .icisco-idcard-avatar {
-  border-color: #0277bd;
-  box-shadow: 0 0 10px rgba(2, 119, 189, 0.25);
+  border-color: #6d4df0;
+  box-shadow: 0 0 12px rgba(109, 77, 240, 0.3);
 }
 .card-style-blue .icisco-idcard-footer {
-  border-top-color: #a8d4f0;
+  border-top-color: #cbbcf5;
 }
 .card-style-blue .icisco-idcard-qr {
-  border-color: #0277bd;
+  border-color: #6d4df0;
 }
 
 .card-style-gold .icisco-idcard-face {
@@ -2493,6 +2544,10 @@ a {
 .card-style-diamond .icisco-idcard-top-title {
   color: #fff;
   text-shadow: 0 0 12px rgba(121, 134, 203, 0.5);
+}
+.card-style-diamond .icisco-idcard-top-logo {
+  filter: brightness(0) invert(1);
+  opacity: 0.85;
 }
 .card-style-diamond .icisco-idcard-membership {
   background: linear-gradient(90deg, #283593, #3949ab, #5c6bc0, #3949ab, #283593);
@@ -2721,6 +2776,10 @@ a {
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   letter-spacing: 0.12em;
   font-size: 0.6rem;
+}
+.card-style-alumni .icisco-idcard-top-logo {
+  filter: brightness(0) invert(1);
+  opacity: 0.85;
 }
 .card-style-alumni .icisco-idcard-membership {
   background: linear-gradient(90deg, #8b6914, #c69500, #d4a800, #c69500, #8b6914);
@@ -2975,14 +3034,15 @@ a {
 .icisco-idcard-sig-clear {
   background: none;
   border: none;
-  color: #8a9aa8;
+  color: #4a4266;
   font-size: 0.55rem;
+  font-weight: 500;
   cursor: pointer;
   padding: 0;
   text-decoration: underline;
 }
 .icisco-idcard-sig-clear:hover {
-  color: #5a6a78;
+  color: #21183f;
 }
 .icisco-idcard-sig-actions {
   display: flex;
@@ -2992,14 +3052,14 @@ a {
 .icisco-idcard-sig-save {
   background: none;
   border: none;
-  color: #049fd9;
+  color: #6d4df0;
   font-size: 0.55rem;
   cursor: pointer;
   padding: 0;
   text-decoration: underline;
 }
 .icisco-idcard-sig-save:hover {
-  color: #0277bd;
+  color: #5b3fd6;
 }
 .icisco-idcard-sig-save.saved {
   color: #4caf50;
@@ -3033,7 +3093,7 @@ a {
   display: block;
   width: 100%;
   text-align: center;
-  color: #049fd9;
+  color: #6d4df0;
   font-size: 0.6rem;
   font-weight: 600;
   padding: 0.5rem 0 0.6rem;
@@ -3044,7 +3104,7 @@ a {
   text-decoration: underline;
 }
 .icisco-idcard-back-flip:hover {
-  color: #0379b4;
+  color: #5b3fd6;
 }
 
 .icisco-id-card-again {
@@ -3710,8 +3770,8 @@ html.dark .footer-legal-links a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(26, 42, 58, 0.6);
-  backdrop-filter: blur(4px);
+  background: rgba(6, 2, 20, 0.68);
+  backdrop-filter: blur(6px);
   animation: fadeIn 0.3s ease;
 }
 .icisco-congrats-card {
@@ -3732,12 +3792,12 @@ html.dark .footer-legal-links a:hover {
   font-family: var(--font-display), sans-serif;
   font-size: 1.3rem;
   font-weight: 800;
-  color: #049fd9;
+  color: #6d4df0;
   margin: 0 0 0.25rem;
 }
 .icisco-congrats-text {
   font-size: 0.8rem;
-  color: #607d8b;
+  color: #5e5478;
   margin: 0;
 }
 .icisco-award-error-card {
@@ -3749,7 +3809,7 @@ html.dark .footer-legal-links a:hover {
 
 .icisco-congrats-awarded-by {
   font-size: 0.75rem;
-  color: #455a64;
+  color: #4a4266;
   margin: 6px 0 0;
   font-style: italic;
 }
@@ -3774,13 +3834,13 @@ html.dark .footer-legal-links a:hover {
   top: -10px;
   animation: confettiFall 1.5s ease-out forwards;
 }
-.icisco-confetti:nth-child(1) { left: 15%; background: #049fd9; animation-delay: 0s; }
+.icisco-confetti:nth-child(1) { left: 15%; background: #8b5cf6; animation-delay: 0s; }
 .icisco-confetti:nth-child(2) { left: 30%; background: #e53935; animation-delay: 0.1s; }
 .icisco-confetti:nth-child(3) { left: 45%; background: #fdd835; animation-delay: 0.15s; }
 .icisco-confetti:nth-child(4) { left: 60%; background: #43a047; animation-delay: 0.05s; }
 .icisco-confetti:nth-child(5) { left: 75%; background: #8e24aa; animation-delay: 0.2s; }
 .icisco-confetti:nth-child(6) { left: 22%; background: #ff7043; animation-delay: 0.12s; }
-.icisco-confetti:nth-child(7) { left: 55%; background: #049fd9; animation-delay: 0.08s; }
+.icisco-confetti:nth-child(7) { left: 55%; background: #8b5cf6; animation-delay: 0.08s; }
 .icisco-confetti:nth-child(8) { left: 85%; background: #fdd835; animation-delay: 0.18s; }
 
 @keyframes confettiFall {
@@ -4606,8 +4666,8 @@ html.dark .footer-legal-links a:hover {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #d0dbe4;
-  color: #607d8b;
+  background: #e4ddf7;
+  color: #5e5478;
   font-size: 0.55rem;
   font-weight: 700;
   cursor: help;
@@ -4619,8 +4679,8 @@ html.dark .footer-legal-links a:hover {
   bottom: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
-  background: #1a2a3a;
-  color: #fff;
+  background: #1d1240;
+  color: #f5f3ff;
   font-size: 0.6rem;
   font-weight: 400;
   padding: 0.4rem 0.6rem;
@@ -4640,7 +4700,7 @@ html.dark .footer-legal-links a:hover {
   left: 50%;
   transform: translateX(-50%);
   border: 4px solid transparent;
-  border-top-color: #1a2a3a;
+  border-top-color: #1d1240;
 }
 .icisco-idcard-badges-help:hover .icisco-idcard-badges-tooltip {
   opacity: 1;
@@ -4663,8 +4723,8 @@ html.dark .footer-legal-links a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(26, 42, 58, 0.55);
-  backdrop-filter: blur(3px);
+  background: rgba(6, 2, 20, 0.62);
+  backdrop-filter: blur(5px);
 }
 .icisco-badge-modal-card {
   background: #fff;
@@ -4701,21 +4761,21 @@ html.dark .footer-legal-links a:hover {
   font-family: var(--font-display), sans-serif;
   font-size: 0.8rem;
   font-weight: 700;
-  color: #1a2a3a;
+  color: #21183f;
   margin: 0 0 0.3rem;
 }
 .icisco-badge-modal-desc {
   font-size: 0.65rem;
-  color: #607d8b;
+  color: #5e5478;
   margin: 0;
   line-height: 1.4;
 }
 .icisco-badge-modal-awarded-by {
   font-size: 0.75rem;
-  color: #546e7a;
+  color: #5e5478;
   margin: 0.5rem 0 0;
   padding-top: 0.4rem;
-  border-top: 1px solid #eceff1;
+  border-top: 1px solid #e7e2f7;
   font-style: italic;
 }
 
@@ -4749,10 +4809,10 @@ html.dark .footer-legal-links a:hover {
   top: 0.75rem;
   right: 0.75rem;
   z-index: 60;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  color: #fff;
+  background: rgba(18, 10, 42, 0.72);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(196, 184, 255, 0.32);
+  color: #f5f3ff;
   font-family: var(--font-body), sans-serif;
   font-size: 0.8rem;
   font-weight: 700;
@@ -4765,7 +4825,7 @@ html.dark .footer-legal-links a:hover {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 .icisco-skip-btn:hover {
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(35, 20, 72, 0.85);
   transform: scale(1.05);
 }
 .icisco-skip-btn:active {
@@ -4783,10 +4843,10 @@ html.dark .footer-legal-links a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  color: #fff;
+  background: rgba(18, 10, 42, 0.72);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(196, 184, 255, 0.32);
+  color: #f5f3ff;
   font-size: 1.1rem;
   font-weight: 700;
   border-radius: 50%;
@@ -4796,7 +4856,7 @@ html.dark .footer-legal-links a:hover {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 .icisco-close-btn:hover {
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(35, 20, 72, 0.85);
   transform: scale(1.1);
 }
 .icisco-close-btn:active {
@@ -4833,7 +4893,7 @@ html.dark .footer-legal-links a:hover {
   padding: 0.75rem 0.5rem;
   min-width: 0;
   border-radius: 0.75rem;
-  border: 1.5px solid #e0e8ef;
+  border: 1.5px solid #ded8f2;
   background: #fff;
   cursor: pointer;
   transition: transform 0.15s, box-shadow 0.15s;
@@ -4841,21 +4901,21 @@ html.dark .footer-legal-links a:hover {
 }
 .icisco-public-id-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(26, 42, 58, 0.12);
+  box-shadow: 0 4px 16px rgba(33, 24, 63, 0.14);
 }
 .icisco-public-id-card.card-style-gold {
   border-color: #d4a800;
   background: linear-gradient(145deg, #fdf6e3, #f5e6b8);
 }
 .icisco-public-id-card.card-style-blue {
-  border-color: #0277bd;
-  background: linear-gradient(145deg, #e8f4fd, #d0eaf8);
+  border-color: #6d4df0;
+  background: linear-gradient(145deg, #f3efff, #e0d6ff);
 }
 .icisco-public-id-avatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #f0f4f8;
+  background: #f1ecff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4864,7 +4924,7 @@ html.dark .footer-legal-links a:hover {
   background: linear-gradient(135deg, #f5e6b8, #d4a800);
 }
 .card-style-blue .icisco-public-id-avatar {
-  background: linear-gradient(135deg, #d0eaf8, #0277bd);
+  background: linear-gradient(135deg, #e0d6ff, #6d4df0);
 }
 .icisco-public-id-card.card-style-diamond {
   border-color: #7986cb;
@@ -4898,10 +4958,16 @@ html.dark .footer-legal-links a:hover {
 .card-style-alumni .icisco-public-id-avatar {
   background: linear-gradient(135deg, #1a2744, #d4a800);
 }
+.card-style-alumni .icisco-public-id-name {
+  color: #f5e6b8;
+}
+.card-style-alumni .icisco-public-id-type {
+  color: #c4b8ff;
+}
 .icisco-public-id-name {
   font-size: 0.7rem;
   font-weight: 700;
-  color: #1a2a3a;
+  color: #21183f;
   margin: 0;
   text-align: center;
   max-width: 100%;
@@ -4911,7 +4977,7 @@ html.dark .footer-legal-links a:hover {
 }
 .icisco-public-id-type {
   font-size: 0.55rem;
-  color: #607d8b;
+  color: #5e5478;
   margin: 0;
   max-width: 100%;
   white-space: nowrap;
@@ -4933,13 +4999,13 @@ html.dark .footer-legal-links a:hover {
 .icisco-public-ids-section {
   margin-top: 0.75rem;
   padding-top: 0.75rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(167, 139, 250, 0.18);
 }
 .icisco-public-ids-header {
   font-family: var(--font-display), sans-serif;
   font-size: 0.75rem;
   font-weight: 700;
-  color: #b0c4d8;
+  color: #c4b8ff;
   margin: 0 0 0.5rem;
   text-align: center;
 }
@@ -4954,14 +5020,14 @@ html.dark .footer-legal-links a:hover {
 }
 .icisco-public-toggle-label {
   font-size: 0.65rem;
-  color: #8a9bb0;
+  color: #b8a8f0;
   font-weight: 500;
 }
 .icisco-toggle-switch {
   position: relative;
   width: 34px;
   height: 18px;
-  background: #37474f;
+  background: #3b3355;
   border: none;
   border-radius: 9px;
   cursor: pointer;
@@ -4969,7 +5035,7 @@ html.dark .footer-legal-links a:hover {
   transition: background 0.2s;
 }
 .icisco-toggle-switch.on {
-  background: #049fd9;
+  background: #6d4df0;
 }
 .icisco-toggle-knob {
   position: absolute;
@@ -4989,7 +5055,7 @@ html.dark .footer-legal-links a:hover {
   cursor: not-allowed;
 }
 
-/* ─── WireZip Game (Cisco Theme) ─── */
+/* ─── WireZip Game (Galaxy Theme) ─── */
 .wirezip {
   width: 100%;
   height: 100%;
@@ -5015,7 +5081,7 @@ html.dark .footer-legal-links a:hover {
   font-family: var(--font-display), sans-serif;
   font-size: 0.95rem;
   font-weight: 800;
-  color: #049fd9;
+  color: #a78bfa;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -5030,7 +5096,7 @@ html.dark .footer-legal-links a:hover {
 }
 .wirezip-stat-label {
   font-size: 0.5rem;
-  color: #607d8b;
+  color: #8b7bb8;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   line-height: 1;
@@ -5038,7 +5104,7 @@ html.dark .footer-legal-links a:hover {
 .wirezip-stat-value {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #cfd8dc;
+  color: #ede9fe;
   line-height: 1.2;
 }
 .wirezip-grid-wrap {
@@ -5048,11 +5114,11 @@ html.dark .footer-legal-links a:hover {
   align-items: center;
   justify-content: center;
   padding: 6px;
-  background: #0d1b2a;
+  background: #0c0628;
   border-radius: 12px;
-  border: 2px solid #1b3a5c;
+  border: 2px solid #3a2a6e;
   box-shadow:
-    0 0 20px rgba(4, 159, 217, 0.08),
+    0 0 20px rgba(124, 92, 255, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 .wirezip-grid {
@@ -5069,40 +5135,40 @@ html.dark .footer-legal-links a:hover {
   position: relative;
   width: 100%;
   aspect-ratio: 1;
-  background: #1a2d42;
+  background: #1b1440;
   border-radius: 5px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: background 0.1s, box-shadow 0.1s;
-  border: 1px solid #243b55;
+  border: 1px solid #2a1f56;
 }
 .wz-cell:hover {
-  background: #243b55;
+  background: #2a1f56;
 }
 /* ── Active path (wire) ── */
 .wz-cell.wz-active {
-  background: #049fd9;
-  border-color: #049fd9;
-  box-shadow: 0 0 8px rgba(4, 159, 217, 0.5);
+  background: #6d4df0;
+  border-color: #6d4df0;
+  box-shadow: 0 0 8px rgba(109, 77, 240, 0.55);
 }
 .wz-cell.wz-active::after {
   content: "";
   position: absolute;
   inset: 2px;
   border-radius: 3px;
-  background: linear-gradient(135deg, #29b6f6, #0288d1);
+  background: linear-gradient(135deg, #8b6ff0, #5b3fd6);
   opacity: 0.95;
 }
 /* ── Numbered node (connector) ── */
 .wz-cell.wz-node {
-  background: #0d1b2a;
-  border: 2px solid #37474f;
+  background: #0c0628;
+  border: 2px solid #4a3a78;
   z-index: 2;
 }
 .wz-cell.wz-node.wz-active {
-  background: #0d1b2a;
+  background: #0c0628;
   border-color: #ff6f00;
   box-shadow: 0 0 12px rgba(255, 111, 0, 0.6);
 }
@@ -5137,8 +5203,8 @@ html.dark .footer-legal-links a:hover {
   animation: wzPulse 0.8s ease-in-out infinite alternate;
 }
 @keyframes wzPulse {
-  from { box-shadow: 0 0 4px rgba(4, 159, 217, 0.4); }
-  to   { box-shadow: 0 0 14px rgba(4, 159, 217, 0.9); }
+  from { box-shadow: 0 0 4px rgba(109, 77, 240, 0.45); }
+  to   { box-shadow: 0 0 14px rgba(109, 77, 240, 0.9); }
 }
 /* ── Number label ── */
 .wz-num {
@@ -5146,7 +5212,7 @@ html.dark .footer-legal-links a:hover {
   z-index: 3;
   font-size: 0.7rem;
   font-weight: 800;
-  color: #b0bec5;
+  color: #b8a8f0;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
   line-height: 1;
 }
@@ -5160,7 +5226,7 @@ html.dark .footer-legal-links a:hover {
   align-items: center;
   gap: 0.5rem;
   padding: 0.4rem 1rem;
-  background: linear-gradient(135deg, #0d47a1, #049fd9);
+  background: linear-gradient(135deg, #3a1f9e, #6d4df0);
   border-radius: 8px;
   animation: wzBannerIn 0.3s ease;
 }
@@ -5177,7 +5243,7 @@ html.dark .footer-legal-links a:hover {
 }
 .wirezip-win-sub {
   font-size: 0.6rem;
-  color: #b3e5fc;
+  color: #d8ccff;
 }
 /* ── Controls ── */
 .wirezip-controls {
@@ -5191,10 +5257,10 @@ html.dark .footer-legal-links a:hover {
   align-items: center;
   gap: 0.3rem;
   padding: 0.4rem 0.8rem;
-  border: 1px solid #37474f;
+  border: 1px solid #4a3a78;
   border-radius: 6px;
-  background: #1a2d42;
-  color: #90a4ae;
+  background: #1b1440;
+  color: #b8a8f0;
   font-family: var(--font-body), sans-serif;
   font-size: 0.65rem;
   font-weight: 600;
@@ -5202,9 +5268,9 @@ html.dark .footer-legal-links a:hover {
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 .wz-btn:hover:not(:disabled) {
-  background: #243b55;
+  background: #2a1f56;
   color: #fff;
-  border-color: #546e7a;
+  border-color: #8b7bb8;
 }
 .wz-btn:disabled {
   opacity: 0.3;
@@ -5220,10 +5286,10 @@ html.dark .footer-legal-links a:hover {
   color: #fff;
 }
 .wz-btn-accent {
-  border-color: #049fd9;
-  color: #049fd9;
+  border-color: #8b5cf6;
+  color: #c4b5fd;
 }
 .wz-btn-accent:hover:not(:disabled) {
-  background: #049fd9;
+  background: #6d4df0;
   color: #fff;
 }

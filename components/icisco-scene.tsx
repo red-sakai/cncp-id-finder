@@ -70,7 +70,6 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const [dialogueStep, setDialogueStep] = useState(0);
   const [bubbleText, setBubbleText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [walkFrame, setWalkFrame] = useState<"left" | "right">("left");
 
   // ID Finder app state
   const [activeApp, setActiveApp] = useState<
@@ -474,21 +473,6 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     return () => clearTimeout(timer);
   }, [phase]);
 
-  // Walk cycle: alternate left/right frames, stop before walk ends
-  useEffect(() => {
-    if (phase !== "walk") return;
-    let count = 0;
-    const interval = setInterval(() => {
-      count++;
-      if (count >= 5) {
-        clearInterval(interval);
-        return;
-      }
-      setWalkFrame((f) => (f === "left" ? "right" : "left"));
-    }, 350);
-    return () => clearInterval(interval);
-  }, [phase]);
-
   // Walk phase lasts 2.4s then transition to talk
   useEffect(() => {
     if (phase !== "walk") return;
@@ -797,12 +781,10 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const isTalk = phase === "talk";
 
   const axolotlSrc = isPeek
-    ? "/axolotl-confused.png"
+    ? "/rebranding/stickers/axie-thinking-sticker.png"
     : isWalk
-      ? walkFrame === "left"
-        ? "/walking-axolotl-left.png"
-        : "/walking-axolotl-right.png"
-      : "/waving-axolotl.png";
+      ? "/rebranding/stickers/axie-flying-sticker.png"
+      : "/rebranding/stickers/axie-flying-sticker1.png";
 
   useEffect(() => {
     if (activeApp) {
@@ -835,7 +817,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
       )}
 
       {!ready && phase === "anim" && (
-        <div className="icisco-loading">Loading iCisco\u2026</div>
+        <div className="icisco-loading">Loading iCisco…</div>
       )}
 
       {phase !== "home" && !closing && (
@@ -851,7 +833,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
       {(phase === "logo" || showAxolotl) && !closing && (
         <div className="icisco-logo-wrap">
           <Image
-            src="/cncp-logo-transparent.png"
+            src="/rebranding/logos/cncp-purple-logo.png"
             alt="CNCP"
             width={330}
             height={231}
@@ -911,7 +893,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
       {phase === "home" && !closing && !activeApp && (
         <div className="icisco-home">
           <Image
-            src="/cncp-logo-transparent.png"
+            src="/rebranding/logos/cncp-purple-logo.png"
             alt="CNCP"
             width={140}
             height={98}
@@ -975,16 +957,16 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
               <span className="icisco-app-label">Shop</span>
             </button>
           </div>
-          <Image src="/stickers/airplane-sticker.png" alt="" width={85} height={85} className="icisco-sticker" draggable={false} style={{ top: "8%", right: "6%", opacity: 0.8, transform: "rotate(-10deg)", animation: "stickerFloat1 4s ease-in-out infinite" }} />
-          <Image src="/stickers/wave-sticker.png" alt="" width={95} height={55} className="icisco-sticker" draggable={false} style={{ bottom: "15%", left: "4%", opacity: 0.75, transform: "rotate(5deg)", animation: "stickerFloat2 3.5s ease-in-out infinite 0.3s" }} />
-          <Image src="/stickers/bridge-sticker.png" alt="" width={80} height={80} className="icisco-sticker" draggable={false} style={{ bottom: "10%", right: "8%", opacity: 0.8, transform: "rotate(-5deg)", animation: "stickerFloat3 4.5s ease-in-out infinite 0.5s" }} />
-          <Image src="/stickers/pup-sticker.png" alt="" width={75} height={95} className="icisco-sticker" draggable={false} style={{ top: "18%", left: "5%", opacity: 0.8, transform: "rotate(8deg)", animation: "stickerFloat2 5s ease-in-out infinite 1s" }} />
-          <Image src="/stickers/airplane-sticker.png" alt="" width={45} height={45} className="icisco-sticker" draggable={false} style={{ bottom: "32%", left: "18%", opacity: 0.45, transform: "rotate(15deg)", animation: "stickerFloat3 5.5s ease-in-out infinite 0.7s" }} />
-          <Image src="/stickers/wave-sticker.png" alt="" width={55} height={32} className="icisco-sticker" draggable={false} style={{ top: "35%", right: "10%", opacity: 0.4, transform: "rotate(-8deg)", animation: "stickerFloat1 4.5s ease-in-out infinite 1.2s" }} />
-          <Image src="/stickers/bridge-sticker.png" alt="" width={40} height={40} className="icisco-sticker" draggable={false} style={{ top: "12%", left: "32%", opacity: 0.45, transform: "rotate(12deg)", animation: "stickerFloat2 5s ease-in-out infinite 1.8s" }} />
-          <Image src="/stickers/pup-sticker.png" alt="" width={38} height={50} className="icisco-sticker" draggable={false} style={{ bottom: "28%", right: "28%", opacity: 0.4, transform: "rotate(-12deg)", animation: "stickerFloat3 4s ease-in-out infinite 0.4s" }} />
-          <Image src="/stickers/airplane-sticker.png" alt="" width={60} height={60} className="icisco-sticker" draggable={false} style={{ top: "55%", left: "8%", opacity: 0.5, transform: "rotate(-18deg)", animation: "stickerFloat1 6s ease-in-out infinite 0.9s" }} />
-          <Image src="/stickers/bridge-sticker.png" alt="" width={35} height={35} className="icisco-sticker" draggable={false} style={{ top: "45%", right: "5%", opacity: 0.35, transform: "rotate(20deg)", animation: "stickerFloat2 5.5s ease-in-out infinite 2s" }} />
+          <Image src="/rebranding/stickers/axie-flying-sticker.png" alt="" width={100} height={88} className="icisco-sticker" draggable={false} style={{ top: "8%", right: "6%", opacity: 0.8, transform: "rotate(-10deg)", animation: "stickerFloat1 4s ease-in-out infinite" }} />
+          <Image src="/rebranding/stickers/axie-sleeping-sticker.png" alt="" width={110} height={96} className="icisco-sticker" draggable={false} style={{ bottom: "15%", left: "4%", opacity: 0.75, transform: "rotate(5deg)", animation: "stickerFloat2 3.5s ease-in-out infinite 0.3s" }} />
+          <Image src="/rebranding/stickers/axie-thinking-sticker.png" alt="" width={92} height={80} className="icisco-sticker" draggable={false} style={{ bottom: "10%", right: "8%", opacity: 0.8, transform: "rotate(-5deg)", animation: "stickerFloat3 4.5s ease-in-out infinite 0.5s" }} />
+          <Image src="/rebranding/stickers/axie-tired-sticker.png" alt="" width={86} height={75} className="icisco-sticker" draggable={false} style={{ top: "18%", left: "5%", opacity: 0.8, transform: "rotate(8deg)", animation: "stickerFloat2 5s ease-in-out infinite 1s" }} />
+          <Image src="/rebranding/stickers/axie-flying-sticker1.png" alt="" width={50} height={44} className="icisco-sticker" draggable={false} style={{ bottom: "32%", left: "18%", opacity: 0.45, transform: "rotate(15deg)", animation: "stickerFloat3 5.5s ease-in-out infinite 0.7s" }} />
+          <Image src="/rebranding/stickers/axie-sleeping-sticker1.png" alt="" width={62} height={54} className="icisco-sticker" draggable={false} style={{ top: "35%", right: "10%", opacity: 0.4, transform: "rotate(-8deg)", animation: "stickerFloat1 4.5s ease-in-out infinite 1.2s" }} />
+          <Image src="/rebranding/stickers/axie-thinking-sticker.png" alt="" width={46} height={40} className="icisco-sticker" draggable={false} style={{ top: "12%", left: "32%", opacity: 0.45, transform: "rotate(12deg)", animation: "stickerFloat2 5s ease-in-out infinite 1.8s" }} />
+          <Image src="/rebranding/stickers/axie-tired-sticker.png" alt="" width={44} height={38} className="icisco-sticker" draggable={false} style={{ bottom: "28%", right: "28%", opacity: 0.4, transform: "rotate(-12deg)", animation: "stickerFloat3 4s ease-in-out infinite 0.4s" }} />
+          <Image src="/rebranding/stickers/axie-flying-sticker.png" alt="" width={70} height={61} className="icisco-sticker" draggable={false} style={{ top: "55%", left: "8%", opacity: 0.5, transform: "rotate(-18deg)", animation: "stickerFloat1 6s ease-in-out infinite 0.9s" }} />
+          <Image src="/rebranding/stickers/axie-thinking-sticker.png" alt="" width={40} height={35} className="icisco-sticker" draggable={false} style={{ top: "45%", right: "5%", opacity: 0.35, transform: "rotate(20deg)", animation: "stickerFloat2 5.5s ease-in-out infinite 2s" }} />
         </div>
       )}
 
@@ -1068,13 +1050,13 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                       <>
                         <div className="icisco-idcard-face icisco-idcard-front">
                           <div className="icisco-idcard-top">
-                            <Image src="/cncp-logo-transparent.png" alt="" width={20} height={14} className="icisco-idcard-top-logo" draggable={false} />
+                            <Image src="/rebranding/logos/cncp-purple-logo.png" alt="" width={20} height={14} className="icisco-idcard-top-logo" draggable={false} />
                             <span className="icisco-idcard-top-title">Member ID</span>
-                            <Image src="/cncp-logo-transparent.png" alt="" width={20} height={14} className="icisco-idcard-top-logo" draggable={false} />
+                            <Image src="/rebranding/logos/cncp-purple-logo.png" alt="" width={20} height={14} className="icisco-idcard-top-logo" draggable={false} />
                           </div>
                           <div className="icisco-idcard-body">
                             <div className="icisco-idcard-avatar">
-                              <Image src="/cncp-logo-transparent.png" alt="CNCP" width={56} height={40} className="icisco-idcard-avatar-img" />
+                              <Image src="/rebranding/logos/cncp-purple-logo.png" alt="CNCP" width={56} height={40} className="icisco-idcard-avatar-img" />
                             </div>
                             <div className="icisco-idcard-info">
                               <p className="icisco-idcard-name">{person.first_name} {person.last_name}</p>
@@ -1123,7 +1105,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                         </div>
                         <div className="icisco-idcard-face icisco-idcard-back">
                           <div className="icisco-idcard-back-header">
-                            <Image src="/cncp-logo-transparent.png" alt="CNCP" width={40} height={28} draggable={false} />
+                            <Image src="/rebranding/logos/cncp-purple-logo.png" alt="CNCP" width={40} height={28} draggable={false} />
                             <span className="icisco-idcard-back-org">Cisco NetConnect PUP &ndash; Manila</span>
                           </div>
                           <p className="icisco-idcard-back-text">
@@ -1163,7 +1145,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
               <>
                 {/* Decorative logo */}
             <Image
-              src="/cncp-logo-transparent.png"
+              src="/rebranding/logos/cncp-purple-logo.png"
               alt=""
               width={80}
               height={56}
@@ -1177,8 +1159,10 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
               <Image
                 src={
                   idFinderPhase === "not-found"
-                    ? "/axolotl-confused.png"
-                    : "/waving-axolotl.png"
+                    ? "/rebranding/stickers/axie-tired-sticker.png"
+                    : idFinderPhase === "found"
+                      ? "/rebranding/stickers/axie-flying-sticker1.png"
+                      : "/rebranding/stickers/axie-thinking-sticker.png"
                 }
                 alt="Axie"
                 width={90}
@@ -1248,7 +1232,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                 <div className="icisco-idcard-face icisco-idcard-front">
                   <div className="icisco-idcard-top">
                     <Image
-                      src="/cncp-logo-transparent.png"
+                      src="/rebranding/logos/cncp-purple-logo.png"
                       alt=""
                       width={20}
                       height={14}
@@ -1257,7 +1241,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                     />
                     <span className="icisco-idcard-top-title">Member ID</span>
                     <Image
-                      src="/cncp-logo-transparent.png"
+                      src="/rebranding/logos/cncp-purple-logo.png"
                       alt=""
                       width={20}
                       height={14}
@@ -1268,7 +1252,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                   <div className="icisco-idcard-body">
                     <div className="icisco-idcard-avatar">
                       <Image
-                        src="/cncp-logo-transparent.png"
+                        src="/rebranding/logos/cncp-purple-logo.png"
                         alt="CNCP"
                         width={56}
                         height={40}
@@ -1442,7 +1426,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                 <div className="icisco-idcard-face icisco-idcard-back">
                   <div className="icisco-idcard-back-header">
                     <Image
-                      src="/cncp-logo-transparent.png"
+                      src="/rebranding/logos/cncp-purple-logo.png"
                       alt="CNCP"
                       width={40}
                       height={28}
@@ -1615,7 +1599,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                         onClick={() => setViewingPublicId(person.email)}
                       >
                         <div className="icisco-public-id-avatar">
-                          <Image src="/cncp-logo-transparent.png" alt="CNCP" width={32} height={22} draggable={false} />
+                          <Image src="/rebranding/logos/cncp-purple-logo.png" alt="CNCP" width={32} height={22} draggable={false} />
                         </div>
                         <p className="icisco-public-id-name">{person.first_name} {person.last_name}</p>
                         <p className="icisco-public-id-type">{person.membership_type}</p>
@@ -1636,16 +1620,16 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             </>
             )}
           </div>
-          <Image src="/stickers/airplane-sticker.png" alt="" width={60} height={60} className="icisco-sticker" draggable={false} style={{ top: "6%", right: "4%", opacity: 0.65, transform: "rotate(-8deg)", animation: "stickerFloat1 5s ease-in-out infinite 0.2s" }} />
-          <Image src="/stickers/wave-sticker.png" alt="" width={75} height={45} className="icisco-sticker" draggable={false} style={{ bottom: "6%", left: "3%", opacity: 0.6, transform: "rotate(4deg)", animation: "stickerFloat2 4s ease-in-out infinite 0.5s" }} />
-          <Image src="/stickers/bridge-sticker.png" alt="" width={55} height={55} className="icisco-sticker" draggable={false} style={{ bottom: "20%", right: "4%", opacity: 0.65, transform: "rotate(-6deg)", animation: "stickerFloat3 4.5s ease-in-out infinite 0.8s" }} />
-          <Image src="/stickers/pup-sticker.png" alt="" width={50} height={65} className="icisco-sticker" draggable={false} style={{ top: "15%", left: "3%", opacity: 0.6, transform: "rotate(6deg)", animation: "stickerFloat2 5s ease-in-out infinite 1s" }} />
-          <Image src="/stickers/airplane-sticker.png" alt="" width={30} height={30} className="icisco-sticker" draggable={false} style={{ bottom: "35%", left: "12%", opacity: 0.35, transform: "rotate(18deg)", animation: "stickerFloat1 5.5s ease-in-out infinite 1.5s" }} />
-          <Image src="/stickers/wave-sticker.png" alt="" width={45} height={27} className="icisco-sticker" draggable={false} style={{ top: "30%", right: "7%", opacity: 0.3, transform: "rotate(-10deg)", animation: "stickerFloat3 4.5s ease-in-out infinite 0.3s" }} />
-          <Image src="/stickers/bridge-sticker.png" alt="" width={28} height={28} className="icisco-sticker" draggable={false} style={{ top: "8%", left: "35%", opacity: 0.35, transform: "rotate(14deg)", animation: "stickerFloat2 6s ease-in-out infinite 2s" }} />
-          <Image src="/stickers/pup-sticker.png" alt="" width={25} height={35} className="icisco-sticker" draggable={false} style={{ bottom: "30%", right: "32%", opacity: 0.3, transform: "rotate(-15deg)", animation: "stickerFloat3 4s ease-in-out infinite 0.6s" }} />
-          <Image src="/stickers/airplane-sticker.png" alt="" width={40} height={40} className="icisco-sticker" draggable={false} style={{ top: "55%", left: "6%", opacity: 0.4, transform: "rotate(-20deg)", animation: "stickerFloat1 5s ease-in-out infinite 1.8s" }} />
-          <Image src="/stickers/bridge-sticker.png" alt="" width={22} height={22} className="icisco-sticker" draggable={false} style={{ top: "42%", right: "4%", opacity: 0.3, transform: "rotate(22deg)", animation: "stickerFloat2 6.5s ease-in-out infinite 2.5s" }} />
+          <Image src="/rebranding/stickers/axie-flying-sticker.png" alt="" width={70} height={61} className="icisco-sticker" draggable={false} style={{ top: "6%", right: "4%", opacity: 0.65, transform: "rotate(-8deg)", animation: "stickerFloat1 5s ease-in-out infinite 0.2s" }} />
+          <Image src="/rebranding/stickers/axie-sleeping-sticker.png" alt="" width={86} height={75} className="icisco-sticker" draggable={false} style={{ bottom: "6%", left: "3%", opacity: 0.6, transform: "rotate(4deg)", animation: "stickerFloat2 4s ease-in-out infinite 0.5s" }} />
+          <Image src="/rebranding/stickers/axie-thinking-sticker.png" alt="" width={63} height={55} className="icisco-sticker" draggable={false} style={{ bottom: "20%", right: "4%", opacity: 0.65, transform: "rotate(-6deg)", animation: "stickerFloat3 4.5s ease-in-out infinite 0.8s" }} />
+          <Image src="/rebranding/stickers/axie-tired-sticker.png" alt="" width={57} height={50} className="icisco-sticker" draggable={false} style={{ top: "15%", left: "3%", opacity: 0.6, transform: "rotate(6deg)", animation: "stickerFloat2 5s ease-in-out infinite 1s" }} />
+          <Image src="/rebranding/stickers/axie-flying-sticker1.png" alt="" width={35} height={31} className="icisco-sticker" draggable={false} style={{ bottom: "35%", left: "12%", opacity: 0.35, transform: "rotate(18deg)", animation: "stickerFloat1 5.5s ease-in-out infinite 1.5s" }} />
+          <Image src="/rebranding/stickers/axie-sleeping-sticker1.png" alt="" width={52} height={46} className="icisco-sticker" draggable={false} style={{ top: "30%", right: "7%", opacity: 0.3, transform: "rotate(-10deg)", animation: "stickerFloat3 4.5s ease-in-out infinite 0.3s" }} />
+          <Image src="/rebranding/stickers/axie-thinking-sticker.png" alt="" width={32} height={28} className="icisco-sticker" draggable={false} style={{ top: "8%", left: "35%", opacity: 0.35, transform: "rotate(14deg)", animation: "stickerFloat2 6s ease-in-out infinite 2s" }} />
+          <Image src="/rebranding/stickers/axie-tired-sticker.png" alt="" width={30} height={26} className="icisco-sticker" draggable={false} style={{ bottom: "30%", right: "32%", opacity: 0.3, transform: "rotate(-15deg)", animation: "stickerFloat3 4s ease-in-out infinite 0.6s" }} />
+          <Image src="/rebranding/stickers/axie-flying-sticker.png" alt="" width={47} height={41} className="icisco-sticker" draggable={false} style={{ top: "55%", left: "6%", opacity: 0.4, transform: "rotate(-20deg)", animation: "stickerFloat1 5s ease-in-out infinite 1.8s" }} />
+          <Image src="/rebranding/stickers/axie-thinking-sticker.png" alt="" width={26} height={23} className="icisco-sticker" draggable={false} style={{ top: "42%", right: "4%", opacity: 0.3, transform: "rotate(22deg)", animation: "stickerFloat2 6.5s ease-in-out infinite 2.5s" }} />
         </div>
       )}
 
@@ -1675,7 +1659,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             >
               <div className="icisco-counter-head">
                 <Image
-                  src="/cncp-logo-transparent.png"
+                  src="/rebranding/logos/cncp-purple-logo.png"
                   alt=""
                   width={44}
                   height={31}
