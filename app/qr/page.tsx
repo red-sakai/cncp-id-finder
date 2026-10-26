@@ -101,7 +101,7 @@ export default function QRPage() {
         <div className="qr-login-card">
           <div className="qr-login-logo-wrap">
             <Image
-              src="/cncp-logo-transparent.png"
+              src="/rebranding/logos/cncp-purple-logo.png"
               alt="CNCP Logo"
               width={64}
               height={45}
@@ -566,12 +566,12 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
     QRCode.toCanvas(canvasRef.current, scanUrl, {
       width: 256,
       margin: 2,
-      color: { dark: "#1a2a3a", light: "#ffffff" },
+      color: { dark: "#1d1240", light: "#ffffff" },
     });
     QRCode.toDataURL(scanUrl, {
       width: 256,
       margin: 2,
-      color: { dark: "#1a2a3a", light: "#ffffff" },
+      color: { dark: "#1d1240", light: "#ffffff" },
     }).then(setQrUrl);
   }, [scanUrl, token]);
 
@@ -590,7 +590,7 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
         <header className="qr-admin-header">
           <div className="qr-admin-header-left">
             <Image
-              src="/cncp-logo-transparent.png"
+              src="/rebranding/logos/cncp-purple-logo.png"
               alt="CNCP Logo"
               width={32}
               height={22}

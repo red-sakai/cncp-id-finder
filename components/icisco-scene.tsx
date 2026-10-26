@@ -52,6 +52,18 @@ type Wallet = {
   phone: string;
 };
 
+type PurchaseState = {
+  item: ShopItem;
+  phase: "confirm" | "paying" | "success" | "error";
+  balance: number | null;
+  shortBy: number;
+  error: string | null;
+  requestId: string;
+  duplicate: boolean;
+};
+
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
 const DIALOGUE_LINES = [
   "Welcome to iCisco! I'm Axie, your guide!",
   "This is the iCisco iPad \u2014 your gateway to everything Cisco NetConnect!",
@@ -129,10 +141,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   // number on file both match, so a borrowed email can't spend anyone's coins.
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
   const [shopLoading, setShopLoading] = useState(false);
-  const [buyingId, setBuyingId] = useState<string | null>(null);
-  const [shopMessage, setShopMessage] = useState<
-    { kind: "error" | "ok"; text: string } | null
-  >(null);
+  const [purchase, setPurchase] = useState<PurchaseState | null>(null);
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [walletEmail, setWalletEmail] = useState("");
   const [walletPhone, setWalletPhone] = useState("");
@@ -141,10 +150,13 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   // Guest cards send people back to the sign-in slip, so the email field is
   // the target rather than a second copy of the form.
   const shopEmailRef = useRef<HTMLInputElement>(null);
+  const purchaseReturnFocusRef = useRef<HTMLElement | null>(null);
+  const purchasePrimaryRef = useRef<HTMLButtonElement>(null);
+  const purchaseDialogRef = useRef<HTMLDivElement>(null);
 
   const openShop = useCallback(() => {
     setActiveApp("shop");
-    setShopMessage(null);
+    setPurchase(null);
     setShopLoading(true);
     fetch("/api/shop")
       .then((r) => r.json())
@@ -158,7 +170,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     setWallet(null);
     setWalletError(null);
     setWalletPhone("");
-    setShopMessage(null);
+    setPurchase(null);
   }, []);
 
   const openWallet = useCallback(async () => {
@@ -183,7 +195,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
         setWallet({ ...(body.member as Omit<Wallet, "phone">), phone });
         setWalletEmail("");
         setWalletPhone("");
-        setShopMessage(null);
+        setPurchase(null);
       } else {
         setWalletError(
           typeof body.error === "string" && body.error
@@ -198,52 +210,152 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     }
   }, [walletEmail, walletPhone]);
 
-  const buyItem = useCallback(
-    async (item: ShopItem) => {
-      if (!wallet || buyingId) return;
-      setBuyingId(item.id);
-      setShopMessage(null);
+  const closePurchase = useCallback(() => {
+    setPurchase((current) =>
+      current?.phase === "paying" ? current : null
+    );
+  }, []);
+
+  useEffect(() => {
+    if (!purchase) {
+      const trigger = purchaseReturnFocusRef.current;
+      purchaseReturnFocusRef.current = null;
+      trigger?.focus();
+      return;
+    }
+    const timer = setTimeout(() => {
+      if (purchase.phase === "paying") {
+        purchaseDialogRef.current?.focus();
+        return;
+      }
+      purchasePrimaryRef.current?.focus();
+    }, 30);
+    return () => clearTimeout(timer);
+  }, [purchase]);
+
+  useEffect(() => {
+    if (!purchase) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.stopPropagation();
+      closePurchase();
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [purchase, closePurchase]);
+
+  const startPurchase = useCallback(
+    (item: ShopItem, trigger: HTMLElement | null) => {
+      if (!wallet) return;
+      purchaseReturnFocusRef.current = trigger;
+      const balance =
+        typeof wallet.ciscoins === "number" ? wallet.ciscoins : null;
+      const shortBy =
+        balance !== null ? Math.max(item.price - balance, 0) : 0;
+      setPurchase({
+        item,
+        phase: shortBy > 0 ? "error" : "confirm",
+        balance,
+        shortBy,
+        error:
+          shortBy > 0
+            ? `Not enough Ciscoins. You need ${shortBy.toLocaleString(
+                "en-US"
+              )} more.`
+            : null,
+        requestId: crypto.randomUUID(),
+        duplicate: false,
+      });
+    },
+    [wallet]
+  );
+
+  const runPurchase = useCallback(
+    async (current: PurchaseState, walletSnapshot: Wallet) => {
+      setPurchase({ ...current, phase: "paying", error: null });
+      const startedAt = Date.now();
       try {
         const res = await fetch("/api/shop/purchase", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            email: wallet.email,
-            phone: wallet.phone,
-            itemId: item.id,
-            requestId: crypto.randomUUID(),
+            email: walletSnapshot.email,
+            phone: walletSnapshot.phone,
+            itemId: current.item.id,
+            requestId: current.requestId,
           }),
         });
         const body = await res.json().catch(() => ({}));
+        const remaining = 900 - (Date.now() - startedAt);
+        if (remaining > 0) await wait(remaining);
+
         if (res.ok && body.ok) {
-          const balance: number = body.balance;
+          const balance =
+            typeof body.balance === "number"
+              ? body.balance
+              : Math.max((current.balance ?? 0) - current.item.price, 0);
           setWallet((prev) => (prev ? { ...prev, ciscoins: balance } : prev));
-          setShopMessage({
-            kind: "ok",
-            text: `Handed over ${body.item}. ${balance.toLocaleString(
-              "en-US"
-            )} Ciscoins left.`,
+          setPurchase({
+            ...current,
+            phase: "success",
+            balance,
+            shortBy: 0,
+            error: null,
+            duplicate: body.duplicate === true,
           });
-        } else {
-          setShopMessage({
-            kind: "error",
-            text:
-              typeof body.error === "string" && body.error
-                ? body.error
-                : "Purchase could not be completed. Please try again.",
-          });
+          return;
         }
-      } catch {
-        setShopMessage({
-          kind: "error",
-          text: "Network error. Please try again.",
+
+        const balance =
+          typeof body.balance === "number" ? body.balance : current.balance;
+        if (typeof body.balance === "number") {
+          setWallet((prev) =>
+            prev ? { ...prev, ciscoins: body.balance } : prev
+          );
+        }
+        const shortBy =
+          balance !== null
+            ? Math.max(current.item.price - balance, 0)
+            : 0;
+        setPurchase({
+          ...current,
+          phase: "error",
+          balance,
+          shortBy,
+          error:
+            typeof body.error === "string" && body.error
+              ? body.error
+              : "Purchase could not be completed. Please try again.",
         });
-      } finally {
-        setBuyingId(null);
+      } catch {
+        const remaining = 900 - (Date.now() - startedAt);
+        if (remaining > 0) await wait(remaining);
+        setPurchase({
+          ...current,
+          phase: "error",
+          error: "Network error. Please try again.",
+        });
       }
     },
-    [buyingId, wallet]
+    []
   );
+
+  const confirmPurchase = useCallback(() => {
+    if (!purchase || purchase.phase !== "confirm" || !wallet) return;
+    void runPurchase(purchase, wallet);
+  }, [purchase, wallet, runPurchase]);
+
+  const retryPurchase = useCallback(() => {
+    if (
+      !purchase ||
+      purchase.phase !== "error" ||
+      !wallet ||
+      purchase.shortBy > 0
+    ) {
+      return;
+    }
+    void runPurchase(purchase, wallet);
+  }, [purchase, wallet, runPurchase]);
 
   const handleLookup = useCallback(async () => {
     const email = emailInput.trim();
@@ -785,6 +897,15 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     : isWalk
       ? "/rebranding/stickers/axie-flying-sticker.png"
       : "/rebranding/stickers/axie-flying-sticker1.png";
+
+  const purchaseImage =
+    purchase?.item.image_url?.startsWith("/") === true
+      ? purchase.item.image_url
+      : null;
+  const purchaseCanRetry =
+    purchase?.phase === "error" &&
+    purchase.shortBy === 0 &&
+    !/no longer available|does not exist/i.test(purchase.error ?? "");
 
   useEffect(() => {
     if (activeApp) {
@@ -1833,15 +1954,6 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             )}
           </div>
 
-          {shopMessage && (
-            <p
-              className={`icisco-shop-msg ${shopMessage.kind}`}
-              role={shopMessage.kind === "error" ? "alert" : "status"}
-            >
-              {shopMessage.text}
-            </p>
-          )}
-
           {shopLoading ? (
             <>
               <p className="icisco-shop-hint" role="status">
@@ -1968,12 +2080,12 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                           <button
                             type="button"
                             className="icisco-shop-btn"
-                            disabled={buyingId !== null || !affordable}
-                            onClick={() => buyItem(item)}
+                            disabled={!balanceKnown}
+                            onClick={(event) =>
+                              startPurchase(item, event.currentTarget)
+                            }
                           >
-                            {buyingId === item.id
-                              ? "Paying…"
-                              : !balanceKnown
+                            {!balanceKnown
                               ? "Balance unavailable"
                               : affordable
                               ? "Buy"

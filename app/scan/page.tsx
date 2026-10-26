@@ -109,7 +109,7 @@ function ScanForm() {
       <div className="scan-page">
         <div className="scan-card">
           <Image
-            src="/cncp-logo-transparent.png"
+            src="/rebranding/logos/cncp-purple-logo.png"
             alt="CNCP Logo"
             width={72}
             height={50}
@@ -129,7 +129,7 @@ function ScanForm() {
     <div className="scan-page">
       <div className="scan-card">
         <Image
-          src="/cncp-logo-transparent.png"
+          src="/rebranding/logos/cncp-purple-logo.png"
           alt="CNCP Logo"
           width={72}
           height={50}
