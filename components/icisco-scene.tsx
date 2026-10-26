@@ -8,6 +8,7 @@ import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import QRCode from "qrcode";
 import WireZipGame from "@/components/wirezip-game";
+import { useBadgeDefinitions } from "@/lib/badge-definitions";
 
 let cachedGltf: GLTF | null = null;
 
@@ -34,6 +35,23 @@ const CLOSE_DUR = 1.8;
 
 type Phase = "anim" | "logo" | "peek" | "walk" | "talk" | "home";
 
+type ShopItem = {
+  id: string;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+  price: number;
+};
+
+type Wallet = {
+  first_name: string;
+  last_name: string;
+  email: string;
+  ciscoins: number | null;
+  // Kept in memory only: every purchase has to prove the number again.
+  phone: string;
+};
+
 const DIALOGUE_LINES = [
   "Welcome to iCisco! I'm Axie, your guide!",
   "This is the iCisco iPad \u2014 your gateway to everything Cisco NetConnect!",
@@ -55,9 +73,9 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const [walkFrame, setWalkFrame] = useState<"left" | "right">("left");
 
   // ID Finder app state
-  const [activeApp, setActiveApp] = useState<null | "id-finder" | "games">(
-    null
-  );
+  const [activeApp, setActiveApp] = useState<
+    null | "id-finder" | "games" | "shop"
+  >(null);
   const [idFinderPhase, setIdFinderPhase] = useState<
     "prompt" | "found" | "not-found"
   >("prompt");
@@ -69,6 +87,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     course_year_section: string;
     membership_type: string;
     badges: { badge_id: string; awarded_at: string; awarded_by?: string }[];
+    ciscoins: number | null;
     card_style: string;
     is_public: boolean;
   } | null>(null);
@@ -82,6 +101,8 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const [badgeMeta, setBadgeMeta] = useState<Record<string, { awarded_by?: string; awarded_at?: string }>>({});
   const [showCongrats, setShowCongrats] = useState(false);
   const [awardError, setAwardError] = useState(false);
+  const [awardErrorMsg, setAwardErrorMsg] = useState<string | null>(null);
+  const [awardedCiscoins, setAwardedCiscoins] = useState(0);
   const [congratsBadge, setCongratsBadge] = useState<string>("welcome-to-cisco");
   const [selectedBadge, setSelectedBadge] = useState<string | null>(null);
   const [zoomedBadgeImg, setZoomedBadgeImg] = useState<{ src: string; alt: string } | null>(null);
@@ -101,6 +122,126 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const [publicToggleLoading, setPublicToggleLoading] = useState(false);
   const [publicToggleError, setPublicToggleError] = useState<string | null>(null);
   const [savedSignatureUrl, setSavedSignatureUrl] = useState<string | null>(null);
+  // The congrats card waits for badgeDefsReady so it never flashes a guessed
+  // badge name while the definitions are still loading.
+  const { ready: badgeDefsReady, badgeFor } = useBadgeDefinitions();
+
+  // Shop app state: the wallet stays locked until the email AND the phone
+  // number on file both match, so a borrowed email can't spend anyone's coins.
+  const [shopItems, setShopItems] = useState<ShopItem[]>([]);
+  const [shopLoading, setShopLoading] = useState(false);
+  const [buyingId, setBuyingId] = useState<string | null>(null);
+  const [shopMessage, setShopMessage] = useState<
+    { kind: "error" | "ok"; text: string } | null
+  >(null);
+  const [wallet, setWallet] = useState<Wallet | null>(null);
+  const [walletEmail, setWalletEmail] = useState("");
+  const [walletPhone, setWalletPhone] = useState("");
+  const [walletLoading, setWalletLoading] = useState(false);
+  const [walletError, setWalletError] = useState<string | null>(null);
+
+  const openShop = useCallback(() => {
+    setActiveApp("shop");
+    setShopMessage(null);
+    setShopLoading(true);
+    fetch("/api/shop")
+      .then((r) => r.json())
+      .then((d) => setShopItems(Array.isArray(d.items) ? d.items : []))
+      .catch(() => setShopItems([]))
+      .finally(() => setShopLoading(false));
+  }, []);
+
+  // The tablet is shared, so leaving the shop locks the wallet behind it.
+  const lockWallet = useCallback(() => {
+    setWallet(null);
+    setWalletError(null);
+    setWalletPhone("");
+    setShopMessage(null);
+  }, []);
+
+  const openWallet = useCallback(async () => {
+    const email = walletEmail.trim();
+    const phone = walletPhone.trim();
+    if (!email || phone.replace(/\D/g, "").length < 7) {
+      setWalletError(
+        "Enter the email address and the phone number on the account."
+      );
+      return;
+    }
+    setWalletLoading(true);
+    setWalletError(null);
+    try {
+      const res = await fetch("/api/shop/wallet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, phone }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (res.ok && body.ok) {
+        setWallet({ ...(body.member as Omit<Wallet, "phone">), phone });
+        setWalletEmail("");
+        setWalletPhone("");
+        setShopMessage(null);
+      } else {
+        setWalletError(
+          typeof body.error === "string" && body.error
+            ? body.error
+            : "Could not open the wallet. Please try again."
+        );
+      }
+    } catch {
+      setWalletError("Network error. Please try again.");
+    } finally {
+      setWalletLoading(false);
+    }
+  }, [walletEmail, walletPhone]);
+
+  const buyItem = useCallback(
+    async (item: ShopItem) => {
+      if (!wallet || buyingId) return;
+      setBuyingId(item.id);
+      setShopMessage(null);
+      try {
+        const res = await fetch("/api/shop/purchase", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: wallet.email,
+            phone: wallet.phone,
+            itemId: item.id,
+            requestId: crypto.randomUUID(),
+          }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (res.ok && body.ok) {
+          const balance: number = body.balance;
+          setWallet((prev) => (prev ? { ...prev, ciscoins: balance } : prev));
+          setShopMessage({
+            kind: "ok",
+            text: `Handed over ${body.item}. ${balance.toLocaleString(
+              "en-US"
+            )} Ciscoins left.`,
+          });
+        } else {
+          setShopMessage({
+            kind: "error",
+            text:
+              typeof body.error === "string" && body.error
+                ? body.error
+                : "Purchase could not be completed. Please try again.",
+          });
+        }
+      } catch {
+        setShopMessage({
+          kind: "error",
+          text: "Network error. Please try again.",
+        });
+      } finally {
+        setBuyingId(null);
+      }
+    },
+    [buyingId, wallet]
+  );
 
   const handleLookup = useCallback(async () => {
     const email = emailInput.trim();
@@ -558,6 +699,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     const by = searchParams.get("by");
     if (awarded && email && awardedRef.current !== awarded) {
       awardedRef.current = awarded;
+      const scanToken = sessionStorage.getItem("cncp-scan-token");
       sessionStorage.removeItem("cncp-scan-token");
       setActiveApp("id-finder");
       setEmailInput(email);
@@ -607,14 +749,34 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             const awardRes = await fetch("/api/badges", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email, badgeId: awarded, awardedBy: validBy }),
+              body: JSON.stringify({
+                email,
+                badgeId: awarded,
+                awardedBy: validBy,
+                token: scanToken,
+              }),
             });
             if (awardRes.ok) {
+              const awardBody = await awardRes.json().catch(() => ({}));
+              const credited =
+                typeof awardBody.ciscoins === "number" ? awardBody.ciscoins : 0;
+              setAwardedCiscoins(credited);
+              if (credited > 0) {
+                setLookupResult((prev) =>
+                  prev
+                    ? { ...prev, ciscoins: (prev.ciscoins ?? 0) + credited }
+                    : prev
+                );
+              }
               setEarnedBadges((prev) => new Set([...prev, awarded]));
               setCongratsBadge(awarded);
               setShowCongrats(true);
               setTimeout(() => setShowCongrats(false), 4000);
             } else {
+              const awardBody = await awardRes.json().catch(() => ({}));
+              setAwardErrorMsg(
+                typeof awardBody.error === "string" && awardBody.error ? awardBody.error : null
+              );
               setAwardError(true);
               setTimeout(() => setAwardError(false), 6000);
             }
@@ -794,6 +956,16 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
               </span>
               <span className="icisco-app-label">Games</span>
             </button>
+            <button
+              type="button"
+              className="icisco-app"
+              onClick={openShop}
+            >
+              <span className="icisco-app-icon icisco-app-tile" aria-hidden="true">
+                <span className="icisco-app-glyph">🛍️</span>
+              </span>
+              <span className="icisco-app-label">Shop</span>
+            </button>
           </div>
           <Image src="/stickers/airplane-sticker.png" alt="" width={85} height={85} className="icisco-sticker" draggable={false} style={{ top: "8%", right: "6%", opacity: 0.8, transform: "rotate(-10deg)", animation: "stickerFloat1 4s ease-in-out infinite" }} />
           <Image src="/stickers/wave-sticker.png" alt="" width={95} height={55} className="icisco-sticker" draggable={false} style={{ bottom: "15%", left: "4%", opacity: 0.75, transform: "rotate(5deg)", animation: "stickerFloat2 3.5s ease-in-out infinite 0.3s" }} />
@@ -815,12 +987,10 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
               type="button"
               className="icisco-app-back"
               onClick={() => {
+                // Keep the looked-up member alive: the Shop spends on whoever
+                // is currently looked up, and "Look up another" is the reset.
                 setActiveApp(null);
-                setLookupResult(null);
                 setLookupError(null);
-                setEmailInput("");
-                setIdFinderPhase("prompt");
-                setQrDataUrl("");
               }}
               aria-label="Back to home"
             >
@@ -829,12 +999,8 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             <span className="icisco-app-title">ID Finder</span>
           </div>
 
-          {showCongrats && (() => {
-            const badgeInfo: Record<string, { img: string; name: string }> = {
-              "welcome-to-cisco": { img: "/badges/welcome-to-cisco-badge.png", name: "Welcome to Cisco" },
-              "golden-alumni": { img: "/badges/golden-alumni-badge.png", name: "Golden Alumni" },
-            };
-            const info = badgeInfo[congratsBadge] ?? badgeInfo["welcome-to-cisco"];
+          {showCongrats && badgeDefsReady && (() => {
+            const info = badgeFor(congratsBadge);
             const awardedByName = badgeMeta[congratsBadge]?.awarded_by;
             return (
               <div className="icisco-congrats-overlay">
@@ -847,18 +1013,31 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                   <div className="icisco-confetti" />
                   <div className="icisco-confetti" />
                   <div className="icisco-confetti" />
-                  <Image
-                    src={info.img}
-                    alt={`${info.name} Badge`}
-                    width={80}
-                    height={80}
-                    className="icisco-congrats-badge"
-                    draggable={false}
-                  />
+                  {info && (
+                    <Image
+                      src={info.img}
+                      alt={`${info.name} Badge`}
+                      width={80}
+                      height={80}
+                      className="icisco-congrats-badge"
+                      draggable={false}
+                    />
+                  )}
                   <p className="icisco-congrats-title">Congratulations!</p>
                   <p className="icisco-congrats-text">
-                    You earned the {info.name} badge!
+                    {info ? (
+                      <>
+                        You earned the {info.name} badge!
+                      </>
+                    ) : (
+                      <>You earned a new badge!</>
+                    )}
                   </p>
+                  {awardedCiscoins > 0 && (
+                    <p className="icisco-congrats-ciscoins">
+                      +{awardedCiscoins.toLocaleString("en-US")} Ciscoins
+                    </p>
+                  )}
                   {awardedByName && (
                     <p className="icisco-congrats-awarded-by">
                       Awarded by {awardedByName}
@@ -900,15 +1079,34 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                           <div className="icisco-idcard-badges">
                             <span className="icisco-idcard-badges-title">Badges</span>
                             <div className="icisco-idcard-badge-slots">
-                              <div className={`icisco-idcard-badge-slot ${personBadges.has("welcome-to-cisco") ? "earned" : ""}`}>
-                                {personBadges.has("welcome-to-cisco") ? (
-                                  <Image src="/badges/welcome-to-cisco-badge.png" alt="Welcome to Cisco" width={36} height={36} className="icisco-idcard-badge-img" draggable={false} />
-                                ) : (
-                                  <div className="icisco-idcard-badge-icon-wrap">?</div>
-                                )}
-                              </div>
-                              <div className="icisco-idcard-badge-slot"><div className="icisco-idcard-badge-icon-wrap">?</div></div>
-                              <div className="icisco-idcard-badge-slot"><div className="icisco-idcard-badge-icon-wrap">?</div></div>
+                              {(() => {
+                                const totalSlots = 3;
+                                const slots: ({ id: string; img: string; name: string } | null)[] = [];
+                                for (const id of personBadges) {
+                                  const info = badgeFor(id);
+                                  if (info) slots.push({ id, img: info.img, name: info.name });
+                                }
+                                while (slots.length < totalSlots) slots.push(null);
+                                return slots.map((slot, i) => (
+                                  <div
+                                    key={slot ? slot.id : `empty-${i}`}
+                                    className={`icisco-idcard-badge-slot ${slot ? "earned" : ""}`}
+                                  >
+                                    {slot ? (
+                                      <Image
+                                        src={slot.img}
+                                        alt={slot.name}
+                                        width={36}
+                                        height={36}
+                                        className="icisco-idcard-badge-img"
+                                        draggable={false}
+                                      />
+                                    ) : (
+                                      <div className="icisco-idcard-badge-icon-wrap">?</div>
+                                    )}
+                                  </div>
+                                ));
+                              })()}
                             </div>
                           </div>
                           <div className="icisco-idcard-footer">
@@ -1021,6 +1219,16 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
               </form>
             )}
 
+            {/* Ciscoins balance */}
+            {lookupResult && typeof lookupResult.ciscoins === "number" && (
+              <div className="icisco-balance-chip">
+                <span className="icisco-balance-amount">
+                  {lookupResult.ciscoins.toLocaleString("en-US")}
+                </span>
+                <span className="icisco-balance-label">Ciscoins balance</span>
+              </div>
+            )}
+
             {/* ID Card */}
             {lookupResult && (
               <div
@@ -1092,17 +1300,13 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                     </span>
                     <div className="icisco-idcard-badge-slots">
                       {(() => {
-                        const allBadgeInfo: Record<string, { img: string; name: string }> = {
-                          "welcome-to-cisco": { img: "/badges/welcome-to-cisco-badge.png", name: "Welcome to Cisco" },
-                          "golden-alumni": { img: "/badges/golden-alumni-badge.png", name: "Golden Alumni" },
-                        };
                         const totalSlots = 3;
                         const earned = Array.from(earnedBadges)
                           .map((id) => ({ id, at: badgeMeta[id]?.awarded_at ?? "" }))
                           .sort((a, b) => a.at.localeCompare(b.at));
                         const slots: ({ id: string; img: string; name: string } | null)[] = [];
                         for (const e of earned) {
-                          const info = allBadgeInfo[e.id];
+                          const info = badgeFor(e.id);
                           if (info) slots.push({ id: e.id, img: info.img, name: info.name });
                         }
                         while (slots.length < totalSlots) slots.push(null);
@@ -1136,7 +1340,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
               <div className="icisco-congrats-card icisco-award-error-card">
                 <p className="icisco-congrats-title">Claim not saved</p>
                 <p className="icisco-congrats-text">
-                  We couldn&apos;t record your badge. Please try scanning again.
+                  {awardErrorMsg ?? "We couldn't record your badge. Please try scanning again."}
                 </p>
               </div>
             </div>
@@ -1161,22 +1365,11 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                   </div>
                 </div>
 
-                {selectedBadge && createPortal((() => {
-                  const badgeInfo: Record<string, { img: string; name: string; desc: string }> = {
-                    "welcome-to-cisco": {
-                      img: "/badges/welcome-to-cisco-badge.png",
-                      name: "Welcome to Cisco",
-                      desc: "Awarded to new members who join Cisco NetConnect PUP \u2013 Manila. Welcome to the community!",
-                    },
-                    "golden-alumni": {
-                      img: "/badges/golden-alumni-badge.png",
-                      name: "Golden Alumni",
-                      desc: "Awarded to distinguished alumni of Cisco NetConnect PUP \u2013 Manila for their continued excellence and contributions.",
-                    },
-                  };
-                  const info = badgeInfo[selectedBadge] ?? badgeInfo["welcome-to-cisco"];
+                {selectedBadge && (() => {
+                  const info = badgeFor(selectedBadge);
+                  if (!info) return null;
                   const meta = badgeMeta[selectedBadge];
-                  return (
+                  return createPortal(
                     <div className="icisco-badge-modal" onClick={(e) => { e.stopPropagation(); setSelectedBadge(null); }}>
                       <div className="icisco-badge-modal-card" onClick={(e) => e.stopPropagation()}>
                         <button
@@ -1206,9 +1399,10 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                           </p>
                         )}
                       </div>
-                    </div>
+                    </div>,
+                    document.body
                   );
-                })(), document.body)}
+                })()}
 
                 {zoomedBadgeImg && createPortal(
                   <div className="icisco-badge-zoom-overlay" onClick={(e) => { e.stopPropagation(); setZoomedBadgeImg(null); }}>
@@ -1418,9 +1612,12 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                         <p className="icisco-public-id-name">{person.first_name} {person.last_name}</p>
                         <p className="icisco-public-id-type">{person.membership_type}</p>
                         <div className="icisco-public-id-badges">
-                          {(person.badges ?? []).map((b) => (
-                            <Image key={b} src="/badges/welcome-to-cisco-badge.png" alt="Badge" width={18} height={18} draggable={false} />
-                          ))}
+                          {(person.badges ?? []).map((b) => {
+                            const info = badgeFor(b);
+                            return info ? (
+                              <Image key={b} src={info.img} alt={info.name} width={18} height={18} draggable={false} />
+                            ) : null;
+                          })}
                         </div>
                       </button>
                     ))}
@@ -1441,6 +1638,243 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
           <Image src="/stickers/pup-sticker.png" alt="" width={25} height={35} className="icisco-sticker" draggable={false} style={{ bottom: "30%", right: "32%", opacity: 0.3, transform: "rotate(-15deg)", animation: "stickerFloat3 4s ease-in-out infinite 0.6s" }} />
           <Image src="/stickers/airplane-sticker.png" alt="" width={40} height={40} className="icisco-sticker" draggable={false} style={{ top: "55%", left: "6%", opacity: 0.4, transform: "rotate(-20deg)", animation: "stickerFloat1 5s ease-in-out infinite 1.8s" }} />
           <Image src="/stickers/bridge-sticker.png" alt="" width={22} height={22} className="icisco-sticker" draggable={false} style={{ top: "42%", right: "4%", opacity: 0.3, transform: "rotate(22deg)", animation: "stickerFloat2 6.5s ease-in-out infinite 2.5s" }} />
+        </div>
+      )}
+
+      {activeApp === "shop" && !closing && (
+        <div className="icisco-app-screen">
+          <div className="icisco-app-bar">
+            <button
+              type="button"
+              className="icisco-app-back"
+              onClick={() => {
+                setActiveApp(null);
+                lockWallet();
+              }}
+              aria-label="Back to home"
+            >
+              &#9664;
+            </button>
+            <span className="icisco-app-title">Shop</span>
+          </div>
+
+          {!wallet ? (
+            <div className="icisco-shop-empty">
+              <div className="icisco-wallet-brand">
+                <Image
+                  src="/cncp-logo-transparent.png"
+                  alt=""
+                  width={46}
+                  height={33}
+                  className="icisco-wallet-brand-img"
+                  draggable={false}
+                />
+                <span className="icisco-wallet-brand-text">
+                  <span className="icisco-wallet-brand-name">Ciscoins Wallet</span>
+                  <span className="icisco-wallet-brand-sub">
+                    Cisco NetConnect PUP - Manila
+                  </span>
+                </span>
+              </div>
+
+              <div className="icisco-shop-panel">
+                <p className="icisco-shop-empty-title">Open your wallet</p>
+                <p className="icisco-shop-empty-text">
+                  Type the email address and phone number on your account. That is
+                  how we know the Ciscoins are yours.
+                </p>
+                <form
+                  className="icisco-shop-form"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    openWallet();
+                  }}
+                >
+                  <label className="icisco-shop-label" htmlFor="shop-wallet-email">
+                    Email address
+                  </label>
+                  <input
+                    id="shop-wallet-email"
+                    className="icisco-shop-input"
+                    type="email"
+                    autoComplete="off"
+                    placeholder="you@example.com"
+                    value={walletEmail}
+                    disabled={walletLoading}
+                    onChange={(e) => {
+                      setWalletEmail(e.target.value);
+                      setWalletError(null);
+                    }}
+                  />
+                  <label className="icisco-shop-label" htmlFor="shop-wallet-phone">
+                    Phone number
+                  </label>
+                  <input
+                    id="shop-wallet-phone"
+                    className="icisco-shop-input"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="off"
+                    placeholder="09XX XXX XXXX"
+                    value={walletPhone}
+                    disabled={walletLoading}
+                    aria-describedby="shop-wallet-phone-hint"
+                    onChange={(e) => {
+                      setWalletPhone(e.target.value);
+                      setWalletError(null);
+                    }}
+                  />
+                  <p className="icisco-shop-field-hint" id="shop-wallet-phone-hint">
+                    Checked against the number saved on your CNCP ID.
+                  </p>
+                  {walletError && (
+                    <p className="icisco-shop-msg error" role="alert">
+                      {walletError}
+                    </p>
+                  )}
+                  <button
+                    type="submit"
+                    className="icisco-shop-cta"
+                    disabled={walletLoading}
+                  >
+                    {walletLoading ? "Checking…" : "Open my wallet"}
+                  </button>
+                </form>
+              </div>
+
+              <button
+                type="button"
+                className="icisco-shop-link"
+                onClick={() => setActiveApp("id-finder")}
+              >
+                No CNCP ID yet? Open ID Finder
+              </button>
+
+              <Image
+                src="/waving-axolotl.png"
+                alt=""
+                width={120}
+                height={120}
+                className="icisco-wallet-mascot"
+                draggable={false}
+              />
+            </div>
+          ) : (
+            <div className="icisco-shop">
+              <div className="icisco-shop-head">
+                <div className="icisco-shop-who">
+                  <p className="icisco-shop-member">
+                    {wallet.first_name} {wallet.last_name}
+                  </p>
+                  <p className="icisco-shop-balance">
+                    <span className="icisco-shop-balance-amount">
+                      {typeof wallet.ciscoins === "number"
+                        ? wallet.ciscoins.toLocaleString("en-US")
+                        : "Unavailable"}
+                    </span>
+                    {typeof wallet.ciscoins === "number" && (
+                      <span className="icisco-shop-balance-unit">Ciscoins</span>
+                    )}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="icisco-shop-lock"
+                  onClick={lockWallet}
+                >
+                  Lock
+                </button>
+              </div>
+
+              {shopMessage && (
+                <p
+                  className={`icisco-shop-msg ${shopMessage.kind}`}
+                  role="status"
+                >
+                  {shopMessage.text}
+                </p>
+              )}
+
+              {shopLoading ? (
+                <p className="icisco-shop-hint">Loading the shop…</p>
+              ) : shopItems.length === 0 ? (
+                <p className="icisco-shop-hint">
+                  Nothing for sale right now. Ask a booth admin to put items on
+                  sale.
+                </p>
+              ) : (
+                <div className="icisco-shop-grid">
+                  {shopItems.map((item) => {
+                    const affordable =
+                      typeof wallet.ciscoins === "number" &&
+                      wallet.ciscoins >= item.price;
+                    const localImage =
+                      item.image_url && item.image_url.startsWith("/")
+                        ? item.image_url
+                        : null;
+                    return (
+                      <div className="icisco-shop-card" key={item.id}>
+                        {localImage ? (
+                          <Image
+                            src={localImage}
+                            alt=""
+                            width={64}
+                            height={64}
+                            className="icisco-shop-img"
+                            draggable={false}
+                          />
+                        ) : (
+                          <span className="icisco-shop-tile" aria-hidden="true">
+                            {item.name.slice(0, 1).toUpperCase()}
+                          </span>
+                        )}
+                        <div className="icisco-shop-info">
+                          <p className="icisco-shop-name">{item.name}</p>
+                          {item.description && (
+                            <p className="icisco-shop-desc">
+                              {item.description}
+                            </p>
+                          )}
+                        </div>
+                        <div className="icisco-shop-buy">
+                          <span className="icisco-shop-price">
+                            <span
+                              className={`icisco-shop-price-amount ${
+                                affordable ? "" : "short"
+                              }`}
+                            >
+                              {item.price.toLocaleString("en-US")}
+                            </span>
+                            <span className="icisco-shop-price-label">
+                              Ciscoins
+                            </span>
+                          </span>
+                          <button
+                            type="button"
+                            className={`icisco-shop-btn ${
+                              affordable ? "" : "short"
+                            }`}
+                            disabled={buyingId !== null}
+                            onClick={() => buyItem(item)}
+                          >
+                            {buyingId === item.id
+                              ? "Paying…"
+                              : affordable
+                              ? "Buy"
+                              : "Not enough"}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <p className="icisco-shop-footnote">
+                Pick the item up at the booth. This purchase is your receipt.
+              </p>
+            </div>
+          )}
         </div>
       )}
 

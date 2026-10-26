@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import QRCode from "qrcode";
+import { useBadgeDefinitions } from "@/lib/badge-definitions";
 
 type UserData = {
   first_name: string;
@@ -16,22 +17,10 @@ type UserData = {
   card_style: string;
 };
 
-const BADGE_INFO: Record<string, { name: string; image: string; desc: string }> = {
-  "welcome-to-cisco": {
-    name: "Welcome to Cisco",
-    image: "/badges/welcome-to-cisco-badge.png",
-    desc: "Awarded to new members who join Cisco NetConnect PUP \u2013 Manila. Welcome to the community!",
-  },
-  "golden-alumni": {
-    name: "Golden Alumni",
-    image: "/badges/golden-alumni-badge.png",
-    desc: "Awarded to distinguished alumni of Cisco NetConnect PUP \u2013 Manila for their continued excellence and contributions.",
-  },
-};
-
 export default function PublicIdPage() {
   const params = useParams();
   const email = decodeURIComponent(params.email as string);
+  const { badgeFor } = useBadgeDefinitions();
   const [data, setData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -231,25 +220,40 @@ export default function PublicIdPage() {
               </span>
             </span>
             <div className="icisco-idcard-badge-slots">
-              <div
-                className={`icisco-idcard-badge-slot ${earnedBadges.has("welcome-to-cisco") ? "earned" : ""}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (earnedBadges.has("welcome-to-cisco")) setSelectedBadge("welcome-to-cisco");
-                }}
-              >
-                {earnedBadges.has("welcome-to-cisco") ? (
-                  <Image src="/badges/welcome-to-cisco-badge.png" alt="Welcome to Cisco" width={36} height={36} className="icisco-idcard-badge-img" draggable={false} />
-                ) : (
-                  <div className="icisco-idcard-badge-icon-wrap">?</div>
-                )}
-              </div>
-              <div className="icisco-idcard-badge-slot">
-                <div className="icisco-idcard-badge-icon-wrap">?</div>
-              </div>
-              <div className="icisco-idcard-badge-slot">
-                <div className="icisco-idcard-badge-icon-wrap">?</div>
-              </div>
+              {(() => {
+                const totalSlots = 3;
+                const slots: string[] = [];
+                for (const id of earnedBadges) {
+                  if (badgeFor(id)) slots.push(id);
+                }
+                while (slots.length < totalSlots) slots.push("");
+                return slots.map((id, i) => {
+                  const info = id ? badgeFor(id) : undefined;
+                  return (
+                    <div
+                      key={id || `empty-${i}`}
+                      className={`icisco-idcard-badge-slot ${info ? "earned" : ""}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (info) setSelectedBadge(id);
+                      }}
+                    >
+                      {info ? (
+                        <Image
+                          src={info.img}
+                          alt={info.name}
+                          width={36}
+                          height={36}
+                          className="icisco-idcard-badge-img"
+                          draggable={false}
+                        />
+                      ) : (
+                        <div className="icisco-idcard-badge-icon-wrap">?</div>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </div>
           <div className="icisco-idcard-footer">
@@ -260,24 +264,27 @@ export default function PublicIdPage() {
           </div>
         </div>
 
-        {selectedBadge && BADGE_INFO[selectedBadge] && createPortal((() => {
+        {selectedBadge && (() => {
+          const badgeInfo = badgeFor(selectedBadge);
+          if (!badgeInfo) return null;
           const badgeData = data?.badges?.find((b) => b.badge_id === selectedBadge);
-          return (
+          return createPortal(
             <div className="icisco-badge-modal" onClick={(e) => { e.stopPropagation(); setSelectedBadge(null); }}>
               <div className="icisco-badge-modal-card" onClick={(e) => e.stopPropagation()}>
                 <button type="button" className="icisco-badge-modal-close" onClick={() => setSelectedBadge(null)}>&times;</button>
-                <Image src={BADGE_INFO[selectedBadge].image} alt={BADGE_INFO[selectedBadge].name} width={64} height={64} className="icisco-badge-modal-img" draggable={false} onClick={() => setZoomedBadgeImg({ src: BADGE_INFO[selectedBadge].image, alt: BADGE_INFO[selectedBadge].name })} style={{ cursor: "zoom-in" }} />
-                <p className="icisco-badge-modal-name">{BADGE_INFO[selectedBadge].name}</p>
-                <p className="icisco-badge-modal-desc">{BADGE_INFO[selectedBadge].desc}</p>
+                <Image src={badgeInfo.img} alt={badgeInfo.name} width={64} height={64} className="icisco-badge-modal-img" draggable={false} onClick={() => setZoomedBadgeImg({ src: badgeInfo.img, alt: badgeInfo.name })} style={{ cursor: "zoom-in" }} />
+                <p className="icisco-badge-modal-name">{badgeInfo.name}</p>
+                <p className="icisco-badge-modal-desc">{badgeInfo.desc}</p>
                 {badgeData?.awarded_by && (
                   <p className="icisco-badge-modal-awarded-by">
                     Awarded by {badgeData.awarded_by}
                   </p>
                 )}
               </div>
-            </div>
+            </div>,
+            document.body
           );
-        })(), document.body)}
+        })()}
 
         {zoomedBadgeImg && createPortal(
           <div className="icisco-badge-zoom-overlay" onClick={(e) => { e.stopPropagation(); setZoomedBadgeImg(null); }}>

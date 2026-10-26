@@ -1412,6 +1412,442 @@ a {
     repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(4, 159, 217, 0.03) 19px, rgba(4, 159, 217, 0.03) 20px);
 }
 
+/* ── Ciscoins balance ── */
+.icisco-balance-chip {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid rgba(255, 202, 40, 0.45);
+  border-radius: 0.5rem;
+  background: rgba(255, 202, 40, 0.1);
+}
+.icisco-balance-amount {
+  font-family: var(--font-display), sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffca28;
+}
+.icisco-balance-label {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* ── Shop app ── */
+.icisco-app-tile {
+  background: linear-gradient(
+    155deg,
+    rgba(255, 202, 40, 0.24),
+    rgba(255, 202, 40, 0.06)
+  );
+  border: 1px solid rgba(255, 202, 40, 0.45);
+}
+.icisco-app-glyph {
+  font-size: 2.9rem;
+  line-height: 1;
+}
+
+/* The shop sits on the same faint scan grid as ID Finder so both apps read
+   as one tablet, with the gold accent reserved for anything monetary. */
+.icisco-shop {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1rem clamp(0.75rem, 2.5vw, 1.5rem) 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(4, 159, 217, 0.07), transparent 55%),
+    repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(4, 159, 217, 0.03) 19px, rgba(4, 159, 217, 0.03) 20px),
+    repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(4, 159, 217, 0.03) 19px, rgba(4, 159, 217, 0.03) 20px);
+}
+.icisco-shop-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(4, 159, 217, 0.3);
+  background: linear-gradient(
+    150deg,
+    rgba(4, 159, 217, 0.16),
+    rgba(255, 255, 255, 0.03) 60%
+  );
+  /* elevation: this is the one block on the screen you act on */
+  box-shadow: 0 14px 30px rgba(2, 16, 32, 0.45);
+}
+.icisco-shop-who {
+  min-width: 0;
+}
+.icisco-shop-member {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #cfe6f7;
+}
+.icisco-shop-balance {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  margin: 0.25rem 0 0;
+}
+.icisco-shop-balance-amount {
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(1.7rem, 4vw, 2.15rem);
+  font-weight: 700;
+  line-height: 1;
+  color: #ffca28;
+}
+.icisco-shop-balance-unit {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: rgba(232, 244, 255, 0.75);
+}
+.icisco-shop-lock {
+  flex-shrink: 0;
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  border-radius: 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.06);
+  color: #dcecf9;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+.icisco-shop-lock:hover {
+  background: rgba(255, 255, 255, 0.13);
+}
+.icisco-shop-lock:focus-visible {
+  outline: 2px solid #55cfff;
+  outline-offset: 2px;
+}
+/* ── Wallet gate ── */
+.icisco-wallet-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: min(30rem, 100%);
+}
+.icisco-wallet-brand-img {
+  width: 46px;
+  height: auto;
+  filter: drop-shadow(0 4px 10px rgba(1, 124, 173, 0.55));
+}
+.icisco-wallet-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.icisco-wallet-brand-name {
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #eaf6ff;
+}
+.icisco-wallet-brand-sub {
+  font-size: 0.72rem;
+  color: rgba(232, 244, 255, 0.72);
+}
+.icisco-shop-panel {
+  width: min(30rem, 100%);
+  padding: 1.35rem 1.4rem 1.5rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(4, 159, 217, 0.32);
+  background: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.07),
+    rgba(4, 159, 217, 0.05) 55%,
+    rgba(255, 255, 255, 0.03)
+  );
+  /* elevation: this panel is the only surface on the screen you act on */
+  box-shadow: 0 22px 50px rgba(2, 14, 28, 0.55);
+  text-align: left;
+}
+.icisco-wallet-mascot {
+  width: 96px;
+  height: auto;
+  margin-top: 0.4rem;
+  opacity: 0.92;
+  pointer-events: none;
+  user-select: none;
+}
+.icisco-shop-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  margin-top: 0.9rem;
+  text-align: left;
+}
+.icisco-shop-label {
+  margin-top: 0.85rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(232, 244, 255, 0.7);
+}
+.icisco-shop-label:first-child {
+  margin-top: 0;
+}
+.icisco-shop-input {
+  width: 100%;
+  margin-top: 0.3rem;
+  min-height: 2.9rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(4, 20, 36, 0.55);
+  color: #eaf6ff;
+  font-family: var(--font-body), sans-serif;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+.icisco-shop-input::placeholder {
+  color: rgba(232, 244, 255, 0.5);
+}
+.icisco-shop-input:hover:not(:disabled) {
+  border-color: rgba(79, 195, 247, 0.5);
+}
+.icisco-shop-input:focus {
+  border-color: rgba(79, 195, 247, 0.85);
+  background: rgba(4, 20, 36, 0.8);
+}
+.icisco-shop-input:focus-visible {
+  outline: 2px solid #55cfff;
+  outline-offset: 1px;
+}
+.icisco-shop-input:disabled {
+  opacity: 0.6;
+}
+.icisco-shop-field-hint {
+  margin: 0.45rem 0 0;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: rgba(232, 244, 255, 0.68);
+}
+.icisco-shop-form .icisco-shop-msg {
+  margin-top: 0.6rem;
+  text-align: left;
+}
+.icisco-shop-form .icisco-shop-cta {
+  width: 100%;
+  margin-top: 0.95rem;
+}
+.icisco-shop-form .icisco-shop-cta:disabled {
+  opacity: 0.65;
+}
+.icisco-shop-link {
+  width: min(30rem, 100%);
+  padding: 0.5rem 0;
+  background: none;
+  border: 0;
+  color: #8fd8f5;
+  font-size: 0.8rem;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.icisco-shop-link:hover {
+  color: #b6e7fb;
+}
+.icisco-shop-link:focus-visible {
+  outline: 2px solid #55cfff;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.icisco-shop-msg {
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.55rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+.icisco-shop-msg.ok {
+  background: rgba(79, 195, 247, 0.14);
+  border: 1px solid rgba(79, 195, 247, 0.45);
+  color: #cdeeff;
+}
+.icisco-shop-msg.error {
+  background: rgba(255, 112, 112, 0.14);
+  border: 1px solid rgba(255, 112, 112, 0.45);
+  color: #ffd6d6;
+}
+.icisco-shop-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(232, 244, 255, 0.7);
+  text-align: center;
+  padding: 1.5rem 0;
+}
+.icisco-shop-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+.icisco-shop-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.75rem;
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.icisco-shop-img,
+.icisco-shop-tile {
+  width: 64px;
+  height: 64px;
+  border-radius: 0.75rem;
+}
+.icisco-shop-img {
+  object-fit: cover;
+}
+.icisco-shop-tile {
+  display: grid;
+  place-items: center;
+  background: rgba(4, 159, 217, 0.16);
+  border: 1px solid rgba(4, 159, 217, 0.4);
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #8fd8f5;
+}
+.icisco-shop-info {
+  flex: 1;
+}
+.icisco-shop-name {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #e8f4ff;
+}
+.icisco-shop-desc {
+  margin: 0.2rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: rgba(232, 244, 255, 0.68);
+}
+.icisco-shop-buy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.icisco-shop-price {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.icisco-shop-price-amount {
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #ffca28;
+}
+.icisco-shop-price-amount.short {
+  color: rgba(232, 244, 255, 0.5);
+}
+.icisco-shop-price-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(232, 244, 255, 0.6);
+}
+.icisco-shop-btn {
+  min-height: 2.75rem;
+  min-width: 5.5rem;
+  padding: 0 0.8rem;
+  border-radius: 0.6rem;
+  border: 1px solid rgba(255, 202, 40, 0.55);
+  background: rgba(255, 202, 40, 0.18);
+  color: #ffca28;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.icisco-shop-btn:hover:not(:disabled) {
+  background: rgba(255, 202, 40, 0.3);
+}
+.icisco-shop-btn.short {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(232, 244, 255, 0.7);
+}
+.icisco-shop-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.icisco-shop-btn:focus-visible,
+.icisco-shop-cta:focus-visible {
+  outline: 2px solid #ffca28;
+  outline-offset: 2px;
+}
+.icisco-shop-footnote {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  text-align: center;
+  color: rgba(232, 244, 255, 0.55);
+}
+.icisco-shop-empty {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1.2rem;
+  text-align: center;
+}
+.icisco-shop-empty-title {
+  width: min(22rem, 100%);
+  margin: 0;
+  text-align: left;
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #e8f4ff;
+}
+.icisco-shop-empty-text {
+  width: min(22rem, 100%);
+  margin: 0;
+  text-align: left;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: rgba(232, 244, 255, 0.7);
+}
+.icisco-shop-cta {
+  min-height: 2.75rem;
+  margin-top: 0.3rem;
+  padding: 0 1.3rem;
+  border-radius: 0.6rem;
+  border: 1px solid rgba(4, 159, 217, 0.6);
+  background: rgba(4, 159, 217, 0.22);
+  color: #bfeaff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.icisco-shop-cta:hover {
+  background: rgba(4, 159, 217, 0.34);
+}
+@media (max-width: 22rem) {
+  .icisco-shop-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+
 /* ── Decorative logo ── */
 .icisco-idfinder-deco-logo {
   opacity: 0.35;
@@ -3100,6 +3536,17 @@ html.dark .footer-legal-links a:hover {
   margin: 6px 0 0;
   font-style: italic;
 }
+/* Gold chip on the white card: the coin reads as a coin, at 9.7:1 contrast. */
+.icisco-congrats-ciscoins {
+  display: inline-block;
+  background: #ffca28;
+  color: #1a2a3a;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.3rem 0.75rem;
+  border-radius: 0.4rem;
+  margin: 0.6rem 0 0;
+}
 
 /* ─── Confetti Particles ─── */
 .icisco-confetti {
@@ -3357,12 +3804,166 @@ html.dark .footer-legal-links a:hover {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+.qr-field-hint {
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0.4rem 0 0;
+}
+
+/* ── Claim mode (only shown when Ciscoins are attached) ── */
+.qr-claim-mode {
+  border: 0;
+  padding: 0;
+  margin: 0 0 1rem;
+  min-width: 0;
+}
+.qr-claim-mode legend {
+  padding: 0;
+}
+.qr-claim-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.7rem 0.8rem;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.qr-claim-option + .qr-claim-option {
+  margin-top: 0.5rem;
+}
+.qr-claim-option input {
+  accent-color: #049fd9;
+  margin: 0.2rem 0 0;
+  flex-shrink: 0;
+}
+.qr-claim-option:hover {
+  border-color: rgba(4, 159, 217, 0.4);
+}
+.qr-claim-option:focus-within {
+  outline: 2px solid #049fd9;
+  outline-offset: 2px;
+}
+.qr-claim-option.active {
+  border-color: #049fd9;
+  background: rgba(4, 159, 217, 0.12);
+}
+.qr-claim-option-text {
+  display: block;
+}
+.qr-claim-option-title {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+.qr-claim-option-desc {
+  display: block;
+  font-size: 0.7rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 0.15rem;
+}
 .qr-error {
   color: #ef5350;
   font-size: 0.8rem;
   margin: 0;
   text-align: center;
 }
+
+/* ── Shop items + purchase log ── */
+.qr-shop-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.qr-shop-row {
+  padding: 0.85rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 0.6rem;
+}
+.qr-shop-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.9fr) auto auto;
+  gap: 0.75rem;
+  align-items: end;
+}
+.qr-shop-fields .qr-input {
+  min-width: 0;
+}
+.qr-shop-active {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.6rem;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.82);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.qr-shop-active input {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: #049fd9;
+  cursor: pointer;
+}
+.qr-shop-saved {
+  margin: 0.6rem 0 0;
+  font-size: 0.8rem;
+  color: #66bb6a;
+  text-align: center;
+}
+.qr-shop-log {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.9rem;
+}
+.qr-shop-log-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto auto;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.55rem 0.7rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.5rem;
+  font-size: 0.78rem;
+}
+.qr-shop-log-item {
+  font-weight: 600;
+  color: #fff;
+}
+.qr-shop-log-email {
+  color: rgba(255, 255, 255, 0.65);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.qr-shop-log-amount {
+  color: #ffca28;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.qr-shop-log-time {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+@media (max-width: 48rem) {
+  .qr-shop-fields,
+  .qr-shop-log-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .qr-shop-active {
+    min-height: 0;
+  }
+}
+
 
 /* ── Buttons ── */
 .qr-btn {
@@ -3467,6 +4068,18 @@ html.dark .footer-legal-links a:hover {
 .qr-single-use {
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.4);
+  margin: 0 0 1rem;
+}
+/* The only warm colour on this screen: currency reads as currency, not chrome. */
+.qr-ciscoins-grant {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ffca28;
+  margin: -0.5rem 0 0.35rem;
+}
+.qr-claim-mode-note {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
   margin: 0 0 1rem;
 }
 .qr-actions {
@@ -3601,6 +4214,18 @@ html.dark .footer-legal-links a:hover {
 }
 .qr-token-expired {
   color: #e53935;
+}
+.qr-token-ciscoins {
+  color: #ffca28;
+  font-weight: 600;
+}
+/* Cyan = still claimable, matching the count badge. Light red = consumed. */
+.qr-token-claim {
+  color: #4fc3f7;
+  font-weight: 600;
+}
+.qr-token-claim.used {
+  color: #ff6b6b;
 }
 .qr-token-delete-btn {
   background: none;

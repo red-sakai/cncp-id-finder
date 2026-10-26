@@ -6,6 +6,9 @@ import Image from "next/image";
 
 const SESSION_KEY = "cncp-qr-auth";
 
+// Mirrors the server-side limit in app/api/tokens/route.ts
+const MAX_CISCOINS = 100000;
+
 type Badge = {
   id: string;
   name: string;
@@ -22,7 +25,33 @@ type Token = {
   created_at: string;
   expires_at?: string | null;
   expired?: boolean;
+  ciscoins?: number | null;
+  single_use?: boolean;
+  claimed_at?: string | null;
 };
+
+type ShopItem = {
+  id: string;
+  name: string;
+  description: string;
+  image_url: string;
+  price: number;
+  active: boolean;
+  sort_order: number;
+};
+
+type ShopPurchase = {
+  email: string;
+  amount: number;
+  item_id: string | null;
+  item_name: string;
+  created_at: string;
+};
+
+type ShopDraft = { name: string; price: string; active: boolean };
+
+// Mirrors the server limits in app/api/shop/route.ts
+const MAX_SHOP_PRICE = 100000;
 
 function getInitialAuth() {
   if (typeof window === "undefined") return false;
@@ -133,6 +162,11 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
   const [awardedBy, setAwardedBy] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const [noExpiry, setNoExpiry] = useState(true);
+  const [attachCiscoins, setAttachCiscoins] = useState(false);
+  const [ciscoinsAmount, setCiscoinsAmount] = useState("");
+  const [claimMode, setClaimMode] = useState<"" | "once" | "always">("");
+  const [grantedCiscoins, setGrantedCiscoins] = useState<number | null>(null);
+  const [grantedSingleUse, setGrantedSingleUse] = useState(false);
   const [token, setToken] = useState("");
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState("");
@@ -152,6 +186,17 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
   const [newBadgeImagePreview, setNewBadgeImagePreview] = useState<string | null>(null);
   const [badgeCreating, setBadgeCreating] = useState(false);
   const [badgeError, setBadgeError] = useState("");
+
+  // Shop: prices are edited here so the migration never has to change
+  const [shopItems, setShopItems] = useState<ShopItem[]>([]);
+  const [shopLoading, setShopLoading] = useState(true);
+  const [shopSavingId, setShopSavingId] = useState<string | null>(null);
+  const [shopDrafts, setShopDrafts] = useState<Record<string, ShopDraft>>({});
+  const [shopStatus, setShopStatus] = useState<
+    { id: string; kind: "error" | "ok"; text: string } | null
+  >(null);
+  const [purchases, setPurchases] = useState<ShopPurchase[]>([]);
+  const [purchasesLoading, setPurchasesLoading] = useState(true);
 
   const badge = badges.find((b) => b.id === selected) ?? badges[0];
   const byParam = awardedBy.trim();
@@ -200,10 +245,118 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
     }
   };
 
+  const normalizeShopItem = (raw: Partial<ShopItem> & { id: string }): ShopItem => ({
+    id: raw.id,
+    name: raw.name ?? "",
+    description: raw.description ?? "",
+    image_url: raw.image_url ?? "",
+    price: typeof raw.price === "number" ? raw.price : 0,
+    active: !!raw.active,
+    sort_order: typeof raw.sort_order === "number" ? raw.sort_order : 0,
+  });
+
+  const fetchShop = async () => {
+    setShopLoading(true);
+    try {
+      const res = await fetch("/api/shop?all=1");
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setShopItems(
+          ((data.items ?? []) as (Partial<ShopItem> & { id: string })[]).map(normalizeShopItem)
+        );
+        setShopStatus(null);
+      } else {
+        setShopStatus({ id: "", kind: "error", text: data.error ?? "Could not load the shop items." });
+      }
+    } catch {
+      setShopStatus({ id: "", kind: "error", text: "Could not load the shop items." });
+    } finally {
+      setShopLoading(false);
+    }
+  };
+
+  const fetchPurchases = async () => {
+    setPurchasesLoading(true);
+    try {
+      const res = await fetch("/api/shop/purchases");
+      const data = await res.json().catch(() => ({}));
+      setPurchases(res.ok ? ((data.purchases ?? []) as ShopPurchase[]) : []);
+    } catch {
+      setPurchases([]);
+    } finally {
+      setPurchasesLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchBadges();
     fetchTokens();
+    fetchShop();
+    fetchPurchases();
   }, []);
+
+  const shopDraftOf = (item: ShopItem): ShopDraft =>
+    shopDrafts[item.id] ?? {
+      name: item.name,
+      price: String(item.price),
+      active: item.active,
+    };
+
+  const setShopDraft = (item: ShopItem, patch: Partial<ShopDraft>) => {
+    setShopStatus(null);
+    setShopDrafts((prev) => ({ ...prev, [item.id]: { ...shopDraftOf(item), ...patch } }));
+  };
+
+  const saveShopItem = async (item: ShopItem) => {
+    const draft = shopDraftOf(item);
+    const name = draft.name.trim();
+    const price = Number(draft.price);
+
+    if (!name) {
+      setShopStatus({ id: item.id, kind: "error", text: "Item name is required." });
+      return;
+    }
+    if (!Number.isInteger(price) || price < 1 || price > MAX_SHOP_PRICE) {
+      setShopStatus({
+        id: item.id,
+        kind: "error",
+        text: `Enter a whole number of Ciscoins between 1 and ${MAX_SHOP_PRICE.toLocaleString("en-US")}.`,
+      });
+      return;
+    }
+
+    setShopSavingId(item.id);
+    setShopStatus(null);
+    try {
+      const res = await fetch("/api/shop", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: item.id, name, price, active: draft.active }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.ok) {
+        setShopItems((prev) =>
+          prev.map((i) => (i.id === item.id ? normalizeShopItem(data.item) : i))
+        );
+        setShopDrafts((prev) => {
+          const next = { ...prev };
+          delete next[item.id];
+          return next;
+        });
+        setShopStatus({ id: item.id, kind: "ok", text: "Saved. The tablet shows this price now." });
+      } else {
+        setShopStatus({
+          id: item.id,
+          kind: "error",
+          text: data.error ?? "Could not save this item.",
+        });
+      }
+    } catch {
+      setShopStatus({ id: item.id, kind: "error", text: "Network error. Nothing was changed." });
+    } finally {
+      setShopSavingId(null);
+    }
+  };
 
   const handleBadgeImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -298,10 +451,38 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
       expiresAt = parsed.toISOString();
     }
 
+    let ciscoins: number | null = null;
+    if (attachCiscoins) {
+      const ciscoinsParsed = Number(ciscoinsAmount);
+      if (
+        !ciscoinsAmount.trim() ||
+        !Number.isInteger(ciscoinsParsed) ||
+        ciscoinsParsed < 1 ||
+        ciscoinsParsed > MAX_CISCOINS
+      ) {
+        setGenError(
+          `Enter a whole number of Ciscoins between 1 and ${MAX_CISCOINS.toLocaleString("en-US")}.`
+        );
+        return;
+      }
+      ciscoins = ciscoinsParsed;
+    }
+
+    let singleUse = false;
+    if (attachCiscoins) {
+      if (!claimMode) {
+        setGenError("Choose whether this QR can be claimed once or always.");
+        return;
+      }
+      singleUse = claimMode === "once";
+    }
+
     setGenerating(true);
     setViewingId(null);
     setToken("");
     setConfirmed(false);
+    setGrantedCiscoins(null);
+    setGrantedSingleUse(false);
     setGenError("");
     try {
       const res = await fetch("/api/tokens", {
@@ -311,11 +492,15 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
           badgeId: badge.id,
           awardedBy: byParam || undefined,
           expiresAt,
+          ciscoins,
+          singleUse,
         }),
       });
       if (res.ok) {
         const data = await res.json();
         setToken(data.token);
+        setGrantedCiscoins(data.ciscoins ?? null);
+        setGrantedSingleUse(!!data.singleUse);
         setConfirmed(true);
         fetchTokens();
       } else {
@@ -361,6 +546,8 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
     setConfirmed(false);
     setQrUrl("");
     setViewingId(null);
+    setGrantedCiscoins(null);
+    setGrantedSingleUse(false);
     setGenError("");
   };
 
@@ -368,6 +555,8 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
     setViewingId(t.id);
     setSelected(t.badge_id);
     setToken(t.token);
+    setGrantedCiscoins(t.ciscoins ?? null);
+    setGrantedSingleUse(!!t.single_use);
     setQrUrl("");
     setConfirmed(true);
   };
@@ -494,6 +683,86 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                 </div>
               </div>
 
+              <div className="qr-field">
+                <label className="qr-field-label" htmlFor="qr-ciscoins">Ciscoins reward</label>
+                <div className="qr-expiry-row">
+                  <input
+                    id="qr-ciscoins"
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={MAX_CISCOINS}
+                    step={1}
+                    value={ciscoinsAmount}
+                    onChange={(e) => setCiscoinsAmount(e.target.value)}
+                    placeholder="How many?"
+                    className="qr-input"
+                    disabled={generating || confirmed || !attachCiscoins}
+                  />
+                  <label className="qr-expiry-never">
+                    <input
+                      type="checkbox"
+                      checked={attachCiscoins}
+                      onChange={(e) => {
+                        setAttachCiscoins(e.target.checked);
+                        if (!e.target.checked) setClaimMode("");
+                      }}
+                      disabled={generating || confirmed}
+                    />
+                    Attach to this badge
+                  </label>
+                </div>
+                <p className="qr-field-hint">
+                  {attachCiscoins
+                    ? "Anyone claiming this badge receives the amount above."
+                    : "This badge does not award any Ciscoins."}
+                </p>
+              </div>
+
+              {attachCiscoins && (
+                <fieldset className="qr-claim-mode">
+                  <legend className="qr-field-label">Who can claim it</legend>
+                  <label
+                    className={`qr-claim-option ${claimMode === "once" ? "active" : ""}`}
+                  >
+                    <input
+                      type="radio"
+                      name="qr-claim-mode"
+                      value="once"
+                      checked={claimMode === "once"}
+                      onChange={() => setClaimMode("once")}
+                      disabled={generating || confirmed}
+                    />
+                    <span className="qr-claim-option-text">
+                      <span className="qr-claim-option-title">One time claim only</span>
+                      <span className="qr-claim-option-desc">
+                        The first person to claim it gets the badge and the Ciscoins. After
+                        that this QR code stops working.
+                      </span>
+                    </span>
+                  </label>
+                  <label
+                    className={`qr-claim-option ${claimMode === "always" ? "active" : ""}`}
+                  >
+                    <input
+                      type="radio"
+                      name="qr-claim-mode"
+                      value="always"
+                      checked={claimMode === "always"}
+                      onChange={() => setClaimMode("always")}
+                      disabled={generating || confirmed}
+                    />
+                    <span className="qr-claim-option-text">
+                      <span className="qr-claim-option-title">Permanently available</span>
+                      <span className="qr-claim-option-desc">
+                        Anyone can claim it, today and later. Each person gets the badge and
+                        the Ciscoins once.
+                      </span>
+                    </span>
+                  </label>
+                </fieldset>
+              )}
+
               {genError && <p className="qr-error">{genError}</p>}
 
               {!confirmed ? (
@@ -529,9 +798,27 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                               ? "Expired"
                               : `Expires ${new Date(viewed.expires_at).toLocaleDateString()}`
                             : "Never expires",
-                        ].join(" · ")
+                          viewed.single_use
+                            ? viewed.claimed_at
+                              ? "Used up"
+                              : "One time claim"
+                            : null,
+                        ].filter(Boolean).join(" · ")
                       : "Each person who scans this QR code gets their own badge."}
                   </p>
+                  {grantedCiscoins !== null && (
+                    <p className="qr-ciscoins-grant">
+                      Grants {grantedCiscoins.toLocaleString("en-US")} Ciscoins when someone claims
+                      this badge
+                    </p>
+                  )}
+                  {grantedCiscoins !== null && (
+                    <p className="qr-claim-mode-note">
+                      {grantedSingleUse
+                        ? "One time claim only. The first person to claim it uses this QR code up."
+                        : "Permanently available. Anyone can scan this QR code and claim it."}
+                    </p>
+                  )}
                   <div className="qr-actions">
                     <button type="button" className="qr-btn qr-btn-primary" onClick={handleDownload} disabled={!qrUrl}>
                       Download QR
@@ -542,6 +829,153 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                   </div>
                 </div>
               )}
+            </div>
+            {/* Shop items — prices are edited here, not in a migration */}
+            <div className="qr-section">
+              <div className="qr-section-header">
+                <h2 className="qr-section-title">Shop Items</h2>
+                <span className="qr-badge-count">{shopItems.length}</span>
+              </div>
+              <p className="qr-section-desc">
+                What members pay on the Shop app. Saving changes the tablet price
+                right away.
+              </p>
+
+              {shopLoading ? (
+                <div className="qr-empty-state">
+                  <span className="qr-spinner" />
+                </div>
+              ) : shopItems.length === 0 ? (
+                <div className="qr-empty-state">
+                  <p className="qr-empty-text">No shop items yet.</p>
+                </div>
+              ) : (
+                <div className="qr-shop-list">
+                  {shopItems.map((item) => {
+                    const draft = shopDraftOf(item);
+                    const saving = shopSavingId === item.id;
+                    const status = shopStatus?.id === item.id ? shopStatus : null;
+                    const dirty =
+                      draft.name.trim() !== item.name ||
+                      draft.price !== String(item.price) ||
+                      draft.active !== item.active;
+                    return (
+                      <div key={item.id} className="qr-shop-row">
+                        <div className="qr-shop-fields">
+                          <div className="qr-field qr-shop-field-name">
+                            <label className="qr-field-label" htmlFor={`shop-name-${item.id}`}>
+                              Item
+                            </label>
+                            <input
+                              id={`shop-name-${item.id}`}
+                              className="qr-input"
+                              type="text"
+                              maxLength={60}
+                              value={draft.name}
+                              onChange={(e) => setShopDraft(item, { name: e.target.value })}
+                              disabled={saving}
+                            />
+                          </div>
+                          <div className="qr-field qr-shop-field-price">
+                            <label className="qr-field-label" htmlFor={`shop-price-${item.id}`}>
+                              Price (Ciscoins)
+                            </label>
+                            <input
+                              id={`shop-price-${item.id}`}
+                              className="qr-input"
+                              type="number"
+                              min={1}
+                              max={MAX_SHOP_PRICE}
+                              step={1}
+                              value={draft.price}
+                              onChange={(e) => setShopDraft(item, { price: e.target.value })}
+                              disabled={saving}
+                            />
+                          </div>
+                          <label className="qr-shop-active">
+                            <input
+                              type="checkbox"
+                              checked={draft.active}
+                              onChange={(e) => setShopDraft(item, { active: e.target.checked })}
+                              disabled={saving}
+                            />
+                            <span>For sale</span>
+                          </label>
+                          <button
+                            type="button"
+                            className="qr-btn qr-btn-primary"
+                            onClick={() => saveShopItem(item)}
+                            disabled={saving || !dirty}
+                          >
+                            {saving ? "Saving..." : "Save"}
+                          </button>
+                        </div>
+                        {status ? (
+                          <p
+                            className={
+                              status.kind === "error" ? "qr-error" : "qr-shop-saved"
+                            }
+                          >
+                            {status.text}
+                          </p>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {shopStatus && shopStatus.id === "" ? (
+                <p className="qr-error">{shopStatus.text}</p>
+              ) : null}
+            </div>
+
+            {/* Purchase log */}
+            <div className="qr-section">
+              <div className="qr-section-header">
+                <h2 className="qr-section-title">Shop Purchases</h2>
+                <span className="qr-badge-count">{purchases.length}</span>
+              </div>
+              <p className="qr-section-desc">
+                Every Ciscoins spent in the Shop, newest first.
+              </p>
+
+              {purchasesLoading ? (
+                <div className="qr-empty-state">
+                  <span className="qr-spinner" />
+                </div>
+              ) : purchases.length === 0 ? (
+                <div className="qr-empty-state">
+                  <p className="qr-empty-text">Nothing has been bought yet.</p>
+                </div>
+              ) : (
+                <div className="qr-shop-log">
+                  {purchases.map((p, index) => (
+                    <div
+                      className="qr-shop-log-row"
+                      key={`${p.created_at}-${p.email}-${index}`}
+                    >
+                      <span className="qr-shop-log-item">
+                        {shopItems.find((i) => i.id === p.item_id)?.name || p.item_name}
+                      </span>
+                      <span className="qr-shop-log-email">{p.email}</span>
+                      <span className="qr-shop-log-amount">
+                        {p.amount.toLocaleString("en-US")} Ciscoins
+                      </span>
+                      <span className="qr-shop-log-time">
+                        {new Date(p.created_at).toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button
+                type="button"
+                className="qr-btn qr-btn-ghost"
+                onClick={fetchPurchases}
+                disabled={purchasesLoading}
+              >
+                Refresh
+              </button>
             </div>
           </div>
 
@@ -594,6 +1028,24 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                                     ? `Exp. ${new Date(t.expires_at).toLocaleDateString()}`
                                     : "Never expires"}
                               </span>
+                              {t.ciscoins ? (
+                                <>
+                                  <span className="qr-token-dot">&#183;</span>
+                                  <span className="qr-token-ciscoins">
+                                    +{t.ciscoins.toLocaleString("en-US")} Ciscoins
+                                  </span>
+                                </>
+                              ) : null}
+                              {t.single_use ? (
+                                <>
+                                  <span className="qr-token-dot">&#183;</span>
+                                  <span
+                                    className={`qr-token-claim ${t.claimed_at ? "used" : ""}`}
+                                  >
+                                    {t.claimed_at ? "Used up" : "One time claim"}
+                                  </span>
+                                </>
+                              ) : null}
                             </span>
                           </span>
                         </button>

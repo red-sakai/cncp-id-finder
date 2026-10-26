@@ -48,9 +48,27 @@ export async function POST(request: NextRequest) {
     .eq("email", trimmed)
     .limit(1);
 
+  const { data: ledgerRows, error: ledgerError } = await supabase
+    .from("ciscoins_ledger")
+    .select("amount")
+    .eq("email", trimmed);
+
+  // PGRST205 / 42P01 = the ledger table has not been created yet. Report no
+  // balance instead of breaking the member lookup over it.
+  const ledgerMissing =
+    ledgerError?.code === "PGRST205" || ledgerError?.code === "42P01";
+  if (ledgerError && !ledgerMissing) {
+    return NextResponse.json({ error: ledgerError.message }, { status: 500 });
+  }
+
+  const ciscoins = ledgerError
+    ? null
+    : (ledgerRows ?? []).reduce((total, row) => total + (row.amount ?? 0), 0);
+
   return NextResponse.json({
     ...data[0],
     badges: badges ?? [],
+    ciscoins,
     card_style: digitalId && digitalId.length > 0 ? digitalId[0].card_style : "white",
     is_public: digitalId && digitalId.length > 0 ? digitalId[0].is_public : false,
   });

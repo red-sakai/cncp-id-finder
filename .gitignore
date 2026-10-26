@@ -40,4 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-migration/
+# Migration dumps contain member PII (names, emails, phone numbers) and live
+# QR tokens, and this repo is public — nothing under migration/ is tracked,
+# schema files included. Re-inclusion has to be explicit, line by line.
+migration/*

@@ -75,13 +75,18 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "Invalid badge id" }, { status: 400 });
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("badge_definitions")
     .delete()
-    .eq("id", id);
+    .eq("id", id)
+    .select("id");
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  if (!data?.length) {
+    return NextResponse.json({ error: "Badge not found" }, { status: 404 });
   }
 
   return NextResponse.json({ ok: true });
