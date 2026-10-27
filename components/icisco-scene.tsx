@@ -2109,6 +2109,261 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
         </div>
       )}
 
+      {purchase &&
+        createPortal(
+          <div
+            className={`icisco-purchase-overlay${
+              purchase.phase === "error"
+                ? " is-error"
+                : purchase.phase === "success"
+                  ? " is-success"
+                  : ""
+            }`}
+            onClick={closePurchase}
+          >
+            <div
+              ref={purchaseDialogRef}
+              className="icisco-purchase-card"
+              data-phase={purchase.phase}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="purchase-title"
+              aria-describedby="purchase-desc"
+              aria-busy={purchase.phase === "paying"}
+              tabIndex={-1}
+              onClick={(event) => event.stopPropagation()}
+            >
+              {purchase.phase !== "paying" && (
+                <button
+                  type="button"
+                  className="icisco-purchase-close"
+                  onClick={closePurchase}
+                  aria-label="Close purchase dialog"
+                >
+                  &times;
+                </button>
+              )}
+
+              <div className="icisco-purchase-hero">
+                {purchase.phase === "success" || purchase.phase === "error" ? (
+                  <span
+                    className={`icisco-purchase-result ${
+                      purchase.phase === "success" ? "is-success" : "is-error"
+                    }`}
+                    aria-hidden="true"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      {purchase.phase === "success" ? (
+                        <path d="M20 6 9 17l-5-5" />
+                      ) : (
+                        <>
+                          <path d="M18 6 6 18" />
+                          <path d="M6 6l12 12" />
+                        </>
+                      )}
+                    </svg>
+                  </span>
+                ) : (
+                  <div className="icisco-purchase-stage" aria-hidden="true">
+                    <div className="icisco-purchase-item">
+                      {purchaseImage ? (
+                        <Image
+                          src={purchaseImage}
+                          alt=""
+                          fill
+                          sizes="96px"
+                          className="icisco-purchase-item-img"
+                          draggable={false}
+                        />
+                      ) : (
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M4.5 8h15l-1.1 10.1a2 2 0 0 1-2 1.9H7.6a2 2 0 0 1-2-1.9L4.5 8Z" />
+                          <path d="M8.6 10V6.7a3.4 3.4 0 0 1 6.8 0V10" />
+                        </svg>
+                      )}
+                    </div>
+                    {purchase.phase === "paying" && (
+                      <>
+                        <span className="icisco-purchase-coin coin-a">C</span>
+                        <span className="icisco-purchase-coin coin-b">C</span>
+                        <span className="icisco-purchase-coin coin-c">C</span>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                <p className="icisco-purchase-kicker">
+                  {purchase.phase === "confirm"
+                    ? "Confirm purchase"
+                    : purchase.phase === "paying"
+                      ? "At the counter"
+                      : purchase.phase === "success"
+                        ? "Purchase complete"
+                        : "Purchase failed"}
+                </p>
+                <h2 className="icisco-purchase-title" id="purchase-title">
+                  {purchase.item.name}
+                </h2>
+                <p
+                  className="icisco-purchase-desc"
+                  id="purchase-desc"
+                  aria-live={
+                    purchase.phase === "error" ? "assertive" : "polite"
+                  }
+                >
+                  {purchase.phase === "confirm"
+                    ? "Swap Ciscoins for this item. Pick it up at CEA 317 after the confirmation email."
+                    : purchase.phase === "paying"
+                      ? "Checking your balance and handing it over…"
+                      : purchase.phase === "success"
+                        ? purchase.duplicate
+                          ? "That purchase was already recorded. You were not charged twice."
+                          : "You're all set. Pick it up at CEA 317 and keep the confirmation email."
+                        : purchase.shortBy > 0
+                          ? `${purchase.error} Earn more Ciscoins at upcoming events, then come back.`
+                          : purchase.error}
+                </p>
+              </div>
+
+              <div className="icisco-purchase-summary">
+                <div className="icisco-purchase-row">
+                  <span>Price</span>
+                  <span>
+                    {purchase.item.price.toLocaleString("en-US")} Ciscoins
+                  </span>
+                </div>
+                {purchase.balance !== null && (
+                  <div className="icisco-purchase-row">
+                    <span>
+                      {purchase.phase === "success"
+                        ? "New balance"
+                        : "Balance"}
+                    </span>
+                    <span>
+                      {purchase.balance.toLocaleString("en-US")} Ciscoins
+                    </span>
+                  </div>
+                )}
+                {purchase.phase === "confirm" &&
+                  purchase.balance !== null && (
+                    <div className="icisco-purchase-row is-emphasis">
+                      <span>After purchase</span>
+                      <span>
+                        {Math.max(
+                          purchase.balance - purchase.item.price,
+                          0
+                        ).toLocaleString("en-US")}{" "}
+                        Ciscoins
+                      </span>
+                    </div>
+                  )}
+                {purchase.phase === "error" && purchase.shortBy > 0 && (
+                  <div className="icisco-purchase-row is-short">
+                    <span>Short by</span>
+                    <span>
+                      {purchase.shortBy.toLocaleString("en-US")} Ciscoins
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {purchase.phase === "paying" && (
+                <div className="icisco-purchase-progress" aria-hidden="true">
+                  <span />
+                </div>
+              )}
+
+              <div className="icisco-purchase-actions">
+                {purchase.phase === "confirm" && (
+                  <>
+                    <button
+                      type="button"
+                      className="icisco-purchase-btn is-secondary"
+                      onClick={closePurchase}
+                    >
+                      Not now
+                    </button>
+                    <button
+                      type="button"
+                      className="icisco-purchase-btn is-primary"
+                      onClick={confirmPurchase}
+                      ref={purchasePrimaryRef}
+                    >
+                      Buy for {purchase.item.price.toLocaleString("en-US")}{" "}
+                      Ciscoins
+                    </button>
+                  </>
+                )}
+
+                {purchase.phase === "paying" && (
+                  <button
+                    type="button"
+                    className="icisco-purchase-btn is-primary"
+                    disabled
+                  >
+                    <span
+                      className="icisco-purchase-spinner"
+                      aria-hidden="true"
+                    />
+                    Paying…
+                  </button>
+                )}
+
+                {purchase.phase === "success" && (
+                  <button
+                    type="button"
+                    className="icisco-purchase-btn is-primary"
+                    onClick={closePurchase}
+                    ref={purchasePrimaryRef}
+                  >
+                    Done
+                  </button>
+                )}
+
+                {purchase.phase === "error" && (
+                  <>
+                    {purchaseCanRetry && (
+                      <button
+                        type="button"
+                        className="icisco-purchase-btn is-primary"
+                        onClick={retryPurchase}
+                        ref={purchasePrimaryRef}
+                      >
+                        Try again
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className={`icisco-purchase-btn ${
+                        purchaseCanRetry ? "is-secondary" : "is-primary"
+                      }`}
+                      onClick={closePurchase}
+                      ref={purchaseCanRetry ? undefined : purchasePrimaryRef}
+                    >
+                      {purchase.shortBy > 0 ? "Back to shelf" : "Close"}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
       {activeApp === "games" && !closing && (
         <div className="icisco-app-screen">
           <div className="icisco-app-bar">
