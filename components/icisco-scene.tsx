@@ -142,6 +142,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
   const [shopLoading, setShopLoading] = useState(false);
   const [purchase, setPurchase] = useState<PurchaseState | null>(null);
+  const [purchaseClosing, setPurchaseClosing] = useState(false);
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [walletEmail, setWalletEmail] = useState("");
   const [walletPhone, setWalletPhone] = useState("");
@@ -153,8 +154,29 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const purchaseReturnFocusRef = useRef<HTMLElement | null>(null);
   const purchasePrimaryRef = useRef<HTMLButtonElement>(null);
   const purchaseDialogRef = useRef<HTMLDivElement>(null);
+  const purchaseExitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+
+  const clearPurchaseExit = useCallback(() => {
+    if (purchaseExitTimerRef.current !== null) {
+      clearTimeout(purchaseExitTimerRef.current);
+      purchaseExitTimerRef.current = null;
+    }
+    setPurchaseClosing(false);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (purchaseExitTimerRef.current !== null) {
+        clearTimeout(purchaseExitTimerRef.current);
+      }
+    },
+    []
+  );
 
   const openShop = useCallback(() => {
+    clearPurchaseExit();
     setActiveApp("shop");
     setPurchase(null);
     setShopLoading(true);
@@ -163,15 +185,16 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
       .then((d) => setShopItems(Array.isArray(d.items) ? d.items : []))
       .catch(() => setShopItems([]))
       .finally(() => setShopLoading(false));
-  }, []);
+  }, [clearPurchaseExit]);
 
   // The tablet is shared, so leaving the shop locks the wallet behind it.
   const lockWallet = useCallback(() => {
+    clearPurchaseExit();
     setWallet(null);
     setWalletError(null);
     setWalletPhone("");
     setPurchase(null);
-  }, []);
+  }, [clearPurchaseExit]);
 
   const openWallet = useCallback(async () => {
     const email = walletEmail.trim();
@@ -195,6 +218,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
         setWallet({ ...(body.member as Omit<Wallet, "phone">), phone });
         setWalletEmail("");
         setWalletPhone("");
+        clearPurchaseExit();
         setPurchase(null);
       } else {
         setWalletError(
@@ -208,13 +232,17 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     } finally {
       setWalletLoading(false);
     }
-  }, [walletEmail, walletPhone]);
+  }, [walletEmail, walletPhone, clearPurchaseExit]);
 
   const closePurchase = useCallback(() => {
-    setPurchase((current) =>
-      current?.phase === "paying" ? current : null
-    );
-  }, []);
+    if (!purchase || purchase.phase === "paying" || purchaseClosing) return;
+    setPurchaseClosing(true);
+    purchaseExitTimerRef.current = setTimeout(() => {
+      purchaseExitTimerRef.current = null;
+      setPurchase(null);
+      setPurchaseClosing(false);
+    }, 190);
+  }, [purchase, purchaseClosing]);
 
   useEffect(() => {
     if (!purchase) {
@@ -236,9 +264,34 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   useEffect(() => {
     if (!purchase) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      event.stopPropagation();
-      closePurchase();
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        closePurchase();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const dialog = purchaseDialogRef.current;
+      if (!dialog) return;
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), a[href], input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      );
+      if (focusable.length === 0) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey && (active === first || active === dialog)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
@@ -247,6 +300,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const startPurchase = useCallback(
     (item: ShopItem, trigger: HTMLElement | null) => {
       if (!wallet) return;
+      clearPurchaseExit();
       purchaseReturnFocusRef.current = trigger;
       const balance =
         typeof wallet.ciscoins === "number" ? wallet.ciscoins : null;
@@ -267,7 +321,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
         duplicate: false,
       });
     },
-    [wallet]
+    [wallet, clearPurchaseExit]
   );
 
   const runPurchase = useCallback(
@@ -2113,6 +2167,8 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
         createPortal(
           <div
             className={`icisco-purchase-overlay${
+              purchaseClosing ? " is-closing" : ""
+            }${
               purchase.phase === "error"
                 ? " is-error"
                 : purchase.phase === "success"
@@ -2206,7 +2262,10 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                   </div>
                 )}
 
-                <p className="icisco-purchase-kicker">
+                <p
+                  key={`kicker-${purchase.phase}`}
+                  className="icisco-purchase-kicker"
+                >
                   {purchase.phase === "confirm"
                     ? "Confirm purchase"
                     : purchase.phase === "paying"
@@ -2215,10 +2274,15 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                         ? "Purchase complete"
                         : "Purchase failed"}
                 </p>
-                <h2 className="icisco-purchase-title" id="purchase-title">
+                <h2
+                  key={`title-${purchase.phase}`}
+                  className="icisco-purchase-title"
+                  id="purchase-title"
+                >
                   {purchase.item.name}
                 </h2>
                 <p
+                  key={`desc-${purchase.phase}`}
                   className="icisco-purchase-desc"
                   id="purchase-desc"
                   aria-live={
