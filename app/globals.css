@@ -2112,19 +2112,19 @@ a {
 }
 @keyframes iciscoAxieCharRage {
   0% {
-    transform: translate3d(0, 0, 0) rotate(0deg);
+    transform: translate3d(0, 0, 0);
   }
   25% {
-    transform: translate3d(-0.8px, 1px, 0) rotate(-3.5deg);
+    transform: translate3d(-0.8px, 1.2px, 0);
   }
   50% {
-    transform: translate3d(1px, -0.8px, 0) rotate(3deg);
+    transform: translate3d(1px, -1px, 0);
   }
   75% {
-    transform: translate3d(-0.8px, -0.5px, 0) rotate(-2deg);
+    transform: translate3d(-0.7px, -0.6px, 0);
   }
   100% {
-    transform: translate3d(0.6px, 0.8px, 0) rotate(1.5deg);
+    transform: translate3d(0.6px, 0.9px, 0);
   }
 }
 @keyframes iciscoAxieCaret {
@@ -2434,7 +2434,7 @@ a {
   position: absolute;
   inset: 0;
   background: radial-gradient(
-    circle at 50% 50%,
+    circle at 50% 54%,
     rgba(8, 3, 27, 0.05) 0%,
     rgba(8, 3, 27, 0.42) 58%,
     rgba(8, 3, 27, 0.7) 100%
@@ -2444,7 +2444,8 @@ a {
   position: relative;
   width: min(110vmin, 100%);
   height: min(110vmin, 100%);
-  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.45));
+  transform: translateY(4%);
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.4));
 }
 @keyframes iciscoAxieCrackIn {
   0% {

@@ -375,14 +375,14 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
       setAxieRage("shake");
       showAxieLine(AXIE_SNAP_LINE, null);
       axieTimersRef.current.push(
-        setTimeout(() => setAxieRage("punch"), 780)
+        setTimeout(() => setAxieRage("punch"), 980)
       );
       axieTimersRef.current.push(
         setTimeout(() => {
           setActiveApp(null);
           lockWallet();
           resetAxie();
-        }, 2000)
+        }, 2400)
       );
       return;
     }
@@ -2667,10 +2667,10 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
               <span className="icisco-axie-impact">
                 <svg viewBox="0 0 200 200" fill="none">
                   <path
-                    d="M100 4 118 56.6 167.9 32.1 152.7 78.2 196 100 143.4 118 167.9 167.9 121.8 152.7 100 196 82 143.4 32.1 167.9 47.3 121.8 4 100 56.6 82 32.1 32.1 78.2 47.3Z"
-                    fill="rgba(255,255,255,0.94)"
-                    stroke="rgba(196,181,253,0.95)"
-                    strokeWidth="2"
+                    d="M100 3 117 70.6 176.2 56 130 100 179.7 146 113 122.5 100 186 81 132.9 18.6 147 72 100 22.1 55 84 72.3Z"
+                    fill="rgba(255,255,255,0.88)"
+                    stroke="rgba(255,255,255,0.95)"
+                    strokeWidth="1.8"
                     strokeLinejoin="round"
                   />
                   <circle
@@ -2694,8 +2694,8 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
               <div className="icisco-axie-crack">
                 <svg viewBox="0 0 400 400" fill="none">
                   <g
-                    stroke="rgba(255,255,255,0.94)"
-                    strokeWidth="2.4"
+                    stroke="rgba(255,255,255,0.88)"
+                    strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   >
@@ -2711,8 +2711,8 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                     <path d="M200 200 140 214 112 236 72 244 24 274" />
                   </g>
                   <g
-                    stroke="rgba(196,181,253,0.78)"
-                    strokeWidth="1.1"
+                    stroke="rgba(196,181,253,0.7)"
+                    strokeWidth="0.9"
                     strokeLinecap="round"
                   >
                     <path d="M188 154 172 130 178 108" />
