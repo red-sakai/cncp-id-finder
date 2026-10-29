@@ -1992,6 +1992,30 @@ a {
   transition-duration: 0.34s;
   transition-timing-function: cubic-bezier(0.45, 0, 0.9, 0.5);
 }
+.icisco-shop-mascot.is-popping img {
+  animation: iciscoAxiePopOut 0.64s cubic-bezier(0.22, 1.2, 0.36, 1) both;
+}
+@keyframes iciscoAxiePopOut {
+  0% {
+    transform: translateY(calc(var(--shop-mascot) * 1)) scaleY(0.86)
+      rotate(-2deg);
+  }
+  52% {
+    transform: translateY(calc(var(--shop-mascot) * 0.03)) scaleY(1.06)
+      rotate(1.6deg);
+  }
+  72% {
+    transform: translateY(calc(var(--shop-mascot) * 0.07)) scaleY(0.97)
+      rotate(-0.7deg);
+  }
+  88% {
+    transform: translateY(calc(var(--shop-mascot) * 0.015)) scaleY(1.01)
+      rotate(0.3deg);
+  }
+  100% {
+    transform: translateY(0) scaleY(1) rotate(0deg);
+  }
+}
 .icisco-shop-mascot.is-raging .icisco-shop-mascot-clip {
   filter: drop-shadow(0 0 14px rgba(255, 90, 90, 0.55));
 }
@@ -2034,6 +2058,84 @@ a {
   border-top: 1px solid rgba(196, 181, 253, 0.55);
   border-right: 1px solid rgba(196, 181, 253, 0.55);
   transform: translateX(-50%) rotate(45deg);
+}
+.icisco-axie-bubble.is-enraged {
+  border-color: rgba(248, 113, 113, 0.7);
+  box-shadow:
+    0 10px 24px rgba(4, 2, 20, 0.4),
+    0 0 22px rgba(248, 113, 113, 0.35);
+}
+.icisco-axie-text {
+  display: inline-block;
+  white-space: pre-wrap;
+}
+.icisco-axie-text.is-raging {
+  animation: iciscoAxieTextRage 0.18s steps(2, end) infinite;
+}
+.icisco-axie-word {
+  display: inline-block;
+  white-space: pre;
+}
+.icisco-axie-space {
+  white-space: pre;
+}
+.icisco-axie-char {
+  display: inline-block;
+}
+.icisco-axie-char.is-raging {
+  color: #b3261e;
+  animation: iciscoAxieCharRage 0.16s steps(2, end) infinite;
+}
+.icisco-axie-caret {
+  display: inline-block;
+  width: 0.42em;
+  height: 1em;
+  margin-left: 0.12em;
+  background: currentColor;
+  vertical-align: -0.12em;
+  animation: iciscoAxieCaret 0.7s steps(1, end) infinite;
+}
+@keyframes iciscoAxieTextRage {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate3d(-1px, 0.4px, 0) rotate(-0.7deg);
+  }
+  50% {
+    transform: translate3d(1px, -0.8px, 0) rotate(0.7deg);
+  }
+  75% {
+    transform: translate3d(-0.6px, 0.8px, 0) rotate(-0.4deg);
+  }
+}
+@keyframes iciscoAxieCharRage {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate3d(-0.8px, 1px, 0) rotate(-3.5deg);
+  }
+  50% {
+    transform: translate3d(1px, -0.8px, 0) rotate(3deg);
+  }
+  75% {
+    transform: translate3d(-0.8px, -0.5px, 0) rotate(-2deg);
+  }
+  100% {
+    transform: translate3d(0.6px, 0.8px, 0) rotate(1.5deg);
+  }
+}
+@keyframes iciscoAxieCaret {
+  0%,
+  48% {
+    opacity: 1;
+  }
+  49%,
+  100% {
+    opacity: 0;
+  }
 }
 @keyframes iciscoAxieBubbleIn {
   0% {
@@ -2123,25 +2225,28 @@ a {
   animation: iciscoRageShake 0.62s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 .icisco-app-screen.is-axie-punch {
-  animation: iciscoRagePunch 0.74s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  animation: iciscoRagePunch 0.95s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 @keyframes iciscoRagePunch {
   0% {
     transform: translate3d(0, 0, 0) scale(1.035) rotate(0deg);
   }
-  14% {
-    transform: translate3d(-26px, 17px, 0) scale(1.04) rotate(-1.2deg);
+  18% {
+    transform: translate3d(0, 0, 0) scale(1.05) rotate(-0.4deg);
   }
-  30% {
-    transform: translate3d(22px, -19px, 0) scale(1.04) rotate(1.1deg);
+  28% {
+    transform: translate3d(-30px, 20px, 0) scale(1.055) rotate(-1.4deg);
   }
-  46% {
-    transform: translate3d(-17px, 12px, 0) scale(1.03) rotate(-0.8deg);
+  40% {
+    transform: translate3d(26px, -23px, 0) scale(1.05) rotate(1.3deg);
   }
-  62% {
-    transform: translate3d(11px, -8px, 0) scale(1.02) rotate(0.55deg);
+  54% {
+    transform: translate3d(-19px, 14px, 0) scale(1.035) rotate(-0.9deg);
   }
-  78% {
+  68% {
+    transform: translate3d(12px, -9px, 0) scale(1.025) rotate(0.6deg);
+  }
+  82% {
     transform: translate3d(-6px, 5px, 0) scale(1.015) rotate(-0.3deg);
   }
   100% {
@@ -2185,15 +2290,56 @@ a {
   pointer-events: none;
   overflow: hidden;
 }
+.icisco-axie-speedlines {
+  position: absolute;
+  inset: -30%;
+  background: repeating-conic-gradient(
+    from 8deg at 50% 50%,
+    rgba(255, 255, 255, 0.55) 0deg 1.2deg,
+    transparent 1.6deg 8deg
+  );
+  -webkit-mask-image: radial-gradient(
+    circle at 50% 50%,
+    transparent 0 23%,
+    #000 44% 72%,
+    transparent 78%
+  );
+  mask-image: radial-gradient(
+    circle at 50% 50%,
+    transparent 0 23%,
+    #000 44% 72%,
+    transparent 78%
+  );
+  opacity: 0;
+  animation: iciscoAxieSpeedlines 0.62s cubic-bezier(0.1, 0.8, 0.2, 1) 0.22s
+    both;
+}
+@keyframes iciscoAxieSpeedlines {
+  0% {
+    opacity: 0;
+    transform: scale(0.55) rotate(-6deg);
+  }
+  18% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.35) rotate(4deg);
+  }
+}
 .icisco-axie-flash {
   position: absolute;
   inset: 0;
   background: #ffffff;
-  animation: iciscoAxieFlash 0.4s ease-out both;
+  opacity: 0;
+  animation: iciscoAxieFlash 0.32s ease-out 0.26s both;
 }
 @keyframes iciscoAxieFlash {
   0% {
-    opacity: 0.85;
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.88;
   }
   100% {
     opacity: 0;
@@ -2208,24 +2354,72 @@ a {
 .icisco-axie-lunge img {
   width: clamp(9rem, 34vw, 18rem);
   height: auto;
-  animation: iciscoAxieLunge 0.55s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+  transform-origin: 50% 58%;
+  filter: drop-shadow(0 18px 30px rgba(4, 2, 20, 0.55));
+  animation: iciscoAxieLunge 0.7s cubic-bezier(0.16, 0.84, 0.24, 1) both;
 }
 @keyframes iciscoAxieLunge {
   0% {
     opacity: 0;
-    transform: translateY(18%) scale(0.5) rotate(-6deg);
+    transform: translate3d(58%, -72%, 0) scale(0.42) rotate(22deg);
+  }
+  24% {
+    opacity: 1;
+    transform: translate3d(24%, -30%, 0) scale(0.92) rotate(7deg);
   }
   42% {
     opacity: 1;
-    transform: translateY(0) scale(1.35) rotate(2deg);
+    transform: translate3d(-2%, 5%, 0) scale(1.48) rotate(-4deg);
   }
-  70% {
+  54% {
     opacity: 1;
-    transform: translateY(-6%) scale(1.5) rotate(-1deg);
+    transform: translate3d(3%, 1%, 0) scale(1.3) rotate(1.5deg);
+  }
+  72% {
+    opacity: 1;
+    transform: translate3d(-1%, -5%, 0) scale(1.18) rotate(-1.5deg);
   }
   100% {
     opacity: 0;
-    transform: translateY(-16%) scale(1.9) rotate(0deg);
+    transform: translate3d(0, -16%, 0) scale(1.04) rotate(0deg);
+  }
+}
+.icisco-axie-impact {
+  position: absolute;
+  left: 50%;
+  top: 54%;
+  width: clamp(7rem, 24vw, 13rem);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  animation: iciscoAxieImpact 0.6s cubic-bezier(0.2, 1.3, 0.4, 1) 0.27s both;
+}
+.icisco-axie-impact svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 18px rgba(255, 255, 255, 0.65));
+}
+@keyframes iciscoAxieImpact {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.15) rotate(-22deg);
+  }
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.18) rotate(4deg);
+  }
+  32% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.96) rotate(-2deg);
+  }
+  55% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1.05) rotate(1deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.45) rotate(8deg);
   }
 }
 .icisco-axie-crack {
@@ -2233,7 +2427,7 @@ a {
   inset: 0;
   display: grid;
   place-items: center;
-  animation: iciscoAxieCrackIn 0.32s cubic-bezier(0.2, 1.3, 0.4, 1) 0.16s both;
+  animation: iciscoAxieCrackIn 0.34s cubic-bezier(0.2, 1.3, 0.4, 1) 0.3s both;
 }
 .icisco-axie-crack::before {
   content: "";
@@ -2307,7 +2501,9 @@ a {
   .icisco-shop-case,
   .icisco-shop-slot,
   .icisco-axie-flash,
+  .icisco-axie-speedlines,
   .icisco-axie-lunge img,
+  .icisco-axie-impact,
   .icisco-axie-crack {
     animation: none;
   }
@@ -2321,6 +2517,13 @@ a {
   .icisco-axie-bubble.is-leaving {
     animation: iciscoAxieBubbleOutSoft 0.14s ease-in both;
   }
+  .icisco-axie-text.is-raging,
+  .icisco-axie-char.is-raging {
+    animation: none;
+  }
+  .icisco-axie-caret {
+    animation: none;
+  }
   .icisco-shop-mascot img {
     transition-duration: 0.24s;
     transition-timing-function: ease-out;
@@ -2329,8 +2532,13 @@ a {
     transition-duration: 0.24s;
     transition-timing-function: ease-out;
   }
+  .icisco-shop-mascot.is-popping img {
+    animation: none;
+  }
   .icisco-axie-flash,
-  .icisco-axie-lunge {
+  .icisco-axie-speedlines,
+  .icisco-axie-lunge,
+  .icisco-axie-impact {
     display: none;
   }
 }
