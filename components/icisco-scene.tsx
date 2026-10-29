@@ -94,6 +94,14 @@ const DIALOGUE_LINES = [
   "Tap anywhere or press Escape to leave anytime. Ready to explore?",
 ];
 
+const AXIE_PEEK_LINES = [
+  "Eep! You found my spot.",
+  "Okay, very funny. Please stop.",
+  "I am asking nicely. Stop that.",
+];
+
+const AXIE_SNAP_LINE = "That does it. Hold still.";
+
 export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const mountRef = useRef<HTMLDivElement>(null);
   const shadeRef = useRef<HTMLDivElement>(null);
@@ -173,6 +181,17 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const [walletPhone, setWalletPhone] = useState("");
   const [walletLoading, setWalletLoading] = useState(false);
   const [walletError, setWalletError] = useState<string | null>(null);
+  const [axieDucking, setAxieDucking] = useState(false);
+  const [axieLine, setAxieLine] = useState<string | null>(null);
+  const [axieBubbleClosing, setAxieBubbleClosing] = useState(false);
+  const [axieRage, setAxieRage] = useState<"shake" | "punch" | null>(null);
+  const axieCountRef = useRef(0);
+  const axieRagingRef = useRef(false);
+  const axieTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const axieLineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const axieBubbleExitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
   // Guest cards send people back to the sign-in slip, so the email field is
   // the target rather than a second copy of the form.
   const shopEmailRef = useRef<HTMLInputElement>(null);
@@ -232,6 +251,92 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     setWalletPhone("");
     setPurchase(null);
   }, [clearPurchaseExit]);
+
+  const clearAxieTimers = useCallback(() => {
+    axieTimersRef.current.forEach((timer) => clearTimeout(timer));
+    axieTimersRef.current = [];
+    if (axieLineTimerRef.current !== null) {
+      clearTimeout(axieLineTimerRef.current);
+      axieLineTimerRef.current = null;
+    }
+    if (axieBubbleExitTimerRef.current !== null) {
+      clearTimeout(axieBubbleExitTimerRef.current);
+      axieBubbleExitTimerRef.current = null;
+    }
+  }, []);
+
+  const resetAxie = useCallback(() => {
+    clearAxieTimers();
+    axieCountRef.current = 0;
+    axieRagingRef.current = false;
+    setAxieDucking(false);
+    setAxieLine(null);
+    setAxieBubbleClosing(false);
+    setAxieRage(null);
+  }, [clearAxieTimers]);
+
+  const showAxieLine = useCallback((line: string) => {
+    if (axieLineTimerRef.current !== null) {
+      clearTimeout(axieLineTimerRef.current);
+    }
+    if (axieBubbleExitTimerRef.current !== null) {
+      clearTimeout(axieBubbleExitTimerRef.current);
+      axieBubbleExitTimerRef.current = null;
+    }
+    setAxieBubbleClosing(false);
+    setAxieLine(line);
+    axieLineTimerRef.current = setTimeout(() => {
+      axieLineTimerRef.current = null;
+      setAxieBubbleClosing(true);
+      axieBubbleExitTimerRef.current = setTimeout(() => {
+        axieBubbleExitTimerRef.current = null;
+        setAxieBubbleClosing(false);
+        setAxieLine(null);
+      }, 190);
+    }, 2600);
+  }, []);
+
+  const teaseAxie = useCallback(() => {
+    if (axieRagingRef.current) return;
+    const peeks = axieCountRef.current + 1;
+    axieCountRef.current = peeks;
+    setAxieDucking(true);
+
+    if (peeks >= AXIE_PEEK_LINES.length + 1) {
+      axieRagingRef.current = true;
+      if (axieLineTimerRef.current !== null) {
+        clearTimeout(axieLineTimerRef.current);
+        axieLineTimerRef.current = null;
+      }
+      if (axieBubbleExitTimerRef.current !== null) {
+        clearTimeout(axieBubbleExitTimerRef.current);
+        axieBubbleExitTimerRef.current = null;
+      }
+      setAxieBubbleClosing(false);
+      setAxieLine(AXIE_SNAP_LINE);
+      setAxieRage("shake");
+      axieTimersRef.current.push(
+        setTimeout(() => setAxieRage("punch"), 780)
+      );
+      axieTimersRef.current.push(
+        setTimeout(() => {
+          setActiveApp(null);
+          lockWallet();
+          resetAxie();
+        }, 2000)
+      );
+      return;
+    }
+
+    showAxieLine(AXIE_PEEK_LINES[peeks - 1]);
+  }, [lockWallet, resetAxie, showAxieLine]);
+
+  const relaxAxie = useCallback(() => {
+    if (axieRagingRef.current) return;
+    setAxieDucking(false);
+  }, []);
+
+  useEffect(() => clearAxieTimers, [clearAxieTimers]);
 
   const openWallet = useCallback(async () => {
     const email = walletEmail.trim();
@@ -1868,12 +1973,15 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
       )}
 
       {activeApp === "shop" && !closing && (
-        <div className="icisco-app-screen">
+        <div
+          className={`icisco-app-screen${axieRage ? ` is-axie-${axieRage}` : ""}`}
+        >
           <div className="icisco-app-bar">
             <button
               type="button"
               className="icisco-app-back"
               onClick={() => {
+                resetAxie();
                 setActiveApp(null);
                 lockWallet();
               }}
@@ -2079,15 +2187,39 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                 className="icisco-shop-case"
                 aria-labelledby="shop-shelf-title"
               >
-                <div className="icisco-shop-mascot" aria-hidden="true">
-                  <Image
-                    src="/axie-peeking.png"
-                    alt=""
-                    width={200}
-                    height={200}
-                    draggable={false}
-                  />
-                </div>
+                <button
+                  type="button"
+                  className={`icisco-shop-mascot${
+                    axieDucking ? " is-ducking" : ""
+                  }${axieRage ? " is-raging" : ""}`}
+                  aria-label="Axie, the shop mascot"
+                  onPointerEnter={teaseAxie}
+                  onPointerLeave={relaxAxie}
+                  onClick={(event) => {
+                    if (event.detail === 0) teaseAxie();
+                  }}
+                >
+                  <span className="icisco-shop-mascot-clip">
+                    <Image
+                      src="/axie-peeking.png"
+                      alt=""
+                      width={200}
+                      height={200}
+                      draggable={false}
+                    />
+                  </span>
+                  {axieLine && (
+                    <span
+                      key={axieLine}
+                      className={`icisco-axie-bubble${
+                        axieBubbleClosing ? " is-leaving" : ""
+                      }`}
+                      role="status"
+                    >
+                      {axieLine}
+                    </span>
+                  )}
+                </button>
                 <span className="icisco-shop-bolt is-tl" aria-hidden="true" />
                 <span className="icisco-shop-bolt is-tr" aria-hidden="true" />
                 <span className="icisco-shop-bolt is-bl" aria-hidden="true" />
@@ -2405,6 +2537,60 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
               </p>
             </div>
           </div>
+
+          {axieRage === "punch" && (
+            <div className="icisco-axie-rage" aria-hidden="true">
+              <span className="icisco-axie-flash" />
+              <div className="icisco-axie-lunge">
+                <Image
+                  src="/axie-peeking.png"
+                  alt=""
+                  width={200}
+                  height={200}
+                  draggable={false}
+                />
+              </div>
+              <div className="icisco-axie-crack">
+                <svg viewBox="0 0 400 400" fill="none">
+                  <g
+                    stroke="rgba(255,255,255,0.92)"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M200 200 188 154 198 118 184 82 192 36" />
+                    <path d="M200 200 242 176 262 148 292 130 324 92" />
+                    <path d="M200 200 248 222 286 214 322 236 368 230" />
+                    <path d="M200 200 166 236 144 266 106 284 76 328" />
+                    <path d="M200 200 156 184 120 190 82 166 40 168" />
+                    <path d="M200 200 212 246 200 284 218 318 208 372" />
+                    <path d="M200 200 176 212 150 208 128 226 96 222" />
+                    <path d="M200 200 228 190 252 196 276 184 304 190" />
+                  </g>
+                  <g
+                    stroke="rgba(196,181,253,0.72)"
+                    strokeWidth="1"
+                    strokeLinecap="round"
+                  >
+                    <path d="M188 154 172 130 178 108" />
+                    <path d="M242 176 252 156 246 134" />
+                    <path d="M166 236 154 252 136 258" />
+                    <path d="M212 246 228 260 234 280" />
+                    <path d="M156 184 138 172 128 154" />
+                    <path d="M248 222 268 232 278 250" />
+                  </g>
+                  <circle cx="200" cy="200" r="13" fill="rgba(255,255,255,0.9)" />
+                  <circle
+                    cx="200"
+                    cy="200"
+                    r="26"
+                    stroke="rgba(255,255,255,0.55)"
+                    strokeWidth="1.5"
+                  />
+                </svg>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
