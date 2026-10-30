@@ -12,7 +12,10 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const emails = (data ?? []).map((d) => d.email);
+  const uniqueIds = Array.from(
+    new Map((data ?? []).map((d) => [d.email, d])).values()
+  );
+  const emails = uniqueIds.map((d) => d.email);
 
   if (emails.length === 0) {
     return NextResponse.json({ ids: [] });
@@ -46,7 +49,7 @@ export async function GET() {
     badgeMap.get(b.email)!.push(b.badge_id);
   });
 
-  const ids = (data ?? []).map((d) => {
+  const ids = uniqueIds.map((d) => {
     const user = userMap.get(d.email);
     return {
       ...user,
