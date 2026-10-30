@@ -175,13 +175,18 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const [walletLoading, setWalletLoading] = useState(false);
   const [walletError, setWalletError] = useState<string | null>(null);
   const [axieDucking, setAxieDucking] = useState(false);
+  const [axiePopping, setAxiePopping] = useState(false);
   const [axieLine, setAxieLine] = useState<string | null>(null);
+  const [axieTyped, setAxieTyped] = useState("");
+  const [axieTyping, setAxieTyping] = useState(false);
   const [axieBubbleClosing, setAxieBubbleClosing] = useState(false);
   const [axieRage, setAxieRage] = useState<"shake" | "punch" | null>(null);
   const axieCountRef = useRef(0);
   const axieRagingRef = useRef(false);
   const axieTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const axieLineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const axieTypeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const axiePopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const axieBubbleExitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
@@ -252,6 +257,14 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
       clearTimeout(axieLineTimerRef.current);
       axieLineTimerRef.current = null;
     }
+    if (axieTypeTimerRef.current !== null) {
+      clearTimeout(axieTypeTimerRef.current);
+      axieTypeTimerRef.current = null;
+    }
+    if (axiePopTimerRef.current !== null) {
+      clearTimeout(axiePopTimerRef.current);
+      axiePopTimerRef.current = null;
+    }
     if (axieBubbleExitTimerRef.current !== null) {
       clearTimeout(axieBubbleExitTimerRef.current);
       axieBubbleExitTimerRef.current = null;
@@ -263,40 +276,54 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     axieCountRef.current = 0;
     axieRagingRef.current = false;
     setAxieDucking(false);
+    setAxiePopping(false);
     setAxieLine(null);
+    setAxieTyped("");
+    setAxieTyping(false);
     setAxieBubbleClosing(false);
     setAxieRage(null);
   }, [clearAxieTimers]);
 
-  const showAxieLine = useCallback((line: string) => {
-    if (axieLineTimerRef.current !== null) {
-      clearTimeout(axieLineTimerRef.current);
+  const typeAxieLine = useCallback((line: string, holdMs: number | null) => {
+    if (axieTypeTimerRef.current !== null) {
+      clearTimeout(axieTypeTimerRef.current);
+      axieTypeTimerRef.current = null;
     }
-    if (axieBubbleExitTimerRef.current !== null) {
-      clearTimeout(axieBubbleExitTimerRef.current);
-      axieBubbleExitTimerRef.current = null;
-    }
-    setAxieBubbleClosing(false);
-    setAxieLine(line);
-    axieLineTimerRef.current = setTimeout(() => {
-      axieLineTimerRef.current = null;
-      setAxieBubbleClosing(true);
-      axieBubbleExitTimerRef.current = setTimeout(() => {
-        axieBubbleExitTimerRef.current = null;
-        setAxieBubbleClosing(false);
-        setAxieLine(null);
-      }, 190);
-    }, 2600);
+    setAxieTyped("");
+    setAxieTyping(true);
+    let index = 0;
+
+    const step = () => {
+      index += 1;
+      setAxieTyped(line.slice(0, index));
+
+      if (index >= line.length) {
+        axieTypeTimerRef.current = null;
+        setAxieTyping(false);
+        if (holdMs === null) return;
+        axieLineTimerRef.current = setTimeout(() => {
+          axieLineTimerRef.current = null;
+          setAxieBubbleClosing(true);
+          axieBubbleExitTimerRef.current = setTimeout(() => {
+            axieBubbleExitTimerRef.current = null;
+            setAxieBubbleClosing(false);
+            setAxieLine(null);
+            setAxieTyped("");
+          }, 190);
+        }, holdMs);
+        return;
+      }
+
+      const char = line[index - 1];
+      const pause = /[.!?]/.test(char) ? 140 : 30;
+      axieTypeTimerRef.current = setTimeout(step, pause);
+    };
+
+    axieTypeTimerRef.current = setTimeout(step, 24);
   }, []);
 
-  const teaseAxie = useCallback(() => {
-    if (axieRagingRef.current) return;
-    const peeks = axieCountRef.current + 1;
-    axieCountRef.current = peeks;
-    setAxieDucking(true);
-
-    if (peeks >= AXIE_PEEK_LINES.length + 1) {
-      axieRagingRef.current = true;
+  const showAxieLine = useCallback(
+    (line: string, holdMs: number | null = 2600) => {
       if (axieLineTimerRef.current !== null) {
         clearTimeout(axieLineTimerRef.current);
         axieLineTimerRef.current = null;
@@ -306,17 +333,49 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
         axieBubbleExitTimerRef.current = null;
       }
       setAxieBubbleClosing(false);
-      setAxieLine(AXIE_SNAP_LINE);
+      setAxieLine(line);
+      typeAxieLine(line, holdMs);
+    },
+    [typeAxieLine]
+  );
+
+  const popAxie = useCallback(() => {
+    if (axiePopTimerRef.current !== null) {
+      clearTimeout(axiePopTimerRef.current);
+    }
+    setAxieDucking(false);
+    setAxiePopping(true);
+    axiePopTimerRef.current = setTimeout(() => {
+      axiePopTimerRef.current = null;
+      setAxiePopping(false);
+    }, 640);
+  }, []);
+
+  const teaseAxie = useCallback(() => {
+    if (axieRagingRef.current) return;
+    const peeks = axieCountRef.current + 1;
+    axieCountRef.current = peeks;
+    if (axiePopTimerRef.current !== null) {
+      clearTimeout(axiePopTimerRef.current);
+      axiePopTimerRef.current = null;
+    }
+    setAxiePopping(false);
+    setAxieDucking(true);
+
+    if (peeks >= AXIE_PEEK_LINES.length + 1) {
+      axieRagingRef.current = true;
+      setAxieBubbleClosing(false);
       setAxieRage("shake");
+      showAxieLine(AXIE_SNAP_LINE, null);
       axieTimersRef.current.push(
-        setTimeout(() => setAxieRage("punch"), 780)
+        setTimeout(() => setAxieRage("punch"), 980)
       );
       axieTimersRef.current.push(
         setTimeout(() => {
           setActiveApp(null);
           lockWallet();
           resetAxie();
-        }, 2000)
+        }, 2400)
       );
       return;
     }
@@ -326,8 +385,9 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
 
   const relaxAxie = useCallback(() => {
     if (axieRagingRef.current) return;
-    setAxieDucking(false);
-  }, []);
+    if (!axieDucking) return;
+    popAxie();
+  }, [axieDucking, popAxie]);
 
   useEffect(() => clearAxieTimers, [clearAxieTimers]);
 
@@ -2184,7 +2244,9 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                   type="button"
                   className={`icisco-shop-mascot${
                     axieDucking ? " is-ducking" : ""
-                  }${axieRage ? " is-raging" : ""}`}
+                  }${axiePopping ? " is-popping" : ""}${
+                    axieRage ? " is-raging" : ""
+                  }`}
                   aria-label="Axie, the shop mascot"
                   onPointerEnter={teaseAxie}
                   onPointerLeave={relaxAxie}
@@ -2206,10 +2268,61 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                       key={axieLine}
                       className={`icisco-axie-bubble${
                         axieBubbleClosing ? " is-leaving" : ""
-                      }`}
+                      }${axieRage ? " is-enraged" : ""}`}
                       role="status"
+                      aria-label={axieLine}
                     >
-                      {axieLine}
+                      <span
+                        className={`icisco-axie-text${
+                          axieRage ? " is-raging" : ""
+                        }`}
+                        aria-hidden="true"
+                      >
+                        {axieTyped.split(/(\s+)/).map((part, partIndex) =>
+                          /^\s+$/.test(part) ? (
+                            <span
+                              key={`space-${partIndex}`}
+                              className="icisco-axie-space"
+                            >
+                              {part}
+                            </span>
+                          ) : (
+                            <span
+                              key={`word-${partIndex}`}
+                              className="icisco-axie-word"
+                            >
+                              {Array.from(part).map((char, charIndex) => (
+                                <span
+                                  key={`${partIndex}-${charIndex}`}
+                                  className={`icisco-axie-char${
+                                    axieRage ? " is-raging" : ""
+                                  }`}
+                                  style={
+                                    axieRage
+                                      ? {
+                                          animationDelay: `${
+                                            (charIndex % 5) * -0.04
+                                          }s`,
+                                          animationDuration: `${
+                                            0.14 + (charIndex % 3) * 0.02
+                                          }s`,
+                                        }
+                                      : undefined
+                                  }
+                                >
+                                  {char}
+                                </span>
+                              ))}
+                            </span>
+                          )
+                        )}
+                      </span>
+                      {axieTyping && (
+                        <span
+                          className="icisco-axie-caret"
+                          aria-hidden="true"
+                        />
+                      )}
                     </span>
                   )}
                 </button>
@@ -2533,6 +2646,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
 
           {axieRage === "punch" && (
             <div className="icisco-axie-rage" aria-hidden="true">
+              <span className="icisco-axie-speedlines" />
               <span className="icisco-axie-flash" />
               <div className="icisco-axie-lunge">
                 <Image
@@ -2543,11 +2657,38 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                   draggable={false}
                 />
               </div>
+              <span className="icisco-axie-impact">
+                <svg viewBox="0 0 200 200" fill="none">
+                  <path
+                    d="M100 3 117 70.6 176.2 56 130 100 179.7 146 113 122.5 100 186 81 132.9 18.6 147 72 100 22.1 55 84 72.3Z"
+                    fill="rgba(255,255,255,0.88)"
+                    stroke="rgba(255,255,255,0.95)"
+                    strokeWidth="1.8"
+                    strokeLinejoin="round"
+                  />
+                  <circle
+                    cx="100"
+                    cy="100"
+                    r="34"
+                    fill="rgba(124,92,255,0.34)"
+                    stroke="rgba(255,255,255,0.9)"
+                    strokeWidth="2.5"
+                  />
+                  <circle
+                    cx="100"
+                    cy="100"
+                    r="52"
+                    stroke="rgba(255,255,255,0.7)"
+                    strokeWidth="1.5"
+                    strokeDasharray="4 9"
+                  />
+                </svg>
+              </span>
               <div className="icisco-axie-crack">
                 <svg viewBox="0 0 400 400" fill="none">
                   <g
-                    stroke="rgba(255,255,255,0.92)"
-                    strokeWidth="2.2"
+                    stroke="rgba(255,255,255,0.88)"
+                    strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   >
@@ -2559,10 +2700,12 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                     <path d="M200 200 212 246 200 284 218 318 208 372" />
                     <path d="M200 200 176 212 150 208 128 226 96 222" />
                     <path d="M200 200 228 190 252 196 276 184 304 190" />
+                    <path d="M200 200 270 164 300 172 336 150 380 162" />
+                    <path d="M200 200 140 214 112 236 72 244 24 274" />
                   </g>
                   <g
-                    stroke="rgba(196,181,253,0.72)"
-                    strokeWidth="1"
+                    stroke="rgba(196,181,253,0.7)"
+                    strokeWidth="0.9"
                     strokeLinecap="round"
                   >
                     <path d="M188 154 172 130 178 108" />
@@ -2571,13 +2714,15 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                     <path d="M212 246 228 260 234 280" />
                     <path d="M156 184 138 172 128 154" />
                     <path d="M248 222 268 232 278 250" />
+                    <path d="M270 164 284 146 280 126" />
+                    <path d="M140 214 126 200 104 198" />
                   </g>
-                  <circle cx="200" cy="200" r="13" fill="rgba(255,255,255,0.9)" />
+                  <circle cx="200" cy="200" r="13" fill="rgba(255,255,255,0.94)" />
                   <circle
                     cx="200"
                     cy="200"
                     r="26"
-                    stroke="rgba(255,255,255,0.55)"
+                    stroke="rgba(255,255,255,0.6)"
                     strokeWidth="1.5"
                   />
                 </svg>
