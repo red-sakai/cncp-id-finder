@@ -47,22 +47,15 @@ type ShopItem = {
 
 function CoinIcon({ className }: { className?: string }) {
   return (
-    <svg
+    <Image
+      src="/rebranding/logos/ciscoins.png"
+      alt=""
+      width={24}
+      height={24}
       className={className}
-      viewBox="0 0 24 24"
       aria-hidden="true"
-      focusable="false"
-    >
-      <circle cx="12" cy="12" r="9.25" fill="#ffca28" stroke="#b47f00" strokeWidth="1.5" />
-      <circle cx="12" cy="12" r="6" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="1.1" />
-      <path
-        d="M14.6 9a4.1 4.1 0 1 0 0 6"
-        fill="none"
-        stroke="#6a4b00"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
+      draggable={false}
+    />
   );
 }
 
@@ -2686,9 +2679,33 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                     </div>
                     {purchase.phase === "paying" && (
                       <>
-                        <span className="icisco-purchase-coin coin-a">C</span>
-                        <span className="icisco-purchase-coin coin-b">C</span>
-                        <span className="icisco-purchase-coin coin-c">C</span>
+                        <Image
+                          src="/rebranding/logos/ciscoins.png"
+                          alt=""
+                          width={24}
+                          height={24}
+                          className="icisco-purchase-coin coin-a"
+                          aria-hidden="true"
+                          draggable={false}
+                        />
+                        <Image
+                          src="/rebranding/logos/ciscoins.png"
+                          alt=""
+                          width={24}
+                          height={24}
+                          className="icisco-purchase-coin coin-b"
+                          aria-hidden="true"
+                          draggable={false}
+                        />
+                        <Image
+                          src="/rebranding/logos/ciscoins.png"
+                          alt=""
+                          width={24}
+                          height={24}
+                          className="icisco-purchase-coin coin-c"
+                          aria-hidden="true"
+                          draggable={false}
+                        />
                       </>
                     )}
                   </div>
