@@ -8,7 +8,7 @@ import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import QRCode from "qrcode";
 import WireZipGame from "@/components/wirezip-game";
-import AxieChestLoader, { loadAxie, type ChestFinish } from "@/components/axie-chest-loader";
+import AxieChestLoader, { prepareAxie, type ChestFinish } from "@/components/axie-chest-loader";
 import { useBadgeDefinitions } from "@/lib/badge-definitions";
 
 let cachedGltf: GLTF | null = null;
@@ -672,10 +672,11 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     }
   }, [emailInput]);
 
-  // The chest model is 7 MB: start fetching it as soon as ID Finder opens.
+  // The chest model is ~5 MB: fetch and warm it once the iPad intro animation is done
+  // (or skipped), so it doesn't stutter the intro but is ready before the first search.
   useEffect(() => {
-    if (activeApp === "id-finder") loadAxie().catch(() => {});
-  }, [activeApp]);
+    if (phase !== "anim" || activeApp === "id-finder") prepareAxie().catch(() => {});
+  }, [phase, activeApp]);
 
   // Signature pad functions
   const getSigPos = (e: React.MouseEvent | React.TouchEvent) => {
