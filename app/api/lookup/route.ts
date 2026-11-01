@@ -42,9 +42,10 @@ export async function POST(request: NextRequest) {
     .eq("email", trimmed)
     .order("awarded_at", { ascending: true });
 
+  // "*" so the lookup keeps working before featured_badges.sql has been run.
   const { data: digitalId } = await supabase
     .from("digital_ids")
-    .select("card_style, is_public")
+    .select("*")
     .eq("email", trimmed)
     .limit(1);
 
@@ -71,5 +72,6 @@ export async function POST(request: NextRequest) {
     ciscoins,
     card_style: digitalId && digitalId.length > 0 ? digitalId[0].card_style : "white",
     is_public: digitalId && digitalId.length > 0 ? digitalId[0].is_public : false,
+    featured_badges: digitalId?.[0]?.featured_badges ?? null,
   });
 }

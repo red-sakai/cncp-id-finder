@@ -6,6 +6,8 @@ import { useParams } from "next/navigation";
 import Image from "next/image";
 import QRCode from "qrcode";
 import { useBadgeDefinitions } from "@/lib/badge-definitions";
+import { resolveFeatured, type FeaturedSlots } from "@/lib/featured-badges";
+import { BadgeCount } from "@/components/badge-case";
 
 type UserData = {
   first_name: string;
@@ -15,6 +17,7 @@ type UserData = {
   membership_type: string;
   badges: { badge_id: string; awarded_at: string; awarded_by?: string }[];
   card_style: string;
+  featured_badges: FeaturedSlots | null;
 };
 
 export default function PublicIdPage() {
@@ -87,9 +90,7 @@ export default function PublicIdPage() {
     fetchUser();
   }, [email]);
 
-  const earnedBadges = new Set(
-    (data?.badges ?? []).map((b) => b.badge_id)
-  );
+  const earnedBadges = (data?.badges ?? []).map((b) => b.badge_id);
 
   const getSigPos = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = sigCanvasRef.current;
@@ -210,32 +211,33 @@ export default function PublicIdPage() {
             </div>
           </div>
           <div className="icisco-idcard-badges">
-            <span className="icisco-idcard-badges-title">
-              Badges
-              <span className="icisco-idcard-badges-help" onClick={(e) => e.stopPropagation()}>
-                ?
-                <span className="icisco-idcard-badges-tooltip">
-                  Earn badges by scanning QR codes at CNCP events and activities.
+            <div className="icisco-idcard-badges-head">
+              <span className="icisco-idcard-badges-title">
+                Badges
+                <span className="icisco-idcard-badges-help" onClick={(e) => e.stopPropagation()}>
+                  ?
+                  <span className="icisco-idcard-badges-tooltip">
+                    Earn badges by scanning QR codes at CNCP events and activities.
+                  </span>
                 </span>
               </span>
-            </span>
+              <BadgeCount count={earnedBadges.length} />
+            </div>
             <div className="icisco-idcard-badge-slots">
               {(() => {
-                const totalSlots = 3;
-                const slots: string[] = [];
-                for (const id of earnedBadges) {
-                  if (badgeFor(id)) slots.push(id);
-                }
-                while (slots.length < totalSlots) slots.push("");
+                const slots = resolveFeatured(
+                  data.featured_badges,
+                  earnedBadges.filter((id) => badgeFor(id))
+                );
                 return slots.map((id, i) => {
                   const info = id ? badgeFor(id) : undefined;
                   return (
                     <div
-                      key={id || `empty-${i}`}
+                      key={i}
                       className={`icisco-idcard-badge-slot ${info ? "earned" : ""}`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (info) setSelectedBadge(id);
+                        if (id && info) setSelectedBadge(id);
                       }}
                     >
                       {info ? (

@@ -4,7 +4,8 @@ import { supabase } from "@/lib/supabase";
 export async function GET() {
   const { data, error } = await supabase
     .from("digital_ids")
-    .select("email, card_style")
+    // "*" so this keeps working before featured_badges.sql has been run.
+    .select("*")
     .eq("is_public", true)
     .order("card_style", { ascending: true });
 
@@ -54,6 +55,7 @@ export async function GET() {
     return {
       ...user,
       card_style: d.card_style,
+      featured_badges: d.featured_badges ?? null,
       badges: badgeMap.get(d.email) ?? [],
     };
   }).filter((item) => item.first_name);

@@ -9,6 +9,13 @@ import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js"
 import QRCode from "qrcode";
 import WireZipGame from "@/components/wirezip-game";
 import AxieChestLoader, { prepareAxie, type ChestFinish } from "@/components/axie-chest-loader";
+import { BadgeCase, BadgeCount, useBadgeDrag } from "@/components/badge-case";
+import {
+  moveBadge,
+  resolveFeatured,
+  type BadgeDrop,
+  type FeaturedSlots,
+} from "@/lib/featured-badges";
 import { useBadgeDefinitions } from "@/lib/badge-definitions";
 
 let cachedGltf: GLTF | null = null;
@@ -126,7 +133,16 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     ciscoins: number | null;
     card_style: string;
     is_public: boolean;
+    featured_badges: FeaturedSlots | null;
   } | null>(null);
+  const [caseOpen, setCaseOpen] = useState(false);
+  const [caseMsg, setCaseMsg] = useState<string | null>(null);
+  const featuredSaveRef = useRef({
+    chain: Promise.resolve(),
+    pending: 0,
+    gen: 0,
+    confirmed: null as FeaturedSlots | null,
+  });
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [chestOpen, setChestOpen] = useState(false);
@@ -153,6 +169,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     membership_type: string;
     card_style: string;
     badges: string[];
+    featured_badges: FeaturedSlots | null;
   }[]>([]);
   const [publicIdsLoading, setPublicIdsLoading] = useState(false);
   const [viewingPublicId, setViewingPublicId] = useState<string | null>(null);
@@ -163,6 +180,63 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   // The congrats card waits for badgeDefsReady so it never flashes a guessed
   // badge name while the definitions are still loading.
   const { ready: badgeDefsReady, badgeFor } = useBadgeDefinitions();
+
+  // Badge case: the ID shows 3 chosen badges, everything else waits in the case.
+  const earnedList = Array.from(earnedBadges).filter((id) => badgeFor(id));
+  const featuredSlots = resolveFeatured(lookupResult?.featured_badges ?? null, earnedList);
+  const caseBadges = earnedList
+    .filter((id) => !featuredSlots.includes(id))
+    .map((id) => ({ id, img: badgeFor(id)!.img, name: badgeFor(id)!.name }));
+
+  // The open card and that member's row in Public IDs show the same layout.
+  const setFeaturedFor = (email: string, slots: FeaturedSlots | null) => {
+    setLookupResult((r) => (r && r.email === email ? { ...r, featured_badges: slots } : r));
+    setPublicIds((ids) => ids.map((p) => (p.email === email ? { ...p, featured_badges: slots } : p)));
+  };
+
+  // Saves run one at a time in order; a failure puts back the last layout the
+  // server confirmed and drops the queued saves built on top of the failed one.
+  const persistFeatured = (email: string, next: FeaturedSlots, prev: FeaturedSlots | null) => {
+    const s = featuredSaveRef.current;
+    if (s.pending === 0) s.confirmed = prev;
+    s.pending++;
+    const gen = s.gen;
+    s.chain = s.chain
+      .then(async () => {
+        if (gen !== s.gen) return;
+        try {
+          const res = await fetch("/api/digital-id", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, featured_badges: next }),
+          });
+          if (!res.ok) throw new Error();
+          s.confirmed = next;
+        } catch {
+          s.gen++;
+          setFeaturedFor(email, s.confirmed);
+          setCaseMsg("Couldn't save that move. Check your connection and try again.");
+        }
+      })
+      .finally(() => { s.pending--; });
+  };
+
+  const applyFeaturedMove = (id: string, to: BadgeDrop): boolean => {
+    if (!lookupResult) return false;
+    const next = moveBadge(featuredSlots, id, to);
+    if (!next) {
+      if (to === "card" && !featuredSlots.includes(id)) {
+        setCaseMsg("Your ID is full. Move a badge back to the case first.");
+      }
+      return false;
+    }
+    setCaseMsg(null);
+    setFeaturedFor(lookupResult.email, next);
+    persistFeatured(lookupResult.email, next, lookupResult.featured_badges);
+    return true;
+  };
+
+  const badgeDrag = useBadgeDrag(applyFeaturedMove);
 
   // Shop app state: the wallet stays locked until the email AND the phone
   // number on file both match, so a borrowed email can't spend anyone's coins.
@@ -617,6 +691,8 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     setLookupError(null);
     setPublicToggleError(null);
     setLookupResult(null);
+    setCaseOpen(false);
+    setCaseMsg(null);
     setIdFinderPhase("prompt");
     try {
       const res = await fetch("/api/lookup", {
@@ -1452,7 +1528,10 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                   {(() => {
                     const person = publicIds.find((i) => i.email === viewingPublicId);
                     if (!person) return <p className="icisco-idfinder-hint">ID not found.</p>;
-                    const personBadges = new Set(person.badges);
+                    const personSlots = resolveFeatured(
+                      person.featured_badges,
+                      person.badges.filter((id) => badgeFor(id))
+                    );
                     return (
                       <>
                         <div className="icisco-idcard-face icisco-idcard-front">
@@ -1474,25 +1553,22 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                             </div>
                           </div>
                           <div className="icisco-idcard-badges">
-                            <span className="icisco-idcard-badges-title">Badges</span>
+                            <div className="icisco-idcard-badges-head">
+                              <span className="icisco-idcard-badges-title">Badges</span>
+                              <BadgeCount count={person.badges.length} />
+                            </div>
                             <div className="icisco-idcard-badge-slots">
-                              {(() => {
-                                const totalSlots = 3;
-                                const slots: ({ id: string; img: string; name: string } | null)[] = [];
-                                for (const id of personBadges) {
-                                  const info = badgeFor(id);
-                                  if (info) slots.push({ id, img: info.img, name: info.name });
-                                }
-                                while (slots.length < totalSlots) slots.push(null);
-                                return slots.map((slot, i) => (
+                              {personSlots.map((id, i) => {
+                                const info = id ? badgeFor(id) : undefined;
+                                return (
                                   <div
-                                    key={slot ? slot.id : `empty-${i}`}
-                                    className={`icisco-idcard-badge-slot ${slot ? "earned" : ""}`}
+                                    key={i}
+                                    className={`icisco-idcard-badge-slot ${info ? "earned" : ""}`}
                                   >
-                                    {slot ? (
+                                    {info ? (
                                       <Image
-                                        src={slot.img}
-                                        alt={slot.name}
+                                        src={info.img}
+                                        alt={info.name}
                                         width={36}
                                         height={36}
                                         className="icisco-idcard-badge-img"
@@ -1502,8 +1578,8 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                                       <div className="icisco-idcard-badge-icon-wrap">?</div>
                                     )}
                                   </div>
-                                ));
-                              })()}
+                                );
+                              })}
                             </div>
                           </div>
                           <div className="icisco-idcard-footer">
@@ -1630,9 +1706,14 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
 
             {/* ID Card */}
             {lookupResult && (
+              <div className={`icisco-idcard-stage${caseOpen ? " is-case-open" : ""}`}>
               <div
-                className={`icisco-idcard ${cardFlipped ? "flipped" : ""} card-style-${lookupResult.card_style || "white"}`}
-                onClick={() => setCardFlipped(!cardFlipped)}
+                className={`icisco-idcard ${cardFlipped ? "flipped" : ""} card-style-${lookupResult.card_style || "white"}${
+                  badgeDrag.over !== null && badgeDrag.over !== "case" ? " is-drop-over" : ""
+                }`}
+                data-badge-drop={caseOpen ? "card" : undefined}
+                // Flipping would hide the badge slots mid-arrangement.
+                onClick={() => { if (!caseOpen) setCardFlipped(!cardFlipped); }}
               >
               <div className="icisco-idcard-inner">
                 {/* FRONT */}
@@ -1688,51 +1769,74 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                     </div>
                   </div>
                   <div className="icisco-idcard-badges">
-                    <span className="icisco-idcard-badges-title">
-                      Badges
-                      <span className="icisco-idcard-badges-help" onClick={(e) => e.stopPropagation()}>
-                        ?
-                        <span className="icisco-idcard-badges-tooltip">
-                          Earn badges by scanning QR codes at CNCP events and activities.
+                    <div className="icisco-idcard-badges-head">
+                      <span className="icisco-idcard-badges-title">
+                        Badges
+                        <span className="icisco-idcard-badges-help" onClick={(e) => e.stopPropagation()}>
+                          ?
+                          <span className="icisco-idcard-badges-tooltip">
+                            Earn badges by scanning QR codes at CNCP events and activities.
+                          </span>
                         </span>
                       </span>
-                    </span>
+                      <BadgeCount count={earnedBadges.size} />
+                    </div>
                     <div className="icisco-idcard-badge-slots">
-                      {(() => {
-                        const totalSlots = 3;
-                        const earned = Array.from(earnedBadges)
-                          .map((id) => ({ id, at: badgeMeta[id]?.awarded_at ?? "" }))
-                          .sort((a, b) => a.at.localeCompare(b.at));
-                        const slots: ({ id: string; img: string; name: string } | null)[] = [];
-                        for (const e of earned) {
-                          const info = badgeFor(e.id);
-                          if (info) slots.push({ id: e.id, img: info.img, name: info.name });
-                        }
-                        while (slots.length < totalSlots) slots.push(null);
-                        return slots.map((slot, i) => (
+                      {featuredSlots.map((id, i) => {
+                        const info = id ? badgeFor(id) : undefined;
+                        const slot = id && info ? { id, img: info.img, name: info.name } : null;
+                        return (
                           <div
-                            key={slot ? slot.id : `empty-${i}`}
-                            className={`icisco-idcard-badge-slot ${slot ? "earned" : ""}`}
+                            key={i}
+                            data-badge-drop={caseOpen ? i : undefined}
+                            className={[
+                              "icisco-idcard-badge-slot",
+                              slot && "earned",
+                              caseOpen && "is-editing",
+                              badgeDrag.over === i && "is-over",
+                              slot && badgeDrag.landed === slot.id && "is-landed",
+                              slot && badgeDrag.draggingId === slot.id && "is-lifted",
+                            ].filter(Boolean).join(" ")}
+                            role={slot ? "button" : undefined}
+                            tabIndex={slot ? 0 : undefined}
+                            aria-label={
+                              slot
+                                ? caseOpen ? `Move ${slot.name} to the badge case` : slot.name
+                                : undefined
+                            }
+                            onPointerDown={
+                              caseOpen && slot
+                                ? (e) => { e.stopPropagation(); badgeDrag.begin(e, slot); }
+                                : undefined
+                            }
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (slot) setSelectedBadge(slot.id);
+                              if (!slot || badgeDrag.wasDrag()) return;
+                              if (caseOpen) applyFeaturedMove(slot.id, "case");
+                              else setSelectedBadge(slot.id);
+                            }}
+                            onKeyDown={(e) => {
+                              if (slot && (e.key === "Enter" || e.key === " ")) {
+                                e.preventDefault();
+                                e.currentTarget.click();
+                              }
                             }}
                           >
                             {slot ? (
                               <Image
                                 src={slot.img}
-                                alt={slot.name}
+                                alt=""
                                 width={36}
                                 height={36}
                                 className="icisco-idcard-badge-img"
                                 draggable={false}
                               />
                             ) : (
-                              <div className="icisco-idcard-badge-icon-wrap">?</div>
+                              <div className="icisco-idcard-badge-icon-wrap">{caseOpen ? "+" : "?"}</div>
                             )}
                           </div>
-                        ));
-          })()}
+                        );
+                      })}
 
           {awardError && (
             <div className="icisco-congrats-overlay">
@@ -1923,6 +2027,24 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                 </div>
               </div>
               </div>
+              <BadgeCase
+                open={caseOpen}
+                badges={caseBadges}
+                total={earnedBadges.size}
+                message={caseMsg}
+                drag={badgeDrag}
+                onPick={(id) => applyFeaturedMove(id, "card")}
+                onOpen={() => {
+                  setCardFlipped(false);
+                  setCaseOpen(true);
+                }}
+                onClose={() => {
+                  setCaseOpen(false);
+                  setCaseMsg(null);
+                }}
+              />
+              {badgeDrag.ghost}
+              </div>
             )}
 
             {lookupError && !lookupResult && (
@@ -1935,6 +2057,8 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                 className="icisco-idfinder-btn icisco-id-card-again"
                 onClick={() => {
                   setLookupResult(null);
+                  setCaseOpen(false);
+                  setCaseMsg(null);
                   setEmailInput("");
                   setIdFinderPhase("prompt");
                   setQrDataUrl("");
@@ -2011,9 +2135,9 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                         <p className="icisco-public-id-name">{person.first_name} {person.last_name}</p>
                         <p className="icisco-public-id-type">{person.membership_type}</p>
                         <div className="icisco-public-id-badges">
-                          {(person.badges ?? []).map((b) => {
-                            const info = badgeFor(b);
-                            return info ? (
+                          {resolveFeatured(person.featured_badges, (person.badges ?? []).filter((b) => badgeFor(b))).map((b) => {
+                            const info = b ? badgeFor(b) : undefined;
+                            return b && info ? (
                               <Image key={b} src={info.img} alt={info.name} width={18} height={18} draggable={false} />
                             ) : null;
                           })}

@@ -6238,6 +6238,492 @@ html.dark .footer-legal-links a:hover {
   transform: scale(1.12);
 }
 
+/* ─── Badge count on the card ─── */
+.icisco-idcard-badges-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+}
+/* #8a9aa8 was under 3:1 on every card face; #2a3a4a is the card's own course/ID text color. */
+.icisco-idcard-badges-head .icisco-idcard-badges-title {
+  margin-bottom: 0;
+  color: #2a3a4a;
+}
+.icisco-idcard-badge-count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  color: #2a3a4a;
+  font-size: 0.58rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+/* Same monospace as the member number, so the count reads as part of the card's data. */
+.icisco-idcard-badge-count-num {
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #1a2a3a;
+  letter-spacing: 0.04em;
+}
+.card-style-alumni .icisco-idcard-badges-head .icisco-idcard-badges-title,
+.card-style-alumni .icisco-idcard-badge-count {
+  color: #d4a800;
+}
+.card-style-alumni .icisco-idcard-badge-count-num {
+  color: #f5e6b8;
+}
+
+/* ─── Badge case (drawer beside the ID) ─── */
+.icisco-idcard-stage {
+  --case-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+  /* Above the floating background stickers (z-index 5). */
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  /* Card (440) + case (268) + gap (16), so the open case is never clipped. */
+  max-width: 724px;
+}
+.icisco-idcard-stage > .icisco-idcard {
+  position: relative;
+  z-index: 1;
+  flex: 0 1 440px;
+  min-width: 0;
+}
+.icisco-idcard-stage.is-case-open > .icisco-idcard {
+  cursor: default;
+}
+.icisco-idcard.is-drop-over .icisco-idcard-front {
+  box-shadow:
+    0 0 0 2px #a78bfa,
+    0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+/* Choreography. Open: case slides out, then the lid swings up, then badges settle.
+   Close: lid swings shut first, then the case slides back behind the card. */
+.icisco-badge-case-wrap {
+  --case-slide: 0.55s;
+  --case-lid: 0.6s;
+  position: relative;
+  display: grid;
+  grid-template-columns: 0fr;
+  transition: grid-template-columns var(--case-slide) var(--case-ease) 0.38s;
+}
+.icisco-badge-case-wrap.is-open {
+  grid-template-columns: 1fr;
+  transition-delay: 0s;
+}
+.icisco-badge-case-drawer {
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Pull tab: tucked behind the card's right edge like a drawer handle. */
+.icisco-badge-case-tab {
+  position: absolute;
+  top: 50%;
+  left: -12px;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  width: 56px;
+  padding: 0.9rem 0 0.9rem 12px;
+  transform: translateY(-50%);
+  border: none;
+  border-radius: 0 12px 12px 0;
+  background: linear-gradient(180deg, #6d4df0 0%, #5b3fd6 100%);
+  color: #fff;
+  cursor: pointer;
+  /* Comes back only once the case has slid away behind the card. */
+  transition: transform 0.3s var(--case-ease), opacity 0.25s ease 0.85s;
+}
+.icisco-badge-case-wrap.is-open .icisco-badge-case-tab {
+  transition-delay: 0s;
+}
+.icisco-badge-case-tab:hover {
+  transform: translate(4px, -50%);
+}
+.icisco-badge-case-tab-label {
+  writing-mode: vertical-rl;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.icisco-badge-case-tab-num {
+  min-width: 22px;
+  padding: 0.1rem 0.3rem;
+  border-radius: 6px;
+  background: #fff;
+  color: #4c33c4;
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-align: center;
+}
+.icisco-badge-case-wrap.is-open .icisco-badge-case-tab {
+  opacity: 0;
+  transform: translate(-24px, -50%);
+  pointer-events: none;
+}
+
+/* A display case: black frame with a blue sheen, chamfered corners, a glass
+   lid on two hinges, black velvet inside. */
+.icisco-badge-case {
+  --chamfer: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px),
+    calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px);
+  --chamfer-in: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px),
+    calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
+  --frame: linear-gradient(160deg, #24306a 0%, #080b1d 30%, #05070f 55%, #0d1538 80%, #2a3a86 100%);
+  --case-h: 156px;
+  width: 268px;
+  margin-left: 16px;
+  display: flex;
+  flex-direction: column;
+  perspective: 900px;
+  opacity: 0;
+  transform: translateX(-40px);
+  transition:
+    opacity 0.3s ease 0.38s,
+    transform var(--case-slide) var(--case-ease) 0.38s;
+}
+.icisco-badge-case-wrap.is-open .icisco-badge-case {
+  opacity: 1;
+  transform: none;
+  transition-delay: 0s;
+}
+
+/* Lid: hinged on its bottom edge, folded down onto the base while closed. */
+.icisco-case-lid {
+  position: relative;
+  height: var(--case-h);
+  transform-origin: 50% calc(100% + 2px);
+  transform-style: preserve-3d;
+  transform: rotateX(-180deg);
+  transition: transform 0.45s cubic-bezier(0.55, 0, 0.75, 0.4);
+}
+.icisco-badge-case-wrap.is-open .icisco-case-lid {
+  transform: rotateX(0deg);
+  /* Overshoot a touch, like a lid that swings past and settles. */
+  transition: transform var(--case-lid) cubic-bezier(0.34, 1.35, 0.6, 1) 0.42s;
+}
+.icisco-case-lid-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  clip-path: var(--chamfer);
+  background: var(--frame);
+}
+.icisco-case-lid-glass {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1rem 1.2rem;
+}
+/* The glass pane inside the frame, with a diagonal reflection. */
+.icisco-case-lid-glass::before {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  clip-path: var(--chamfer-in);
+  background:
+    linear-gradient(118deg, rgba(170, 190, 255, 0.16) 0%, rgba(255, 255, 255, 0.04) 26%, transparent 40%,
+      transparent 62%, rgba(170, 190, 255, 0.1) 74%, transparent 88%),
+    #0a0f26;
+  box-shadow: inset 0 0 0 1px rgba(130, 150, 230, 0.22);
+}
+.icisco-case-lid-glass > * {
+  position: relative;
+}
+.icisco-case-lid-top {
+  transform: rotateX(180deg);
+}
+/* Clasp dots, top of the lid and bottom of the base, as on the real case. */
+.icisco-case-lid-face::after,
+.icisco-case-base::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  border-radius: 50%;
+  background: #e8ecf8;
+}
+.icisco-case-lid-face::after {
+  top: 2px;
+}
+.icisco-case-base::after {
+  bottom: 2px;
+}
+
+.icisco-case-hinges {
+  position: relative;
+  z-index: 3;
+  height: 4px;
+}
+.icisco-case-hinges span {
+  position: absolute;
+  top: -5px;
+  width: 16px;
+  height: 14px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #4a4e5c 0%, #e4e7ef 40%, #a3a8b6 62%, #4a4e5c 100%);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+.icisco-case-hinges span:first-child {
+  left: 22%;
+}
+.icisco-case-hinges span:last-child {
+  right: 22%;
+}
+
+.icisco-case-base {
+  position: relative;
+  height: var(--case-h);
+  clip-path: var(--chamfer);
+  background: var(--frame);
+}
+.icisco-case-velvet {
+  position: absolute;
+  inset: 9px;
+  clip-path: var(--chamfer-in);
+  overflow-y: auto;
+  padding: 0.7rem;
+  /* Velvet: soft sheen plus fine grain. */
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at 50% 25%, #1c1c28 0%, #0c0c13 55%, #050508 100%);
+  box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.8);
+  transition: box-shadow 0.2s ease;
+}
+.icisco-case-base.is-over .icisco-case-velvet {
+  box-shadow:
+    inset 0 3px 10px rgba(0, 0, 0, 0.8),
+    inset 0 0 0 2px rgba(167, 139, 250, 0.7),
+    inset 0 0 28px rgba(167, 139, 250, 0.3);
+}
+
+.icisco-badge-case-title {
+  margin: 0;
+  color: #f5f3ff;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.icisco-badge-case-sub {
+  margin: 0.25rem 0 0;
+  color: #c4b5fd;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+.icisco-badge-case-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+}
+/* Badges rest on the velvet: a faint pressed-in spot under each one. */
+.icisco-badge-pocket {
+  width: 100%;
+  aspect-ratio: 1;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 68%);
+  cursor: grab;
+  touch-action: none;
+  transition: transform 0.2s var(--case-ease), opacity 0.2s ease;
+}
+.icisco-badge-pocket img {
+  width: 74%;
+  height: auto;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.7));
+}
+.icisco-badge-pocket:hover {
+  transform: translateY(-3px);
+}
+.icisco-badge-case-wrap.is-open .icisco-badge-pocket {
+  animation: badgeCaseIn 0.42s var(--case-ease) both;
+  animation-delay: calc(0.85s + var(--i) * 50ms);
+}
+@keyframes badgeCaseIn {
+  from { opacity: 0; transform: translateY(-14px) scale(0.85); }
+  to   { opacity: 1; transform: none; }
+}
+.icisco-badge-case-empty {
+  margin: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 0.4rem;
+  color: #c4b5fd;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  text-align: center;
+}
+.icisco-badge-case-msg {
+  margin: 0.6rem 0 0;
+  color: #fda4af;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+.icisco-badge-case-msg:empty {
+  display: none;
+}
+.icisco-badge-case-done {
+  min-height: 44px;
+  margin-top: 0.75rem;
+  align-self: stretch;
+}
+
+/* Slots while arranging */
+.icisco-idcard-badge-slot.is-editing.earned {
+  cursor: grab;
+  touch-action: none;
+}
+.icisco-idcard-badge-slot.is-editing .icisco-idcard-badge-icon-wrap {
+  border-color: #a78bfa;
+  background: rgba(124, 92, 255, 0.08);
+  color: #6d4df0;
+}
+.icisco-idcard-badge-slot.is-over {
+  transform: scale(1.14);
+  transition: transform 0.18s var(--case-ease);
+}
+.icisco-idcard-badge-slot.is-over .icisco-idcard-badge-icon-wrap {
+  border-style: solid;
+  background: rgba(124, 92, 255, 0.2);
+}
+.icisco-idcard-badge-slot.is-over.earned .icisco-idcard-badge-img {
+  outline: 2px solid #a78bfa;
+  outline-offset: 3px;
+}
+.icisco-idcard-badge-slot.is-lifted,
+.icisco-badge-pocket.is-lifted {
+  opacity: 0.25;
+}
+.icisco-idcard-badge-slot.is-landed,
+.icisco-badge-pocket.is-landed {
+  animation: badgeLand 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes badgeLand {
+  0%   { transform: scale(0.4); }
+  60%  { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+.icisco-idcard-badge-slot:focus-visible,
+.icisco-badge-pocket:focus-visible,
+.icisco-badge-case-tab:focus-visible,
+.icisco-badge-case-done:focus-visible {
+  outline: 2px solid #c4b5fd;
+  outline-offset: 3px;
+}
+
+/* The badge in your hand while dragging. */
+.icisco-badge-ghost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10001;
+  width: 64px;
+  height: 64px;
+  pointer-events: none;
+  filter: drop-shadow(0 12px 14px rgba(10, 4, 40, 0.5));
+  will-change: transform;
+}
+.icisco-badge-ghost img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.icisco-badge-ghost.is-returning {
+  transition: transform 0.28s cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+
+/* Narrow screens: the case slides down under the card instead. */
+@media (max-width: 720px) {
+  .icisco-idcard-stage {
+    flex-direction: column;
+    align-items: stretch;
+    max-width: 440px;
+  }
+  .icisco-idcard-stage > .icisco-idcard {
+    flex: none;
+  }
+  .icisco-badge-case-wrap {
+    grid-template-columns: 1fr;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows var(--case-slide) var(--case-ease) 0.38s;
+    padding-top: 44px;
+  }
+  .icisco-badge-case-wrap.is-open {
+    grid-template-rows: 1fr;
+    padding-top: 0;
+  }
+  .icisco-badge-case-tab {
+    top: -12px;
+    left: 50%;
+    flex-direction: row;
+    width: auto;
+    padding: 12px 1.1rem 0;
+    height: 56px;
+    transform: translateX(-50%);
+    border-radius: 0 0 12px 12px;
+  }
+  .icisco-badge-case-tab:hover {
+    transform: translate(-50%, 4px);
+  }
+  .icisco-badge-case-wrap.is-open .icisco-badge-case-tab {
+    transform: translate(-50%, -24px);
+  }
+  .icisco-badge-case-tab-label {
+    writing-mode: horizontal-tb;
+  }
+  .icisco-badge-case {
+    width: auto;
+    margin: 14px 0 0;
+    transform: translateY(-28px);
+  }
+  .icisco-badge-case-grid {
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .icisco-badge-case-wrap,
+  .icisco-badge-case-wrap.is-open,
+  .icisco-badge-case,
+  .icisco-badge-case-wrap.is-open .icisco-badge-case,
+  .icisco-case-lid,
+  .icisco-badge-case-wrap.is-open .icisco-case-lid,
+  .icisco-badge-case-tab,
+  .icisco-badge-pocket,
+  .icisco-badge-ghost.is-returning {
+    transition: none;
+  }
+  .icisco-badge-case-wrap.is-open .icisco-badge-pocket,
+  .icisco-idcard-badge-slot.is-landed,
+  .icisco-badge-pocket.is-landed {
+    animation: none;
+  }
+}
+
 /* ─── Badge Info Modal ─── */
 .icisco-badge-modal {
   position: fixed;
