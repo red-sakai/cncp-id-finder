@@ -6321,7 +6321,9 @@ html.dark .footer-legal-links a:hover {
 }
 .icisco-badge-case-drawer {
   min-width: 0;
-  overflow: hidden;
+  /* Clip only sideways (the slide); the swinging lid may pass above or below. */
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 /* Pull tab: tucked behind the card's right edge like a drawer handle. */
@@ -6403,10 +6405,13 @@ html.dark .footer-legal-links a:hover {
 /* Lid: hinged on its bottom edge, folded down onto the base while closed. */
 .icisco-case-lid {
   position: relative;
+  /* Above the base, which comes later in the DOM and would otherwise cover the closed lid. */
+  z-index: 2;
   height: var(--case-h);
   transform-origin: 50% calc(100% + 2px);
   transform-style: preserve-3d;
-  transform: rotateX(-180deg);
+  /* Positive: the lid tips away from the viewer, so perspective never blows it past the case. */
+  transform: rotateX(180deg);
   transition: transform 0.45s cubic-bezier(0.55, 0, 0.75, 0.4);
 }
 .icisco-badge-case-wrap.is-open .icisco-case-lid {
@@ -6443,8 +6448,17 @@ html.dark .footer-legal-links a:hover {
 .icisco-case-lid-glass > * {
   position: relative;
 }
+/* Underside of the lid, seen while it lies shut: tinted glass in its frame,
+   so the velvet and badges show through. */
 .icisco-case-lid-top {
   transform: rotateX(180deg);
+  background:
+    linear-gradient(118deg, rgba(170, 190, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 26%, transparent 40%,
+      transparent 62%, rgba(170, 190, 255, 0.12) 74%, transparent 88%),
+    rgba(30, 44, 110, 0.3);
+  box-shadow:
+    inset 0 0 0 9px #090c1f,
+    inset 0 0 0 10px rgba(130, 150, 230, 0.3);
 }
 /* Clasp dots, top of the lid and bottom of the base, as on the real case. */
 .icisco-case-lid-face::after,
@@ -6460,6 +6474,11 @@ html.dark .footer-legal-links a:hover {
 }
 .icisco-case-lid-face::after {
   top: 2px;
+}
+/* The underside is flipped twice (face + lid), so its clasp sits at its bottom to land on the front edge. */
+.icisco-case-lid-top::after {
+  top: auto;
+  bottom: 2px;
 }
 .icisco-case-base::after {
   bottom: 2px;
@@ -6559,7 +6578,8 @@ html.dark .footer-legal-links a:hover {
 }
 .icisco-badge-case-wrap.is-open .icisco-badge-pocket {
   animation: badgeCaseIn 0.42s var(--case-ease) both;
-  animation-delay: calc(0.85s + var(--i) * 50ms);
+  /* Early, so the badges are already visible under the glass as the case slides out. */
+  animation-delay: calc(0.1s + var(--i) * 50ms);
 }
 @keyframes badgeCaseIn {
   from { opacity: 0; transform: translateY(-14px) scale(0.85); }
