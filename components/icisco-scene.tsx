@@ -8,6 +8,7 @@ import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import QRCode from "qrcode";
 import WireZipGame from "@/components/wirezip-game";
+import AxieChestLoader, { loadAxie, type ChestFinish } from "@/components/axie-chest-loader";
 import { useBadgeDefinitions } from "@/lib/badge-definitions";
 
 let cachedGltf: GLTF | null = null;
@@ -128,6 +129,8 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   } | null>(null);
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
+  const [chestOpen, setChestOpen] = useState(false);
+  const chestFinishRef = useRef<ChestFinish | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [cardFlipped, setCardFlipped] = useState(false);
   const sigCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -610,6 +613,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     const email = emailInput.trim();
     if (!email) return;
     setLookupLoading(true);
+    setChestOpen(!window.matchMedia("(prefers-reduced-motion: reduce)").matches);
     setLookupError(null);
     setPublicToggleError(null);
     setLookupResult(null);
@@ -620,6 +624,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
+      await chestFinishRef.current?.(res.ok);
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         setIdFinderPhase("not-found");
@@ -658,12 +663,19 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
           .finally(() => setPublicIdsLoading(false));
       }
     } catch {
+      await chestFinishRef.current?.(false);
       setLookupError("Network error. Please try again.");
       setIdFinderPhase("not-found");
     } finally {
       setLookupLoading(false);
+      setChestOpen(false);
     }
   }, [emailInput]);
+
+  // The chest model is 7 MB: start fetching it as soon as ID Finder opens.
+  useEffect(() => {
+    if (activeApp === "id-finder") loadAxie().catch(() => {});
+  }, [activeApp]);
 
   // Signature pad functions
   const getSigPos = (e: React.MouseEvent | React.TouchEvent) => {
@@ -1380,6 +1392,8 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             </button>
             <span className="icisco-app-title">ID Finder</span>
           </div>
+
+          {chestOpen && <AxieChestLoader finishRef={chestFinishRef} />}
 
           {showCongrats && badgeDefsReady && (() => {
             const info = badgeFor(congratsBadge);
