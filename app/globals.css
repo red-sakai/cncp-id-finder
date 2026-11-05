@@ -5318,6 +5318,30 @@ html.dark .footer-legal-links a:hover {
 .icisco-award-error-card .icisco-congrats-title {
   color: #e53935;
 }
+.icisco-waiting-task {
+  margin-top: 0.6rem;
+  color: #21183f;
+}
+/* No auto-dismiss here: the member has to be able to read the requirement. */
+.icisco-waiting-close {
+  margin-top: 0.9rem;
+  min-height: 2.75rem;
+  padding: 0 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: #6d4df0;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.icisco-waiting-close:hover {
+  background: #5b3fd6;
+}
+.icisco-waiting-close:focus-visible {
+  outline: 2px solid #6d4df0;
+  outline-offset: 2px;
+}
 
 .icisco-congrats-awarded-by {
   font-size: 0.75rem;
@@ -5475,9 +5499,16 @@ html.dark .footer-legal-links a:hover {
 }
 .qr-admin-body {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: minmax(0, 1fr) 340px;
   gap: 1.5rem;
   align-items: start;
+}
+.qr-admin-main,
+.qr-admin-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
 }
 
 /* ── Sections ── */
@@ -5493,6 +5524,9 @@ html.dark .footer-legal-links a:hover {
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.25rem;
+}
+.qr-section-header-action {
+  margin-left: auto;
 }
 .qr-section-title {
   font-family: var(--font-display), sans-serif;
@@ -5516,42 +5550,91 @@ html.dark .footer-legal-links a:hover {
   border-radius: 999px;
 }
 
-/* ── Badge Select ── */
+/* ── Badge Select ──
+   Tiles keep a fixed minimum width and the grid decides how many fit, so adding
+   badges adds rows instead of squeezing every tile in one row. */
 .qr-badge-select {
-  display: flex;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  gap: 0.6rem;
+  max-height: 25rem;
+  overflow-y: auto;
+  /* Room for the selected tile's ring, which the scroll area would otherwise clip. */
+  padding: 4px;
+  margin: 0 -4px 1.25rem;
 }
 .qr-badge-option {
-  flex: 1;
+  position: relative;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  padding: 1rem;
-  border: 2px solid rgba(167, 139, 250, 0.14);
+  gap: 0.55rem;
+  padding: 0.9rem 0.5rem 0.7rem;
+  border: 1.5px solid rgba(167, 139, 250, 0.16);
   border-radius: 0.75rem;
   background: rgba(124, 92, 255, 0.06);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: border-color 0.2s, background 0.2s;
   font-family: var(--font-body), sans-serif;
 }
+.qr-badge-option img {
+  width: 4rem;
+  height: 4rem;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+/* Two lines reserved so a long name doesn't make its row of tiles uneven. */
 .qr-badge-option-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  min-height: 2.5em;
   font-size: 0.75rem;
   font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+  overflow-wrap: anywhere;
   color: #d8ccff;
 }
 .qr-badge-option:hover {
-  border-color: rgba(139, 92, 246, 0.45);
-  background: rgba(124, 92, 255, 0.1);
+  border-color: rgba(139, 92, 246, 0.55);
+  background: rgba(124, 92, 255, 0.12);
+}
+.qr-badge-option:focus-visible {
+  outline: 2px solid #c4b5fd;
+  outline-offset: 2px;
+}
+.qr-badge-option:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 .qr-badge-option.active {
-  border-color: #6d4df0;
-  background: rgba(124, 92, 255, 0.14);
-  box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.18);
+  border-color: #8b5cf6;
+  background: rgba(124, 92, 255, 0.24);
+  box-shadow: 0 0 0 2px #8b5cf6;
 }
 .qr-badge-option.active .qr-badge-option-name {
   color: #fff;
+}
+/* The check says "selected" without relying on the border colour alone. */
+.qr-badge-option.active::after {
+  content: "\2713";
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #6d4df0;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
 }
 
 /* ── Form Fields ── */
@@ -5667,6 +5750,60 @@ html.dark .footer-legal-links a:hover {
   color: #b8a8f0;
   margin-top: 0.15rem;
 }
+/* A field that belongs to the option above it, indented to line up with its text. */
+.qr-claim-suboption {
+  margin: 0.5rem 0 0 1.55rem;
+}
+.qr-claim-suboption + .qr-claim-option {
+  margin-top: 0.5rem;
+}
+
+/* ── Claim requests ── */
+.qr-claim-requests {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.qr-claim-request {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.6rem 0.9rem;
+  align-items: center;
+  padding: 0.75rem 0.85rem;
+  background: rgba(124, 92, 255, 0.06);
+  border: 1px solid rgba(167, 139, 250, 0.14);
+  border-radius: 0.6rem;
+}
+.qr-claim-request-info p {
+  margin: 0;
+}
+.qr-claim-request-email {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #f5f3ff;
+  overflow-wrap: anywhere;
+}
+.qr-claim-request-meta,
+.qr-claim-request-task {
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: #c4b8ff;
+}
+.qr-claim-request-info .qr-claim-request-meta {
+  margin-top: 0.15rem;
+}
+.qr-claim-request-info .qr-claim-request-task {
+  margin-top: 0.3rem;
+  color: #ede9fe;
+}
+.qr-claim-request-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.qr-claim-request-error {
+  grid-column: 1 / -1;
+  text-align: left;
+}
 .qr-error {
   color: #ef5350;
   font-size: 0.8rem;
@@ -5771,6 +5908,7 @@ html.dark .footer-legal-links a:hover {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  min-height: 2.75rem;
   padding: 0.65rem 1.25rem;
   border-radius: 0.5rem;
   font-size: 0.85rem;
@@ -5784,7 +5922,7 @@ html.dark .footer-legal-links a:hover {
   width: 100%;
 }
 .qr-btn-primary {
-  background: linear-gradient(135deg, #8b6ff0 0%, #5b3fd6 100%);
+  background: linear-gradient(135deg, #7355e0 0%, #5b3fd6 100%);
   color: #fff;
   box-shadow: 0 4px 16px rgba(109, 77, 240, 0.35);
 }
@@ -5882,6 +6020,10 @@ html.dark .footer-legal-links a:hover {
   color: #c4b8ff;
   margin: 0 0 1rem;
 }
+.qr-claim-mode-note p {
+  margin: 0 0 0.25rem;
+  overflow-wrap: anywhere;
+}
 .qr-actions {
   display: flex;
   gap: 0.75rem;
@@ -5931,7 +6073,7 @@ html.dark .footer-legal-links a:hover {
 }
 .qr-empty-text {
   font-size: 0.8rem;
-  color: #8b7bb8;
+  color: #b8a8f0;
   margin: 0;
 }
 .qr-tokens-list {
@@ -6039,6 +6181,8 @@ html.dark .footer-legal-links a:hover {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
 }
 .qr-token-delete-btn:hover {
   color: #e53935;
@@ -6097,16 +6241,30 @@ html.dark .footer-legal-links a:hover {
   justify-content: center;
 }
 
-/* ── Responsive ── */
-@media (max-width: 768px) {
+/* ── Responsive ──
+   Below 56rem the form column gets too narrow beside the 340px sidebar. */
+@media (max-width: 56rem) {
   .qr-admin-body {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
-  .qr-badge-select {
-    flex-direction: column;
-  }
+}
+@media (max-width: 768px) {
   .qr-actions {
     flex-direction: column;
+  }
+}
+@media (max-width: 30rem) {
+  .qr-page {
+    padding: 1rem;
+  }
+  .qr-section {
+    padding: 1.1rem;
+  }
+  .qr-claim-request {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .qr-claim-request-actions .qr-btn {
+    flex: 1;
   }
 }
 
@@ -6121,8 +6279,9 @@ html.dark .footer-legal-links a:hover {
   background: rgba(124, 92, 255, 0.08);
 }
 .qr-badge-add-icon {
-  width: 48px;
-  height: 48px;
+  width: 4rem;
+  height: 4rem;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;

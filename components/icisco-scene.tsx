@@ -157,6 +157,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   const [awardError, setAwardError] = useState(false);
   const [awardErrorMsg, setAwardErrorMsg] = useState<string | null>(null);
   const [awardedCiscoins, setAwardedCiscoins] = useState(0);
+  const [claimWaiting, setClaimWaiting] = useState<{ requirement: string | null } | null>(null);
   const [congratsBadge, setCongratsBadge] = useState<string>("welcome-to-cisco");
   const [selectedBadge, setSelectedBadge] = useState<string | null>(null);
   const [zoomedBadgeImg, setZoomedBadgeImg] = useState<{ src: string; alt: string } | null>(null);
@@ -1121,11 +1122,13 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
   useEffect(() => {
     if (phase === "anim" || closing) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") startClose();
+      if (e.key !== "Escape") return;
+      if (claimWaiting) setClaimWaiting(null);
+      else startClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [phase, closing, startClose]);
+  }, [phase, closing, startClose, claimWaiting]);
 
   const searchParams = useSearchParams();
   const awardedRef = useRef<string | null>(null);
@@ -1195,6 +1198,10 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             });
             if (awardRes.ok) {
               const awardBody = await awardRes.json().catch(() => ({}));
+              if (awardBody.pending) {
+                setClaimWaiting({ requirement: awardBody.requirement ?? null });
+                return;
+              }
               const credited =
                 typeof awardBody.ciscoins === "number" ? awardBody.ciscoins : 0;
               setAwardedCiscoins(credited);
@@ -1838,6 +1845,30 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
                         );
                       })}
 
+          {claimWaiting && (
+            <div className="icisco-congrats-overlay">
+              <div className="icisco-congrats-card" role="status">
+                <p className="icisco-congrats-title">Waiting for approval</p>
+                <p className="icisco-congrats-text">
+                  We sent your claim to the admin. You get the badge and Ciscoins once it&apos;s
+                  approved. Look up your ID later to check.
+                </p>
+                {claimWaiting.requirement && (
+                  <p className="icisco-congrats-text icisco-waiting-task">
+                    <strong>Do this first:</strong> {claimWaiting.requirement}
+                  </p>
+                )}
+                <button
+                  type="button"
+                  className="icisco-waiting-close"
+                  onClick={() => setClaimWaiting(null)}
+                  autoFocus
+                >
+                  Okay
+                </button>
+              </div>
+            </div>
+          )}
           {awardError && (
             <div className="icisco-congrats-overlay">
               <div className="icisco-congrats-card icisco-award-error-card">

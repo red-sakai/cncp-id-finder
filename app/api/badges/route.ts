@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { creditAndAward } from "@/lib/award-claim";
+
+async function isMember(email: string) {
+  for (const table of ["executives_personal_info", "registration_personal_info"]) {
+    const { data } = await supabase.from(table).select("email").eq("email", email).limit(1);
+    if (data?.length) return true;
+  }
+  return false;
+}
 
 export async function GET(request: NextRequest) {
   const email = request.nextUrl.searchParams.get("email");
@@ -51,14 +60,18 @@ export async function POST(request: NextRequest) {
   let tokenId: string | null = null;
   let singleUse = false;
   let tokenCiscoins: number | null = null;
+  let requiresApproval = false;
+  let requirement: string | null = null;
+  let tracksClaims = false;
   if (token !== undefined && token !== null && token !== "") {
     if (typeof token !== "string") {
       return NextResponse.json({ error: "Invalid QR code." }, { status: 400 });
     }
 
+    // "*" so claims keep working before qr_claim_limits.sql has been run.
     const { data: tokenRows, error: tokenError } = await supabase
       .from("badge_tokens")
-      .select("id, badge_id, expires_at, ciscoins, single_use, claimed_at")
+      .select("*")
       .eq("token", token.trim())
       .limit(1);
 
@@ -86,6 +99,9 @@ export async function POST(request: NextRequest) {
     tokenId = tokenRow.id;
     singleUse = tokenRow.single_use;
     tokenCiscoins = tokenRow.ciscoins ?? null;
+    requiresApproval = !!tokenRow.requires_approval;
+    requirement = tokenRow.requirement ?? null;
+    tracksClaims = requiresApproval || tokenRow.max_claims != null;
   }
 
   const { data: existing } = await supabase
@@ -99,10 +115,67 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ alreadyEarned: true });
   }
 
+  const by = typeof awardedBy === "string" && awardedBy.trim() ? awardedBy.trim() : null;
+  const waiting = { pending: true, requirement };
+
+  // QRs with a limit or approval keep one qr_claims row per person: the unique
+  // index stops a second claim and a database trigger enforces the limit.
+  let claimId: string | null = null;
+  if (tracksClaims && tokenId) {
+    // These claims hold a limited slot, so a made-up email must not take one.
+    if (!(await isMember(trimmedEmail))) {
+      return NextResponse.json({ error: "Email not found." }, { status: 404 });
+    }
+
+    const { data: prior, error: priorError } = await supabase
+      .from("qr_claims")
+      .select("status")
+      .eq("token_id", tokenId)
+      .eq("email", trimmedEmail)
+      .limit(1);
+
+    if (priorError) {
+      return NextResponse.json({ error: priorError.message }, { status: 500 });
+    }
+    if (prior?.[0]?.status === "pending") {
+      return NextResponse.json(waiting);
+    }
+
+    // An approved row with no badge is an interrupted award: fall through and repair it.
+    if (!prior?.length) {
+      const { data: inserted, error: insertError } = await supabase
+        .from("qr_claims")
+        .insert({
+          token_id: tokenId,
+          email: trimmedEmail,
+          status: requiresApproval ? "pending" : "approved",
+          awarded_by: by,
+        })
+        .select("id");
+
+      if (insertError?.code === "23505") {
+        return NextResponse.json(requiresApproval ? waiting : { alreadyEarned: true });
+      }
+      if (insertError?.code === "QR001") {
+        return NextResponse.json(
+          { error: "This QR code has reached its claim limit." },
+          { status: 409 }
+        );
+      }
+      if (insertError) {
+        return NextResponse.json({ error: insertError.message }, { status: 500 });
+      }
+      if (requiresApproval) {
+        return NextResponse.json(waiting);
+      }
+      claimId = inserted?.[0]?.id ?? null;
+    }
+  }
+
   // One-time QRs are consumed with UPDATE ... WHERE claimed_at IS NULL, so at
   // most one caller wins even when two people scan at the same moment.
   let consumed = false;
-  if (singleUse && tokenId) {
+  if (singleUse && tokenId && !tracksClaims) {
     const { data: claimed, error: claimError } = await supabase
       .from("badge_tokens")
       .update({ claimed_at: new Date().toISOString(), claimed_by: trimmedEmail })
@@ -122,41 +195,13 @@ export async function POST(request: NextRequest) {
     consumed = true;
   }
 
-  // The credit goes in before the badge row: if the badge insert then fails,
-  // the coins are already banked and a rescan repairs the badge without the
-  // ledger paying twice (the unique index on email + token_id absorbs it).
-  let credited: number | null = null;
-  if (tokenId && tokenCiscoins) {
-    const { error: creditError } = await supabase.from("ciscoins_ledger").insert({
-      email: trimmedEmail,
-      amount: tokenCiscoins,
-      type: "badge_claim",
-      badge_id: badgeId,
-      token_id: tokenId,
-    });
-
-    if (creditError && creditError.code !== "23505") {
-      if (consumed) {
-        await supabase
-          .from("badge_tokens")
-          .update({ claimed_at: null, claimed_by: null })
-          .eq("id", tokenId);
-      }
-      return NextResponse.json({ error: creditError.message }, { status: 500 });
-    }
-
-    credited = tokenCiscoins;
-  }
-
-  const insertData: { email: string; badge_id: string; awarded_by?: string } = {
+  const { error, credited } = await creditAndAward({
     email: trimmedEmail,
-    badge_id: badgeId,
-  };
-  if (awardedBy && typeof awardedBy === "string" && awardedBy.trim()) {
-    insertData.awarded_by = awardedBy.trim();
-  }
-
-  const { error } = await supabase.from("user_badges").insert(insertData);
+    badgeId,
+    tokenId,
+    ciscoins: tokenCiscoins,
+    awardedBy: by,
+  });
 
   if (error) {
     if (consumed && tokenId) {
@@ -165,7 +210,10 @@ export async function POST(request: NextRequest) {
         .update({ claimed_at: null, claimed_by: null })
         .eq("id", tokenId);
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (claimId) {
+      await supabase.from("qr_claims").delete().eq("id", claimId);
+    }
+    return NextResponse.json({ error }, { status: 500 });
   }
 
   return NextResponse.json({ awarded: true, ciscoins: credited });

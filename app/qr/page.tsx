@@ -6,8 +6,10 @@ import Image from "next/image";
 
 const SESSION_KEY = "cncp-qr-auth";
 
-// Mirrors the server-side limit in app/api/tokens/route.ts
+// Mirrors the server-side limits in app/api/tokens/route.ts
 const MAX_CISCOINS = 100000;
+const MAX_CLAIMS = 100000;
+const MAX_REQUIREMENT = 200;
 
 type Badge = {
   id: string;
@@ -28,7 +30,63 @@ type Token = {
   ciscoins?: number | null;
   single_use?: boolean;
   claimed_at?: string | null;
+  max_claims?: number | null;
+  requires_approval?: boolean;
+  requirement?: string | null;
+  claimed_count?: number;
+  pending_count?: number;
 };
+
+type ClaimRequest = {
+  id: string;
+  token_id: string;
+  email: string;
+  created_at: string;
+};
+
+type ClaimRule = {
+  singleUse: boolean;
+  maxClaims: number | null;
+  requiresApproval: boolean;
+  requirement: string | null;
+};
+
+function isExpired(t: Token) {
+  return !!t.expires_at && new Date(t.expires_at).getTime() <= Date.now();
+}
+
+function claimRuleNotes({ singleUse, maxClaims, requiresApproval, requirement }: ClaimRule) {
+  const notes = [
+    singleUse
+      ? requiresApproval
+        ? "One time claim only. The first person you approve uses this QR code up."
+        : "One time claim only. The first person to claim it uses this QR code up."
+      : maxClaims
+        ? `Limited to ${maxClaims.toLocaleString("en-US")} ${maxClaims === 1 ? "person" : "people"}. Each person can claim once.`
+        : "Permanently available. Anyone can scan this QR code and claim it.",
+  ];
+  if (requiresApproval) notes.push("You approve each claim before anything is granted.");
+  if (requirement) notes.push(`Requirement: ${requirement}`);
+  return notes;
+}
+
+function claimStatus(t: Token) {
+  const pending = t.pending_count ?? 0;
+  const waiting = pending > 0 ? `, ${pending} waiting` : "";
+  if (t.single_use) {
+    return t.claimed_at
+      ? { label: "Used up", used: true }
+      : { label: `One time claim${waiting}`, used: false };
+  }
+  if (t.max_claims) {
+    const claimed = t.claimed_count ?? 0;
+    return {
+      label: `${claimed} of ${t.max_claims} claimed${waiting}`,
+      used: claimed >= t.max_claims,
+    };
+  }
+  return null;
+}
 
 type ShopItem = {
   id: string;
@@ -89,6 +147,7 @@ export default function QRPage() {
   };
 
   const handleLogout = () => {
+    fetch("/api/auth/login", { method: "DELETE" }).catch(() => {});
     sessionStorage.removeItem(SESSION_KEY);
     setAuthenticated(false);
     setUsername("");
@@ -164,9 +223,12 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
   const [noExpiry, setNoExpiry] = useState(true);
   const [attachCiscoins, setAttachCiscoins] = useState(false);
   const [ciscoinsAmount, setCiscoinsAmount] = useState("");
-  const [claimMode, setClaimMode] = useState<"" | "once" | "always">("");
+  const [claimMode, setClaimMode] = useState<"" | "once" | "limited" | "always">("");
+  const [claimLimit, setClaimLimit] = useState("");
+  const [requireApproval, setRequireApproval] = useState(false);
+  const [requirement, setRequirement] = useState("");
   const [grantedCiscoins, setGrantedCiscoins] = useState<number | null>(null);
-  const [grantedSingleUse, setGrantedSingleUse] = useState(false);
+  const [grantedRule, setGrantedRule] = useState<ClaimRule | null>(null);
   const [token, setToken] = useState("");
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState("");
@@ -177,6 +239,13 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; badge_id: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+
+  // Claims waiting for an admin
+  const [claims, setClaims] = useState<ClaimRequest[]>([]);
+  const [claimsLoading, setClaimsLoading] = useState(true);
+  const [claimsError, setClaimsError] = useState("");
+  const [claimBusyId, setClaimBusyId] = useState<string | null>(null);
+  const [claimRowError, setClaimRowError] = useState<{ id: string; text: string } | null>(null);
 
   // Badge creation state
   const [showCreateBadge, setShowCreateBadge] = useState(false);
@@ -230,12 +299,8 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
       const res = await fetch("/api/tokens");
       if (res.ok) {
         const data = await res.json();
-        const now = Date.now();
         setTokens(
-          ((data.tokens ?? []) as Token[]).map((t) => ({
-            ...t,
-            expired: !!t.expires_at && new Date(t.expires_at).getTime() <= now,
-          }))
+          ((data.tokens ?? []) as Token[]).map((t) => ({ ...t, expired: isExpired(t) }))
         );
       }
     } catch {
@@ -288,9 +353,61 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
     }
   };
 
+  const fetchClaims = async () => {
+    setClaimsLoading(true);
+    setClaimRowError(null);
+    try {
+      const res = await fetch("/api/claims");
+      // A session from before the login cookie existed: logging in again sets it.
+      if (res.status === 401) {
+        onLogout();
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setClaims((data.claims ?? []) as ClaimRequest[]);
+        setClaimsError("");
+      } else {
+        setClaimsError(data.error ?? "Could not load the claim requests. Try Refresh.");
+      }
+    } catch {
+      setClaimsError("Could not load the claim requests. Check your connection, then try Refresh.");
+    } finally {
+      setClaimsLoading(false);
+    }
+  };
+
+  const decideClaim = async (claim: ClaimRequest, action: "approve" | "decline") => {
+    setClaimBusyId(claim.id);
+    setClaimRowError(null);
+    try {
+      const res = await fetch("/api/claims", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: claim.id, action }),
+      });
+      if (res.status === 401) {
+        onLogout();
+        return;
+      }
+      if (res.ok) {
+        setClaims((prev) => prev.filter((c) => c.id !== claim.id));
+        fetchTokens();
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setClaimRowError({ id: claim.id, text: body.error ?? "Could not save this decision. Try again." });
+      }
+    } catch {
+      setClaimRowError({ id: claim.id, text: "Network error. Nothing was changed." });
+    } finally {
+      setClaimBusyId(null);
+    }
+  };
+
   useEffect(() => {
     fetchBadges();
     fetchTokens();
+    fetchClaims();
     fetchShop();
     fetchPurchases();
   }, []);
@@ -469,20 +586,37 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
     }
 
     let singleUse = false;
+    let maxClaims: number | null = null;
     if (attachCiscoins) {
       if (!claimMode) {
-        setGenError("Choose whether this QR can be claimed once or always.");
+        setGenError("Choose who can claim this QR: one person, a limited number, or anyone.");
         return;
       }
       singleUse = claimMode === "once";
+      if (claimMode === "limited") {
+        const limitParsed = Number(claimLimit);
+        if (
+          !claimLimit.trim() ||
+          !Number.isInteger(limitParsed) ||
+          limitParsed < 1 ||
+          limitParsed > MAX_CLAIMS
+        ) {
+          setGenError(
+            `Enter how many people can claim, from 1 to ${MAX_CLAIMS.toLocaleString("en-US")}.`
+          );
+          return;
+        }
+        maxClaims = limitParsed;
+      }
     }
+    const requiresApproval = requireApproval && (claimMode === "once" || claimMode === "limited");
 
     setGenerating(true);
     setViewingId(null);
     setToken("");
     setConfirmed(false);
     setGrantedCiscoins(null);
-    setGrantedSingleUse(false);
+    setGrantedRule(null);
     setGenError("");
     try {
       const res = await fetch("/api/tokens", {
@@ -494,13 +628,21 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
           expiresAt,
           ciscoins,
           singleUse,
+          maxClaims,
+          requiresApproval,
+          requirement: requiresApproval ? requirement.trim() : null,
         }),
       });
       if (res.ok) {
         const data = await res.json();
         setToken(data.token);
         setGrantedCiscoins(data.ciscoins ?? null);
-        setGrantedSingleUse(!!data.singleUse);
+        setGrantedRule({
+          singleUse: !!data.singleUse,
+          maxClaims: data.maxClaims ?? null,
+          requiresApproval: !!data.requiresApproval,
+          requirement: data.requirement ?? null,
+        });
         setConfirmed(true);
         fetchTokens();
       } else {
@@ -526,6 +668,7 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
       });
       if (res.ok) {
         setTokens((prev) => prev.filter((t) => t.id !== deleteTarget.id));
+        setClaims((prev) => prev.filter((c) => c.token_id !== deleteTarget.id));
         if (viewingId === deleteTarget.id) {
           handleReset();
         }
@@ -547,7 +690,7 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
     setQrUrl("");
     setViewingId(null);
     setGrantedCiscoins(null);
-    setGrantedSingleUse(false);
+    setGrantedRule(null);
     setGenError("");
   };
 
@@ -556,10 +699,25 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
     setSelected(t.badge_id);
     setToken(t.token);
     setGrantedCiscoins(t.ciscoins ?? null);
-    setGrantedSingleUse(!!t.single_use);
+    setGrantedRule({
+      singleUse: !!t.single_use,
+      maxClaims: t.max_claims ?? null,
+      requiresApproval: !!t.requires_approval,
+      requirement: t.requirement ?? null,
+    });
     setQrUrl("");
     setConfirmed(true);
   };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (!badgeCreating) setShowCreateBadge(false);
+      if (!deleting) setDeleteTarget(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [badgeCreating, deleting]);
 
   useEffect(() => {
     if (!token) return;
@@ -605,6 +763,89 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
 
         <div className="qr-admin-body">
           <div className="qr-admin-main">
+            {/* Claims waiting for an admin: first on the page, members may be standing there */}
+            <div className="qr-section">
+              <div className="qr-section-header">
+                <h2 className="qr-section-title">Claim Requests</h2>
+                <span className="qr-badge-count">{claims.length}</span>
+                <button
+                  type="button"
+                  className="qr-btn qr-btn-ghost qr-section-header-action"
+                  onClick={fetchClaims}
+                  disabled={claimsLoading}
+                >
+                  Refresh
+                </button>
+              </div>
+              <p className="qr-section-desc">
+                Approving grants the badge and Ciscoins right away. Declining frees the
+                slot, and the member can scan again.
+              </p>
+
+              {claimsLoading && claims.length === 0 ? (
+                <div className="qr-empty-state">
+                  <span className="qr-spinner" />
+                </div>
+              ) : claimsError ? (
+                <p className="qr-error">{claimsError}</p>
+              ) : claims.length === 0 ? (
+                <p className="qr-empty-text">
+                  Nobody is waiting. Scans of QR codes that need approval show up here.
+                </p>
+              ) : (
+                <div className="qr-claim-requests">
+                  {claims.map((c) => {
+                    const t = tokens.find((tok) => tok.id === c.token_id);
+                    const busy = claimBusyId === c.id;
+                    return (
+                      <div key={c.id} className="qr-claim-request">
+                        <div className="qr-claim-request-info">
+                          <p className="qr-claim-request-email">{c.email}</p>
+                          <p className="qr-claim-request-meta">
+                            {badges.find((b) => b.id === t?.badge_id)?.name ?? t?.badge_id ?? "QR code"}
+                            {t?.ciscoins ? (
+                              <>
+                                <span className="qr-token-dot">&#183;</span>
+                                <span className="qr-token-ciscoins">
+                                  +{t.ciscoins.toLocaleString("en-US")} Ciscoins
+                                </span>
+                              </>
+                            ) : null}
+                            <span className="qr-token-dot">&#183;</span>
+                            {new Date(c.created_at).toLocaleString()}
+                          </p>
+                          {t?.requirement ? (
+                            <p className="qr-claim-request-task">Requirement: {t.requirement}</p>
+                          ) : null}
+                        </div>
+                        <div className="qr-claim-request-actions">
+                          <button
+                            type="button"
+                            className="qr-btn qr-btn-primary"
+                            onClick={() => decideClaim(c, "approve")}
+                            disabled={claimBusyId !== null}
+                          >
+                            {busy ? "Saving..." : "Approve"}
+                          </button>
+                          <button
+                            type="button"
+                            className="qr-btn qr-btn-secondary"
+                            onClick={() => decideClaim(c, "decline")}
+                            disabled={claimBusyId !== null}
+                          >
+                            Decline
+                          </button>
+                        </div>
+                        {claimRowError?.id === c.id ? (
+                          <p className="qr-error qr-claim-request-error">{claimRowError.text}</p>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             {/* QR Generator Section */}
             <div className="qr-section">
               <h2 className="qr-section-title">
@@ -629,8 +870,10 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                       className={`qr-badge-option ${selected === b.id ? "active" : ""}`}
                       onClick={() => { setSelected(b.id); handleReset(); }}
                       disabled={generating}
+                      aria-pressed={selected === b.id}
+                      title={b.name}
                     >
-                      <Image src={b.image_url} alt={b.name} width={48} height={48} draggable={false} />
+                      <Image src={b.image_url} alt="" width={64} height={64} draggable={false} />
                       <span className="qr-badge-option-name">{b.name}</span>
                     </button>
                   ))}
@@ -742,6 +985,45 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                     </span>
                   </label>
                   <label
+                    className={`qr-claim-option ${claimMode === "limited" ? "active" : ""}`}
+                  >
+                    <input
+                      type="radio"
+                      name="qr-claim-mode"
+                      value="limited"
+                      checked={claimMode === "limited"}
+                      onChange={() => setClaimMode("limited")}
+                      disabled={generating || confirmed}
+                    />
+                    <span className="qr-claim-option-text">
+                      <span className="qr-claim-option-title">Limited number of people</span>
+                      <span className="qr-claim-option-desc">
+                        You set how many people can claim it. Each person can claim once, and
+                        the QR code stops working when the limit is reached.
+                      </span>
+                    </span>
+                  </label>
+                  {claimMode === "limited" && (
+                    <div className="qr-claim-suboption">
+                      <label className="qr-field-label" htmlFor="qr-claim-limit">
+                        How many people?
+                      </label>
+                      <input
+                        id="qr-claim-limit"
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        max={MAX_CLAIMS}
+                        step={1}
+                        value={claimLimit}
+                        onChange={(e) => setClaimLimit(e.target.value)}
+                        placeholder="Number of people"
+                        className="qr-input"
+                        disabled={generating || confirmed}
+                      />
+                    </div>
+                  )}
+                  <label
                     className={`qr-claim-option ${claimMode === "always" ? "active" : ""}`}
                   >
                     <input
@@ -761,6 +1043,44 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                     </span>
                   </label>
                 </fieldset>
+              )}
+
+              {attachCiscoins && (claimMode === "once" || claimMode === "limited") && (
+                <div className="qr-claim-mode">
+                  <label className={`qr-claim-option ${requireApproval ? "active" : ""}`}>
+                    <input
+                      type="checkbox"
+                      checked={requireApproval}
+                      onChange={(e) => setRequireApproval(e.target.checked)}
+                      disabled={generating || confirmed}
+                    />
+                    <span className="qr-claim-option-text">
+                      <span className="qr-claim-option-title">I approve each claim first</span>
+                      <span className="qr-claim-option-desc">
+                        Scanning sends you a request. The member gets the badge and Ciscoins
+                        only after you approve it in Claim Requests.
+                      </span>
+                    </span>
+                  </label>
+                  {requireApproval && (
+                    <div className="qr-claim-suboption">
+                      <label className="qr-field-label" htmlFor="qr-requirement">
+                        What must they do first? (optional)
+                      </label>
+                      <input
+                        id="qr-requirement"
+                        type="text"
+                        maxLength={MAX_REQUIREMENT}
+                        value={requirement}
+                        onChange={(e) => setRequirement(e.target.value)}
+                        placeholder="e.g. Attend the general assembly"
+                        className="qr-input"
+                        disabled={generating || confirmed}
+                      />
+                      <p className="qr-field-hint">Members see this when they scan.</p>
+                    </div>
+                  )}
+                </div>
               )}
 
               {genError && <p className="qr-error">{genError}</p>}
@@ -798,11 +1118,7 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                               ? "Expired"
                               : `Expires ${new Date(viewed.expires_at).toLocaleDateString()}`
                             : "Never expires",
-                          viewed.single_use
-                            ? viewed.claimed_at
-                              ? "Used up"
-                              : "One time claim"
-                            : null,
+                          claimStatus(viewed)?.label,
                         ].filter(Boolean).join(" · ")
                       : "Each person who scans this QR code gets their own badge."}
                   </p>
@@ -812,12 +1128,12 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                       this badge
                     </p>
                   )}
-                  {grantedCiscoins !== null && (
-                    <p className="qr-claim-mode-note">
-                      {grantedSingleUse
-                        ? "One time claim only. The first person to claim it uses this QR code up."
-                        : "Permanently available. Anyone can scan this QR code and claim it."}
-                    </p>
+                  {grantedCiscoins !== null && grantedRule && (
+                    <div className="qr-claim-mode-note">
+                      {claimRuleNotes(grantedRule).map((note) => (
+                        <p key={note}>{note}</p>
+                      ))}
+                    </div>
                   )}
                   <div className="qr-actions">
                     <button type="button" className="qr-btn qr-btn-primary" onClick={handleDownload} disabled={!qrUrl}>
@@ -1001,6 +1317,7 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                   {tokens.map((t) => {
                     const b = badges.find((badge) => badge.id === t.badge_id);
                     const expired = !!t.expired;
+                    const status = claimStatus(t);
                     return (
                       <div key={t.id} className={`qr-token-row ${viewingId === t.id ? "active" : ""}`}>
                         <button
@@ -1036,14 +1353,18 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                                   </span>
                                 </>
                               ) : null}
-                              {t.single_use ? (
+                              {status ? (
                                 <>
                                   <span className="qr-token-dot">&#183;</span>
-                                  <span
-                                    className={`qr-token-claim ${t.claimed_at ? "used" : ""}`}
-                                  >
-                                    {t.claimed_at ? "Used up" : "One time claim"}
+                                  <span className={`qr-token-claim ${status.used ? "used" : ""}`}>
+                                    {status.label}
                                   </span>
+                                </>
+                              ) : null}
+                              {t.requires_approval ? (
+                                <>
+                                  <span className="qr-token-dot">&#183;</span>
+                                  <span className="qr-token-claim">Needs approval</span>
                                 </>
                               ) : null}
                             </span>
@@ -1174,6 +1495,9 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
             <p className="qr-confirm-title">Delete QR Code?</p>
             <p className="qr-confirm-desc">
               The <strong>{badges.find((b) => b.id === deleteTarget.badge_id)?.name ?? deleteTarget.badge_id}</strong> badge token will be permanently removed. This action cannot be undone.
+              {claims.some((c) => c.token_id === deleteTarget.id)
+                ? " Claims still waiting on this QR code are removed too."
+                : ""}
             </p>
             {deleteError && <p className="qr-error">{deleteError}</p>}
             <div className="qr-confirm-actions">

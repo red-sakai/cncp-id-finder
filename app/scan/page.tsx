@@ -19,6 +19,8 @@ function ScanForm() {
   const [tokenValid, setTokenValid] = useState<boolean | null>(null);
   const [tokenBadge, setTokenBadge] = useState("");
   const [tokenBy, setTokenBy] = useState("");
+  const [needsApproval, setNeedsApproval] = useState(false);
+  const [requirement, setRequirement] = useState("");
 
   const BADGE_NAMES: Record<string, string> = {
     "welcome-to-cisco": "Welcome to Cisco",
@@ -42,6 +44,8 @@ function ScanForm() {
           const data = await res.json();
           setTokenBadge(data.badgeId ?? "");
           setTokenBy(data.awardedBy ?? "");
+          setNeedsApproval(!!data.requiresApproval);
+          setRequirement(data.requirement ?? "");
           setTokenValid(true);
         } else {
           const body = await res.json().catch(() => ({}));
@@ -138,8 +142,15 @@ function ScanForm() {
         />
         <h1 className="scan-title">Cisco NetConnect PUP &ndash; Manila</h1>
         <p className="scan-subtitle">
-          Enter your email to claim your badge
+          {needsApproval
+            ? "Enter your email to request this badge. An admin approves it before you get the badge and Ciscoins."
+            : "Enter your email to claim your badge"}
         </p>
+        {requirement && (
+          <p className="scan-subtitle">
+            <strong>Do this first:</strong> {requirement}
+          </p>
+        )}
         <form onSubmit={handleSubmit} className="scan-form">
           {alreadyEarned ? (
             <div className="scan-already-earned">
