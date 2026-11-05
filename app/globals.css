@@ -5619,6 +5619,39 @@ html.dark .footer-legal-links a:hover {
 .qr-badge-option.active .qr-badge-option-name {
   color: #fff;
 }
+/* Dims the art only: the name and the "Disabled" label stay readable. */
+.qr-badge-option.off img {
+  opacity: 0.4;
+}
+.qr-badge-option-off {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #ff6b6b;
+}
+.qr-badge-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+.qr-badge-status-text {
+  flex: 1 1 16rem;
+  min-width: 0;
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #b8a8f0;
+  overflow-wrap: anywhere;
+}
+.qr-badge-status-text strong {
+  display: block;
+  color: #fff;
+}
+.qr-badge-status-error {
+  flex-basis: 100%;
+}
 /* The check says "selected" without relying on the border colour alone. */
 .qr-badge-option.active::after {
   content: "\2713";

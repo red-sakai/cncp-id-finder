@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { creditAndAward } from "@/lib/award-claim";
 
+const BADGE_DISABLED = "This badge can't be claimed right now. Try again later.";
+
 async function isMember(email: string) {
   for (const table of ["executives_personal_info", "registration_personal_info"]) {
     const { data } = await supabase.from(table).select("email").eq("email", email).limit(1);
@@ -40,9 +42,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid badge" }, { status: 400 });
   }
 
+  // "*" so claims keep working before badge_disabled.sql has been run.
   const { data: definition, error: defError } = await supabase
     .from("badge_definitions")
-    .select("id")
+    .select("*")
     .eq("id", badgeId)
     .limit(1);
 
@@ -51,6 +54,9 @@ export async function POST(request: NextRequest) {
   }
   if (!definition || definition.length === 0) {
     return NextResponse.json({ error: "Invalid badge" }, { status: 400 });
+  }
+  if (definition[0].disabled) {
+    return NextResponse.json({ error: BADGE_DISABLED }, { status: 403 });
   }
 
   const trimmedEmail = email.trim().toLowerCase();

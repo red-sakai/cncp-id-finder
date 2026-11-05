@@ -88,6 +88,23 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // "*" so scans keep working before badge_disabled.sql has been run.
+  const { data: definitions, error: definitionError } = await supabase
+    .from("badge_definitions")
+    .select("*")
+    .eq("id", data[0].badge_id)
+    .limit(1);
+
+  if (definitionError) {
+    return NextResponse.json({ error: definitionError.message }, { status: 500 });
+  }
+  if (definitions?.[0]?.disabled) {
+    return NextResponse.json(
+      { error: "This badge can't be claimed right now. Try again later." },
+      { status: 403 }
+    );
+  }
+
   return NextResponse.json({
     valid: true,
     badgeId: data[0].badge_id,

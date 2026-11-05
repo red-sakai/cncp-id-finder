@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { isAdmin } from "@/lib/admin-auth";
 
 // GET /api/badge-definitions — List all badges
 export async function GET() {
+  // "*" so this keeps working before badge_disabled.sql has been run.
   const { data, error } = await supabase
     .from("badge_definitions")
-    .select("id, name, description, image_url, created_at")
+    .select("*")
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -62,6 +64,43 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ ok: true, id: slug });
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+}
+
+// PATCH /api/badge-definitions — Disable or reactivate a badge
+export async function PATCH(request: NextRequest) {
+  // Checks the login so a member can't reopen a badge an admin disabled.
+  if (!isAdmin(request)) {
+    return NextResponse.json({ error: "Please log in again." }, { status: 401 });
+  }
+
+  try {
+    const { id, disabled } = await request.json();
+
+    if (!id || typeof id !== "string") {
+      return NextResponse.json({ error: "Invalid badge id" }, { status: 400 });
+    }
+    if (typeof disabled !== "boolean") {
+      return NextResponse.json({ error: "Invalid badge status" }, { status: 400 });
+    }
+
+    const { data, error } = await supabase
+      .from("badge_definitions")
+      .update({ disabled })
+      .eq("id", id)
+      .select("id");
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    if (!data?.length) {
+      return NextResponse.json({ error: "Badge not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ ok: true, disabled });
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }

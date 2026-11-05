@@ -17,6 +17,7 @@ type Badge = {
   description: string;
   image_url: string;
   created_at: string;
+  disabled?: boolean;
 };
 
 type Token = {
@@ -256,6 +257,10 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
   const [badgeCreating, setBadgeCreating] = useState(false);
   const [badgeError, setBadgeError] = useState("");
 
+  // Disabling a badge
+  const [badgeToggling, setBadgeToggling] = useState(false);
+  const [badgeToggleError, setBadgeToggleError] = useState<{ id: string; text: string } | null>(null);
+
   // Shop: prices are edited here so the migration never has to change
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
   const [shopLoading, setShopLoading] = useState(true);
@@ -282,8 +287,9 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
         const data = await res.json();
         const fromDb = (data.badges ?? []) as Badge[];
         setBadges(fromDb);
-        if (fromDb.length > 0 && !selected) {
-          setSelected(fromDb[0].id);
+        // Functional so a late response can't move the admin off the badge they picked.
+        if (fromDb.length > 0) {
+          setSelected((current) => current || fromDb[0].id);
         }
       }
     } catch {
@@ -550,6 +556,35 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
       setBadgeError("Network error. Please try again.");
     } finally {
       setBadgeCreating(false);
+    }
+  };
+
+  const toggleBadge = async (target: Badge) => {
+    // Not the button's disabled attribute: that would drop keyboard focus on every save.
+    if (badgeToggling) return;
+    const disabled = !target.disabled;
+    setBadgeToggling(true);
+    setBadgeToggleError(null);
+    try {
+      const res = await fetch("/api/badge-definitions", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: target.id, disabled }),
+      });
+      if (res.status === 401) {
+        onLogout();
+        return;
+      }
+      if (res.ok) {
+        setBadges((prev) => prev.map((b) => (b.id === target.id ? { ...b, disabled } : b)));
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setBadgeToggleError({ id: target.id, text: body.error ?? "Could not change this badge. Try again." });
+      }
+    } catch {
+      setBadgeToggleError({ id: target.id, text: "Network error. Nothing was changed." });
+    } finally {
+      setBadgeToggling(false);
     }
   };
 
@@ -867,7 +902,7 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                     <button
                       key={b.id}
                       type="button"
-                      className={`qr-badge-option ${selected === b.id ? "active" : ""}`}
+                      className={`qr-badge-option ${selected === b.id ? "active" : ""} ${b.disabled ? "off" : ""}`}
                       onClick={() => { setSelected(b.id); handleReset(); }}
                       disabled={generating}
                       aria-pressed={selected === b.id}
@@ -875,6 +910,7 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                     >
                       <Image src={b.image_url} alt="" width={64} height={64} draggable={false} />
                       <span className="qr-badge-option-name">{b.name}</span>
+                      {b.disabled ? <span className="qr-badge-option-off">Disabled</span> : null}
                     </button>
                   ))}
                   <button
@@ -886,6 +922,29 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                     <div className="qr-badge-add-icon">+</div>
                     <span className="qr-badge-option-name">Add Badge</span>
                   </button>
+                </div>
+              )}
+
+              {!badgesLoading && badge && (
+                <div className="qr-badge-status">
+                  <p className="qr-badge-status-text">
+                    <strong>{badge.name}</strong>
+                    {badge.disabled
+                      ? "Disabled. Its QR codes refuse new claims until you reactivate it. Members who earned it keep it, and you can still approve requests already waiting."
+                      : "Open for claims. Disabling it stops all of its QR codes until you reactivate it. Members who earned it keep it."}
+                  </p>
+                  <button
+                    type="button"
+                    className="qr-btn qr-btn-secondary"
+                    onClick={() => toggleBadge(badge)}
+                    disabled={generating}
+                    aria-busy={badgeToggling}
+                  >
+                    {badgeToggling ? "Saving..." : badge.disabled ? "Reactivate badge" : "Disable badge"}
+                  </button>
+                  {badgeToggleError?.id === badge.id ? (
+                    <p className="qr-error qr-badge-status-error">{badgeToggleError.text}</p>
+                  ) : null}
                 </div>
               )}
 
@@ -1119,8 +1178,11 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                               : `Expires ${new Date(viewed.expires_at).toLocaleDateString()}`
                             : "Never expires",
                           claimStatus(viewed)?.label,
+                          badge?.disabled && "Badge disabled",
                         ].filter(Boolean).join(" · ")
-                      : "Each person who scans this QR code gets their own badge."}
+                      : badge?.disabled
+                        ? "This badge is disabled, so this QR code won't work until you reactivate it."
+                        : "Each person who scans this QR code gets their own badge."}
                   </p>
                   {grantedCiscoins !== null && (
                     <p className="qr-ciscoins-grant">
@@ -1365,6 +1427,12 @@ function QRGenerator({ onLogout }: { onLogout: () => void }) {
                                 <>
                                   <span className="qr-token-dot">&#183;</span>
                                   <span className="qr-token-claim">Needs approval</span>
+                                </>
+                              ) : null}
+                              {b?.disabled ? (
+                                <>
+                                  <span className="qr-token-dot">&#183;</span>
+                                  <span className="qr-token-claim used">Badge disabled</span>
                                 </>
                               ) : null}
                             </span>
