@@ -1,0 +1,103 @@
+{
+  "title": "How the casino is laid out",
+  "question": "Three ways to arrange the walkable casino on a phone. The look stays the iCisco galaxy; this choice is composition. Lock one, steer, or re-roll.",
+  "options": [
+    {
+      "id": "cutaway",
+      "kind": "assigned",
+      "label": "Cutaway floor",
+      "kicker": "THE ROLL",
+      "lineage": "dollhouse cutaway / tabletop diorama",
+      "thesis": "The whole casino is one roofless room seen from above; Axie walks it, and sitting down dollies the camera into the table.",
+      "palette": ["#0b0820", "#1d1446", "#7c5cff", "#f5b83d", "#ece8ff"],
+      "materials": ["violet lacquer", "gold trim", "felt", "neon marquee"],
+      "viewport": "High three-quarter view of the open room: slot row on the left wall, Hold'em table centre-right, cashier cage by the door; joystick bottom-left, balance chip top-right.",
+      "risk": "From high up, the props read small on a phone until you sit down.",
+      "raised": [
+        { "from": "rw-manual-acetate-tab-board", "raise": "One ply only: the game deck is the single layer that ever sits above the floor." },
+        { "from": "medium-native-algorave-source-floor", "raise": "Bots telegraph their move a beat before it lands, so the table never surprises you." }
+      ],
+      "html": ".impeccable/mocks/decision/cutaway.html",
+      "htmlFrame": "390x844"
+    },
+    {
+      "id": "stroll",
+      "kind": "dealt",
+      "label": "Eye-level stroll",
+      "lineage": "first-person walk-through",
+      "thesis": "You walk the floor at eye level and the games play on the objects themselves: reels spin in the cabinet glass, cards land on the felt.",
+      "palette": ["#0b0820", "#1d1446", "#7c5cff", "#f5b83d", "#ece8ff"],
+      "materials": ["violet lacquer", "gold trim", "felt", "neon marquee"],
+      "viewport": "Eye-level view down the aisle toward the slot row, marquees glowing; drag to look, joystick to move, a thin chip rail along the bottom.",
+      "risk": "First-person on a phone needs two thumbs and can feel disorienting to non-gamers.",
+      "html": ".impeccable/mocks/decision/stroll.html",
+      "htmlFrame": "390x844"
+    },
+    {
+      "id": "rail",
+      "kind": "dealt",
+      "label": "Floor above, rail below",
+      "lineage": "split portrait game layout",
+      "thesis": "The live 3D floor fills the top of the screen and a rail below always holds your balance, mode and the nearest game; seated, the rail becomes the controls.",
+      "palette": ["#0b0820", "#1d1446", "#7c5cff", "#f5b83d", "#ece8ff"],
+      "materials": ["violet lacquer", "gold trim", "felt", "neon marquee"],
+      "viewport": "Top 55%: diorama of the room with Axie by the slots. Bottom 45%: rail with mode switch, balance, 'Slot machine, 2 steps away' and a Sit down button.",
+      "risk": "Half the screen is UI, so the casino feels smaller than the other two.",
+      "html": ".impeccable/mocks/decision/rail.html",
+      "htmlFrame": "390x844"
+    },
+    {
+      "id": "ch-acetate", "kind": "challenger", "catalogId": "rw-manual-acetate-tab-board",
+      "label": "Acetate manual", "verdict": "declined", "lineage": "boxed-software manuals",
+      "thesis": "Content on hinged acetate leaves over coloured divider boards.",
+      "palette": ["#e9e4d8", "#e4572e", "#f2c12e", "#3b5bdb"], "materials": ["acetate", "divider board"],
+      "viewport": "An open manual at a tabbed section.", "risk": "Turns a casino into a document.",
+      "case": "Fuses poorly: members came to walk a casino, not read a manual.",
+      "kept": "One ply only: overlays never stack."
+    },
+    {
+      "id": "ch-feed", "kind": "challenger", "catalogId": "pop-culture-shelf-vertical-video-feed-surface",
+      "label": "Vertical feed", "verdict": "declined", "lineage": "short-video feeds",
+      "thesis": "One game fills the screen; the next is one flick away.",
+      "palette": ["#000000", "#ffffff"], "materials": ["full-bleed media", "scrim"],
+      "viewport": "Slot machine full screen, poker one swipe down.", "risk": "Drops walking, which the brief asks for.",
+      "case": "Fuses poorly: it removes the walkable floor the brief requires.",
+      "kept": "Seated, the station owns the whole screen."
+    },
+    {
+      "id": "ch-ribbon", "kind": "challenger", "catalogId": "exhibition-museum-curation-provenance-ribbon",
+      "label": "Provenance ribbon", "verdict": "declined", "lineage": "museum provenance displays",
+      "thesis": "One object's custody told as a ribbon.", "palette": ["#efe6d2", "#b3261e", "#8a8a8a"], "materials": ["silk", "archival paper"],
+      "viewport": "A ribbon unrolling down the page.", "risk": "No play, no place.",
+      "case": "Fuses poorly: no audience fit for a game room.",
+      "kept": "Every real-deal win or loss leaves a ledger line you can see."
+    },
+    {
+      "id": "ch-rain", "kind": "challenger", "catalogId": "dream-surreal-impossible-worlds-gravity-rain-garden",
+      "label": "Gravity rain garden", "verdict": "declined", "lineage": "surreal physics toys",
+      "thesis": "Rain falls toward whatever its cloud's colour pulls it.", "palette": ["#5f6b66", "#2f6fd6", "#d23b3b", "#111111"], "materials": ["rain", "garden"],
+      "viewport": "A garden under coloured clouds.", "risk": "Pretty, unrelated.",
+      "case": "Fuses poorly: neither members nor the games recognise it.",
+      "kept": "Chips and coins fall with honest weight."
+    },
+    {
+      "id": "ch-algorave", "kind": "challenger", "catalogId": "medium-native-algorave-source-floor",
+      "label": "Algorave floor", "verdict": "declined", "lineage": "live-coded club nights",
+      "thesis": "Projected code edits the music mid-dance.", "palette": ["#000000", "#39ff88", "#ff3ec8", "#ffb000"], "materials": ["projector", "mono code"],
+      "viewport": "A code buffer as the stage.", "risk": "Reads as a hacker costume.",
+      "case": "Fuses poorly: code is not what members came to play.",
+      "kept": "The next change is visible a beat before it lands."
+    },
+    {
+      "id": "ch-detector", "kind": "challenger", "catalogId": "scientific-notation-particle-detector-event-display",
+      "label": "Event display", "verdict": "declined", "lineage": "collider event displays",
+      "thesis": "Tracks curling out of one frozen collision.", "palette": ["#05070a", "#4a6a8a", "#ffd400", "#00e5ff", "#e53935"], "materials": ["vacuum", "detector rings"],
+      "viewport": "Concentric detector rings.", "risk": "Scientific costume on a casino.",
+      "case": "Fuses poorly: no link to cards or reels.",
+      "kept": "Inertial 3D: the camera keeps a little momentum."
+    }
+  ],
+  "reroll": true,
+  "buildPath": { "value": "code", "toggle": false },
+  "steer": true
+}

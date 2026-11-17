@@ -1,0 +1,40 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Floor above, rail below</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Inter+Tight:wght@700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0}
+body{width:390px;height:844px;overflow:hidden;background:#0b0820;font-family:Inter,sans-serif;color:#ece8ff;position:relative}
+.stage{position:absolute;left:0;right:0;top:0;height:464px;background:radial-gradient(100% 80% at 50% 40%,#2a1c63,#0b0820);overflow:hidden}
+.room{position:absolute;left:-20px;right:-20px;top:110px;height:340px;transform:perspective(600px) rotateX(50deg);transform-origin:50% 30%}
+.floor{position:absolute;inset:0;background:repeating-linear-gradient(45deg,#1d1446 0 20px,#22185a 20px 40px);border:5px solid #f5b83d}
+.slot{position:absolute;left:24px;width:50px;height:58px;background:#5b3fd6;border:3px solid #f5b83d;border-radius:12px 12px 3px 3px}
+.table{position:absolute;left:180px;top:120px;width:180px;height:110px;background:#3d2399;border:9px solid #2a1a12;border-radius:55px}
+.axie{position:absolute;left:96px;top:110px;width:30px;height:30px;border-radius:50%;background:#ff9ec7;box-shadow:0 0 0 4px #ece8ff}
+.top{position:absolute;top:0;left:0;right:0;height:64px;display:flex;align-items:center;gap:12px;padding:0 16px}
+.back{width:36px;height:36px;border-radius:50%;background:#1d1446;border:1px solid #3a2a8a}
+.title{font-family:"Inter Tight";font-weight:800;font-size:22px}
+.rail{position:absolute;left:0;right:0;top:464px;bottom:0;background:#14102e;border-top:2px solid #f5b83d;padding:20px 16px}
+.seg{display:flex;background:#0b0820;border-radius:999px;padding:4px;width:100%}
+.seg span{flex:1;text-align:center;padding:10px;border-radius:999px;font-weight:600;font-size:15px;color:#b9b0e8}
+.seg .on{background:#7c5cff;color:#fff}
+.balrow{display:flex;align-items:baseline;gap:8px;margin-top:22px}
+.balrow b{font-family:"Inter Tight";font-weight:800;font-size:40px;color:#f5b83d}
+.balrow small{color:#b9b0e8;font-size:14px}
+.near{margin-top:22px;border-top:1px solid #2a1f66;padding-top:18px;display:flex;align-items:center}
+.near div small{display:block;color:#b9b0e8;font-size:13px}
+.near div strong{font-family:"Inter Tight";font-weight:800;font-size:22px}
+.sit{margin-left:auto;background:#ece8ff;color:#0b0820;border-radius:999px;padding:14px 22px;font-weight:600}
+.joy{position:absolute;left:16px;bottom:24px;width:96px;height:96px;border-radius:50%;border:2px solid #3a2a8a}
+.joy::after{content:"";position:absolute;left:30px;top:30px;width:36px;height:36px;border-radius:50%;background:#7c5cff}
+</style></head><body>
+<div class="stage"><div class="room"><div class="floor"></div>
+<div class="slot" style="top:20px"></div><div class="slot" style="top:95px"></div><div class="slot" style="top:170px"></div>
+<div class="table"></div><div class="axie"></div></div>
+<div class="top"><div class="back"></div><div class="title">Casino</div></div></div>
+<div class="rail">
+<div class="seg"><span class="on">Simulated</span><span>Real deal</span></div>
+<div class="balrow"><b>1,000</b><small>practice coins</small></div>
+<div class="near"><div><small>Two steps away</small><strong>Slot machine</strong></div><span class="sit">Sit down</span></div>
+<div class="joy"></div>
+</div>
+</body></html>

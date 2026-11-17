@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "createdAt": "2026-11-17T14:38:39.621Z",
+        "reason": "Inter is the project's existing body face (next/font in app/layout.tsx), recorded in PRODUCT.md Brand Commitments; the casino extends that world rather than replacing it"
+      }
+    ]
+  }
+}

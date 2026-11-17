@@ -7,7 +7,7 @@ import Image from "next/image";
 import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import QRCode from "qrcode";
-import WireZipGame from "@/components/wirezip-game";
+import Casino from "@/components/casino/casino";
 import AxieChestLoader, { prepareAxie, type ChestFinish } from "@/components/axie-chest-loader";
 import { BadgeCase, BadgeCount, useBadgeDrag } from "@/components/badge-case";
 import {
@@ -1404,7 +1404,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             >
               <span className="icisco-app-icon">
                 <Image
-                  src="/id-finder-icon.png"
+                  src="/icons/id-finder.png"
                   alt="ID Finder"
                   width={108}
                   height={108}
@@ -1420,7 +1420,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
             >
               <span className="icisco-app-icon">
                 <Image
-                  src="/games-app-icon.jpg"
+                  src="/icons/GAMES.png"
                   alt="Games"
                   width={108}
                   height={108}
@@ -1434,13 +1434,14 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
               className="icisco-app"
               onClick={openShop}
             >
-              <span className="icisco-app-icon icisco-app-tile" aria-hidden="true">
-                <span className="icisco-app-glyph">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4.5 8h15l-1.1 10.1a2 2 0 0 1-2 1.9H7.6a2 2 0 0 1-2-1.9L4.5 8Z" />
-                    <path d="M8.6 10V6.7a3.4 3.4 0 0 1 6.8 0V10" />
-                  </svg>
-                </span>
+              <span className="icisco-app-icon">
+                <Image
+                  src="/icons/SHOP.png"
+                  alt="Shop"
+                  width={108}
+                  height={108}
+                  className="icisco-app-img"
+                />
               </span>
               <span className="icisco-app-label">Shop</span>
             </button>
@@ -3194,20 +3195,7 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
 
       {activeApp === "games" && !closing && (
         <div className="icisco-app-screen">
-          <div className="icisco-app-bar">
-            <button
-              type="button"
-              className="icisco-app-back"
-              onClick={() => setActiveApp(null)}
-              aria-label="Back to home"
-            >
-              &#9664;
-            </button>
-            <span className="icisco-app-title">Games</span>
-          </div>
-          <div className="icisco-idfinder-body" style={{ overflow: "hidden", padding: "0.4rem", justifyContent: "center" }}>
-            <WireZipGame />
-          </div>
+          <Casino onExit={() => setActiveApp(null)} />
         </div>
       )}
     </div>

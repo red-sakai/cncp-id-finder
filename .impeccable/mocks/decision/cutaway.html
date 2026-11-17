@@ -1,0 +1,38 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Cutaway floor</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Inter+Tight:wght@700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0}
+body{width:390px;height:844px;overflow:hidden;background:#0b0820;font-family:Inter,sans-serif;color:#ece8ff;position:relative}
+.sky{position:absolute;inset:0;background:radial-gradient(120% 70% at 50% 30%,#2a1c63 0%,#120c33 55%,#0b0820 100%)}
+.room{position:absolute;left:-40px;right:-40px;top:150px;height:520px;transform:perspective(700px) rotateX(52deg);transform-origin:50% 40%}
+.floor{position:absolute;inset:0;background:repeating-linear-gradient(45deg,#1d1446 0 22px,#22185a 22px 44px);border:6px solid #f5b83d;border-radius:4px}
+.wall-l{position:absolute;left:0;top:0;bottom:0;width:20px;background:#3a2a8a}
+.slot{position:absolute;left:30px;width:58px;height:70px;background:#5b3fd6;border:3px solid #f5b83d;border-radius:14px 14px 4px 4px}
+.slot::after{content:"";position:absolute;left:8px;right:8px;top:14px;height:20px;background:#ece8ff;border-radius:3px}
+.table{position:absolute;left:190px;top:170px;width:200px;height:120px;background:#3d2399;border:10px solid #2a1a12;border-radius:60px}
+.cage{position:absolute;right:20px;bottom:20px;width:110px;height:56px;background:#14102e;border:3px solid #f5b83d}
+.axie{position:absolute;left:150px;top:300px;width:34px;height:34px;border-radius:50%;background:#ff9ec7;box-shadow:0 0 0 4px #ece8ff}
+.top{position:absolute;top:0;left:0;right:0;height:64px;display:flex;align-items:center;gap:12px;padding:0 16px}
+.back{width:36px;height:36px;border-radius:50%;background:#1d1446;border:1px solid #3a2a8a}
+.title{font-family:"Inter Tight";font-weight:800;font-size:22px;letter-spacing:-.01em}
+.bal{margin-left:auto;display:flex;align-items:center;gap:8px;background:#14102e;border:1px solid #f5b83d;border-radius:999px;padding:6px 12px 6px 6px;font-weight:600;font-size:16px}
+.coin{width:22px;height:22px;border-radius:50%;background:#f5b83d}
+.mode{position:absolute;top:72px;left:16px;font-size:13px;color:#b9b0e8;letter-spacing:.08em;text-transform:uppercase}
+.mode b{color:#f5b83d}
+.joy{position:absolute;left:24px;bottom:40px;width:120px;height:120px;border-radius:50%;border:2px solid #3a2a8a;background:rgba(29,20,70,.6)}
+.joy::after{content:"";position:absolute;left:38px;top:38px;width:44px;height:44px;border-radius:50%;background:#7c5cff}
+.prompt{position:absolute;right:16px;bottom:56px;width:180px;background:#ece8ff;color:#0b0820;border-radius:16px;padding:14px 16px}
+.prompt small{display:block;font-size:12px;color:#4a3fa0;margin-bottom:4px}
+.prompt strong{font-family:"Inter Tight";font-size:22px;font-weight:800}
+.prompt span{display:block;margin-top:10px;background:#7c5cff;color:#fff;border-radius:999px;text-align:center;padding:10px;font-weight:600}
+</style></head><body>
+<div class="sky"></div>
+<div class="room"><div class="floor"></div><div class="wall-l"></div>
+<div class="slot" style="top:30px"></div><div class="slot" style="top:120px"></div><div class="slot" style="top:210px"></div><div class="slot" style="top:300px"></div>
+<div class="table"></div><div class="cage"></div><div class="axie"></div></div>
+<div class="top"><div class="back"></div><div class="title">Casino</div><div class="bal"><span class="coin"></span>1,000</div></div>
+<div class="mode">Simulated · <b>practice coins</b></div>
+<div class="joy"></div>
+<div class="prompt"><small>Two steps away</small><strong>Slot machine</strong><span>Sit down</span></div>
+</body></html>

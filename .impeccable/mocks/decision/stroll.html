@@ -1,0 +1,32 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Eye-level stroll</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Inter+Tight:wght@700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0}
+body{width:390px;height:844px;overflow:hidden;background:#0b0820;font-family:Inter,sans-serif;color:#ece8ff;position:relative}
+.ceil{position:absolute;left:0;right:0;top:0;height:380px;background:linear-gradient(#07051a,#1a1240)}
+.floor{position:absolute;left:0;right:0;top:380px;bottom:0;background:linear-gradient(#22185a,#0b0820);clip-path:polygon(40% 0,60% 0,100% 100%,0 100%)}
+.floorsides{position:absolute;left:0;right:0;top:380px;bottom:0;background:#120c33}
+.row{position:absolute;top:250px;display:flex;gap:6px}
+.cab{width:44px;height:150px;background:#5b3fd6;border:3px solid #f5b83d;border-radius:18px 18px 4px 4px;position:relative}
+.cab::before{content:"";position:absolute;left:6px;right:6px;top:10px;height:16px;background:#ff5fa8;border-radius:4px}
+.cab::after{content:"";position:absolute;left:6px;right:6px;top:40px;height:30px;background:#ece8ff;border-radius:3px}
+.big{position:absolute;left:96px;top:300px;width:200px;height:330px;background:#5b3fd6;border:6px solid #f5b83d;border-radius:60px 60px 8px 8px}
+.marq{position:absolute;left:18px;right:18px;top:20px;height:44px;background:#ff5fa8;border-radius:10px;font-family:"Inter Tight";font-weight:800;text-align:center;line-height:44px;font-size:22px;color:#0b0820}
+.glass{position:absolute;left:18px;right:18px;top:84px;height:110px;background:#ece8ff;border-radius:8px;display:flex;justify-content:space-around;align-items:center;font-family:"Inter Tight";font-weight:800;font-size:40px;color:#3d2399}
+.top{position:absolute;top:0;left:0;right:0;height:64px;display:flex;align-items:center;gap:12px;padding:0 16px}
+.back{width:36px;height:36px;border-radius:50%;background:#1d1446;border:1px solid #3a2a8a}
+.title{font-family:"Inter Tight";font-weight:800;font-size:22px}
+.rail{position:absolute;left:0;right:0;bottom:0;height:120px;background:#14102e;border-top:2px solid #f5b83d;display:flex;align-items:center;gap:10px;padding:0 16px}
+.chip{width:56px;height:56px;border-radius:50%;border:5px dashed #ece8ff;background:#7c5cff;display:flex;align-items:center;justify-content:center;font-weight:600}
+.spin{margin-left:auto;height:64px;padding:0 28px;border-radius:999px;background:#f5b83d;color:#0b0820;font-family:"Inter Tight";font-weight:800;font-size:22px;display:flex;align-items:center}
+.bal{position:absolute;right:16px;top:14px;font-weight:600;font-size:16px;color:#f5b83d}
+</style></head><body>
+<div class="ceil"></div><div class="floorsides"></div><div class="floor"></div>
+<div class="row" style="left:4px"><div class="cab"></div><div class="cab" style="height:130px;margin-top:10px"></div></div>
+<div class="row" style="right:4px"><div class="cab" style="height:130px;margin-top:10px"></div><div class="cab"></div></div>
+<div class="big"><div class="marq">CISCOINS</div><div class="glass"><span>7</span><span>★</span><span>7</span></div></div>
+<div class="top"><div class="back"></div><div class="title">Casino</div></div>
+<div class="bal">1,000 coins</div>
+<div class="rail"><div class="chip">5</div><div class="chip" style="background:#3d2399">10</div><div class="chip" style="background:#1d1446">25</div><div class="spin">Spin</div></div>
+</body></html>
