@@ -10,6 +10,7 @@ import {
 import { randomSeed } from "@/lib/casino/rng";
 import { Jukebox, TRACKS, type Layer } from "./jukebox";
 import { deleteSong, listSongs, saveSong, type StoredSong } from "./song-store";
+import { Sfx } from "./sfx";
 
 type Mode = "practice" | "real";
 type Wallet = { first_name: string; last_name: string; email: string; phone: string };
@@ -25,14 +26,14 @@ const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 const lowerFirst = (s: string) => s[0].toLowerCase() + s.slice(1);
 
 type Song = { key: string; name: string; sub: string; custom?: StoredSong };
-type JukeboxPrefs = { track: string; volume: number; tempo: number; layers: Record<Layer, boolean> };
+type JukeboxPrefs = { track: string; volume: number; tempo: number; layers: Record<Layer, boolean>; sfx: boolean };
 const JUKEBOX_KEY = "cncp-casino-jukebox";
 const MAX_SONGS = 12;
 const MAX_SONG_BYTES = 30 * 1024 * 1024;
 const BUILT_IN: Song[] = TRACKS.map((t) => ({ key: `b:${t.id}`, name: t.name, sub: t.mood }));
 
 function readJukebox(): JukeboxPrefs {
-  const fallback: JukeboxPrefs = { track: BUILT_IN[0].key, volume: 70, tempo: 100, layers: { drums: true, bass: true, keys: true } };
+  const fallback: JukeboxPrefs = { track: BUILT_IN[0].key, volume: 70, tempo: 100, layers: { drums: true, bass: true, keys: true }, sfx: true };
   try {
     const raw = JSON.parse(localStorage.getItem(JUKEBOX_KEY) ?? "null");
     if (!raw || typeof raw !== "object") return fallback;
@@ -41,6 +42,7 @@ function readJukebox(): JukeboxPrefs {
       volume: Number.isFinite(raw.volume) ? Math.min(100, Math.max(0, raw.volume)) : fallback.volume,
       tempo: Number.isFinite(raw.tempo) ? Math.min(130, Math.max(70, raw.tempo)) : fallback.tempo,
       layers: { ...fallback.layers, ...(raw.layers ?? {}) },
+      sfx: typeof raw.sfx === "boolean" ? raw.sfx : true,
     };
   } catch {
     return fallback;
@@ -127,6 +129,7 @@ export default function Casino({ onExit }: { onExit: () => void }) {
   const mountRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<CasinoWorld | null>(null);
+  const sfxRef = useRef<Sfx | null>(null);
   const reduced = useRef(false);
 
   const [ready, setReady] = useState(false);
@@ -300,7 +303,7 @@ export default function Casino({ onExit }: { onExit: () => void }) {
       const anticipate = a === b && a !== "blank";
       await worldRef.current?.spinReels(seated.index, stops, anticipate);
       const size = win >= bet * 50 ? "big" : win > 0 ? "win" : "none";
-      worldRef.current?.settleSpin(seated.index, size);
+      worldRef.current?.settleSpin(seated.index, size, win / bet);
       if (mode === "practice") setPractice((p) => p + win);
       else setRealBalance(after!);
       if (win > 0) showToast(win, lowerFirst(combo ?? "win"), size === "big");
@@ -385,6 +388,8 @@ export default function Casino({ onExit }: { onExit: () => void }) {
         draw.pot += Math.max(0, paid);
         info[ev.seat].stack -= Math.max(0, paid);
         if (ev.act === "fold") seat.folded = true;
+        if (ev.act === "check") sfxRef.current?.play("knock");
+        else if (paid > 0) sfxRef.current?.play("chip");
         info[ev.seat].text = actText(ev.act, ev.to);
         show();
         await wait(quick ? 40 : 280);
@@ -412,7 +417,7 @@ export default function Casino({ onExit }: { onExit: () => void }) {
       }
       const wins = v.events.filter((e) => e.t === "win");
       const mine = v.winnings[0];
-      for (const w of wins) if (w.t === "win") world?.payPot(w.seat, w.amount >= 200);
+      for (const w of wins) if (w.t === "win") world?.payPot(w.seat, w.amount >= 200, w.amount / BIG_BLIND);
       info = v.seats.map((s, i) => ({ stack: s.stack, text: v.winnings[i] > 0 ? `Wins ${fmt(v.winnings[i])}` : info[i].text, thinking: false }));
       setSeatInfo(info.map((x) => ({ ...x })));
       infoRef.current = info;
@@ -460,6 +465,9 @@ export default function Casino({ onExit }: { onExit: () => void }) {
       }
       setView(v);
       setHand("live");
+      // The shuffle is heard before the first card flies.
+      sfxRef.current?.play("shuffle");
+      await wait(reduced.current ? 0 : 550);
       await playEvents(v, true);
       if (v.done) setHand("over");
     } catch (e) {
@@ -563,6 +571,7 @@ export default function Casino({ onExit }: { onExit: () => void }) {
   const [tempo, setTempo] = useState(prefs.tempo);
   const [layers, setLayers] = useState<Record<Layer, boolean>>(prefs.layers);
   const [mine, setMine] = useState<StoredSong[]>([]);
+  const [sfxOn, setSfxOn] = useState(prefs.sfx);
   const [songNote, setSongNote] = useState<string | null>(null);
   const songs = songList(mine);
   const current = songs.find((x) => x.key === trackKey) ?? songs[0];
@@ -595,9 +604,31 @@ export default function Casino({ onExit }: { onExit: () => void }) {
 
   useEffect(() => {
     try {
-      localStorage.setItem(JUKEBOX_KEY, JSON.stringify({ track: trackKey, volume, tempo, layers }));
+      localStorage.setItem(JUKEBOX_KEY, JSON.stringify({ track: trackKey, volume, tempo, layers, sfx: sfxOn }));
     } catch {}
-  }, [trackKey, volume, tempo, layers]);
+  }, [trackKey, volume, tempo, layers, sfxOn]);
+
+  // Sound effects ride their own audio context; the first tap anywhere opens it.
+  useEffect(() => {
+    const fx = new Sfx();
+    fx.enabled = prefs.sfx;
+    sfxRef.current = fx;
+    worldRef.current?.setSfx(fx);
+    const unlock = () => fx.unlock();
+    window.addEventListener("pointerdown", unlock, true);
+    return () => {
+      window.removeEventListener("pointerdown", unlock, true);
+      worldRef.current?.setSfx(null);
+      fx.dispose();
+      sfxRef.current = null;
+    };
+  }, [prefs]);
+  const toggleSfx = () => {
+    setSfxOn((on) => {
+      if (sfxRef.current) sfxRef.current.enabled = !on;
+      return !on;
+    });
+  };
 
   // Autoplay on entry. If the browser holds sound until a tap, the first
   // tap or key press anywhere in the casino lets it out.
@@ -1006,6 +1037,10 @@ export default function Casino({ onExit }: { onExit: () => void }) {
                   ))}
                 </div>
               )}
+              <button type="button" className="cas-sfx" aria-pressed={sfxOn} onClick={toggleSfx}>
+                <span>Sound effects</span>
+                <i aria-hidden="true" />
+              </button>
               <div className="cas-row">
                 <button type="button" className="cas-btn is-gold is-big" onClick={togglePlay}>
                   {playing ? "Pause" : "Play"}
@@ -1019,6 +1054,7 @@ export default function Casino({ onExit }: { onExit: () => void }) {
 
           {atCashier && (
             <div className="cas-pane" key={tab}>
+              <p className="cas-greet">Welcome in. Practice coins, or the real deal?</p>
               <div className="cas-modes" role="radiogroup" aria-label="Play mode">
                 <button type="button" role="radio" aria-checked={tab === "practice"} className={tab === "practice" ? "is-on" : ""} onClick={() => switchMode("practice")}>
                   Practice

@@ -5,6 +5,7 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { clone as cloneRig } from "three/examples/jsm/utils/SkeletonUtils.js";
+import { winIntensity, type Sfx } from "./sfx";
 import type { Card } from "@/lib/casino/cards";
 import { STRIP } from "@/lib/casino/slots";
 import {
@@ -87,6 +88,8 @@ export class CasinoWorld {
   private music: { pulse(): number; playing: boolean } | null = null;
   private jukeTubes: THREE.MeshBasicMaterial[] = [];
   private jukeDisc = new THREE.Group();
+  private sfx: Sfx | null = null;
+  private cashier: { root: THREE.Group; head: THREE.Group; torso: THREE.Object3D; wave: THREE.Group; greet: number } | null = null;
   private heading = Math.PI;
   private input = new THREE.Vector2();
   private keys = new Set<string>();
@@ -679,40 +682,250 @@ export class CasinoWorld {
     this.music = m;
   }
 
+  setSfx(sfx: Sfx | null) {
+    this.sfx = sfx;
+  }
+
+  // A booth against the left wall: wood sides, a brass grille with a serving
+  // window, shelves of chip racks and a safe behind the counter, and the
+  // cashier standing at the window.
   private buildCashier() {
     const g = new THREE.Group();
-    g.position.set(-6.5, 0, 0.6);
-    const counter = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.05, 2.0), this.std("#2b1a7c", 0.4, 0.2));
-    counter.position.y = 0.525;
-    g.add(counter);
-    const topSlab = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.06, 2.1), this.gold());
-    topSlab.position.y = 1.07;
-    g.add(topSlab);
-    const barMat = this.gold();
-    for (let k = -4; k <= 4; k++) {
-      const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 1.1, 8), barMat);
-      bar.position.set(0.1, 1.65, k * 0.22);
-      g.add(bar);
+    g.position.set(-6.35, 0, 0.6);
+    const wood = this.std("#3a2213", 0.55, 0.05);
+    const lacquer = this.std("#2b1a7c", 0.4, 0.2);
+    const gold = this.gold();
+
+    const floor = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.06, 2.6), this.std("#1d1446", 0.7));
+    floor.position.set(0, 0.03, 0);
+    g.add(floor);
+    const back = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.5, 2.6), this.std("#24186a", 0.8));
+    back.position.set(-0.62, 1.25, 0);
+    g.add(back);
+    const logo = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.62), new THREE.MeshBasicMaterial({ map: logoTexture(), transparent: true }));
+    logo.position.set(-0.58, 1.95, 0);
+    logo.rotation.y = Math.PI / 2;
+    g.add(logo);
+    // The back side is a full wall; the side facing the room stops at counter
+    // height, with a gold post carrying the header, so the floor sees inside.
+    const wall = new THREE.Mesh(new THREE.BoxGeometry(1.4, 2.55, 0.08), wood);
+    wall.position.set(0, 1.275, -1.3);
+    g.add(wall);
+    const low = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.05, 0.08), wood);
+    low.position.set(0, 0.525, 1.3);
+    g.add(low);
+    const lowCap = new THREE.Mesh(new THREE.BoxGeometry(1.44, 0.04, 0.12), gold);
+    lowCap.position.set(0, 1.07, 1.3);
+    g.add(lowCap);
+    for (const z of [-1.3, 1.3]) {
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.55, 12), gold);
+      post.position.set(0.71, 1.275, z);
+      g.add(post);
     }
-    const header = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.36, 2.1), this.std("#1d1446", 0.4));
-    header.position.set(0.1, 2.36, 0);
+    const header = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.42, 2.7), this.std("#1d1446", 0.4));
+    header.position.set(0, 2.66, 0);
     g.add(header);
+    for (const y of [2.46, 2.86]) {
+      const line = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.025, 2.7), gold);
+      line.position.set(0.75, y, 0);
+      g.add(line);
+    }
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.29), new THREE.MeshBasicMaterial({ map: signTexture("CASHIER", GOLD, 1024, 192, 120), transparent: true, color: glow("#ffffff", 1.1) }));
     // Angled toward the room camera so the station reads on arrival.
-    sign.position.set(0.75, 2.55, 0.55);
+    sign.position.set(0.95, 2.66, 0.75);
     sign.rotation.y = Math.PI / 4;
     g.add(sign);
+
+    // Counter, with gold inlay panels on its face.
+    const counter = new THREE.Mesh(new THREE.BoxGeometry(0.45, 1.05, 2.52), lacquer);
+    counter.position.set(0.5, 0.525, 0);
+    g.add(counter);
+    const slab = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.06, 2.6), gold);
+    slab.position.set(0.5, 1.08, 0);
+    g.add(slab);
+    for (const z of [-0.8, 0, 0.8]) {
+      const inlay = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.62, 0.62), this.std("#3b22a6", 0.35, 0.25));
+      inlay.position.set(0.73, 0.55, z);
+      g.add(inlay);
+      for (const [dy, dz, w, h] of [[0.32, 0, 0.66, 0.025], [-0.32, 0, 0.66, 0.025], [0, 0.32, 0.025, 0.66], [0, -0.32, 0.025, 0.66]]) {
+        const edge = new THREE.Mesh(new THREE.BoxGeometry(0.012, h, w), gold);
+        edge.position.set(0.735, 0.55 + dy, z + dz);
+        g.add(edge);
+      }
+    }
+
+    // Brass grille with an arched serving window in the middle.
+    for (let z = -1.2; z <= 1.21; z += 0.16) {
+      if (Math.abs(z) < 0.4) continue;
+      const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 1.34, 8), gold);
+      bar.position.set(0.62, 1.78, z);
+      g.add(bar);
+    }
+    for (const z of [-0.36, 0.36]) {
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.72, 10), gold);
+      post.position.set(0.62, 1.47, z);
+      g.add(post);
+    }
+    const arch = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.02, 8, 32, Math.PI), gold);
+    arch.position.set(0.62, 1.83, 0);
+    arch.rotation.y = Math.PI / 2;
+    g.add(arch);
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 2.5), gold);
+    rail.position.set(0.62, 2.44, 0);
+    g.add(rail);
+
+    // On the counter: a service bell and a tray of chips.
+    const bellBase = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.025, 20), this.std("#1d1446", 0.4));
+    bellBase.position.set(0.55, 1.125, -0.2);
+    g.add(bellBase);
+    const bell = new THREE.Mesh(new THREE.SphereGeometry(0.055, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2), gold);
+    bell.position.set(0.55, 1.137, -0.2);
+    g.add(bell);
+    const tray = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.03, 0.36), this.std("#14102e", 0.5));
+    tray.position.set(0.5, 1.125, 0.22);
+    g.add(tray);
+    for (let k = 0; k < 4; k++)
+      for (let h = 0; h < 3 + (k % 2); h++) {
+        const chip = new THREE.Mesh(this.chipGeo, this.chipMats[k % this.chipMats.length]);
+        chip.position.set(0.5, 1.15 + h * 0.015, 0.1 + k * 0.08);
+        g.add(chip);
+      }
+
+    // Behind the counter: two shelves of chip racks and a safe.
+    for (const y of [1.0, 1.42]) {
+      const shelf = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.04, 1.0), wood);
+      shelf.position.set(-0.45, y, -0.72);
+      g.add(shelf);
+      for (let k = 0; k < 6; k++) {
+        const stack = new THREE.Group();
+        stack.position.set(-0.45, y + 0.02, -1.12 + k * 0.16);
+        for (let h = 0; h < 5 + ((k * 3 + Math.round(y * 10)) % 4); h++) {
+          const chip = new THREE.Mesh(this.chipGeo, this.chipMats[(k + Math.round(y)) % this.chipMats.length]);
+          chip.position.y = 0.008 + h * 0.015;
+          stack.add(chip);
+        }
+        g.add(stack);
+      }
+    }
+    const safe = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.6, 0.5), this.std("#2a2838", 0.35, 0.6));
+    safe.position.set(-0.36, 0.33, 0.82);
+    g.add(safe);
+    const dial = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.03, 24), gold);
+    dial.rotation.z = Math.PI / 2;
+    dial.position.set(-0.115, 0.4, 0.82);
+    g.add(dial);
+    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.16), gold);
+    handle.position.set(-0.115, 0.22, 0.82);
+    g.add(handle);
+    const deskLamp = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.08, 0.12, 16, 1, true), this.std(GOLD, 0.3, 0.6, { side: THREE.DoubleSide }));
+    deskLamp.position.set(-0.36, 0.74, 0.82);
+    g.add(deskLamp);
+    const deskBulb = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), new THREE.MeshBasicMaterial({ color: glow("#ffd79a", 1.6) }));
+    deskBulb.position.set(-0.36, 0.7, 0.82);
+    g.add(deskBulb);
+    const inside = new THREE.PointLight("#ffc98a", 1.8, 3.2, 1.6);
+    inside.position.set(-0.45, 2.3, -0.5);
+    g.add(inside);
+
+    g.add(this.buildCashierPerson());
     this.scene.add(g);
-    this.obstacles.push({ minX: -7.2, maxX: -5.85, minZ: -0.5, maxZ: 1.7 });
-    const hit = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.6, 2.2), new THREE.MeshBasicMaterial({ visible: false }));
-    hit.position.set(-6.5, 1.3, 0.6);
+    this.obstacles.push({ minX: -7.2, maxX: -5.55, minZ: -0.75, maxZ: 1.95 });
+    const hit = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.7, 2.7), new THREE.MeshBasicMaterial({ visible: false }));
+    hit.position.set(-6.3, 1.35, 0.6);
     hit.userData.station = 200;
     this.scene.add(hit);
     this.hitTargets.push(hit);
-    this.stations.push({ id: "cashier", index: 0, label: "Cashier", stand: new THREE.Vector3(-5.3, 0, 0.6) });
-    const lamp = new THREE.PointLight(GOLD, 5, 5, 1.6);
-    lamp.position.set(-5.6, 2.4, 0.6);
+    this.stations.push({ id: "cashier", index: 0, label: "Cashier", stand: new THREE.Vector3(-4.95, 0, 0.6) });
+    const lamp = new THREE.PointLight(GOLD, 2.5, 5, 1.6);
+    lamp.position.set(-5.0, 2.6, 1.4);
     this.scene.add(lamp);
+  }
+
+  // The cashier: a vest, a bow tie, a name tag. Breathes, follows Axie with
+  // their eyes, and waves when someone steps up to the window.
+  private buildCashierPerson() {
+    const root = new THREE.Group();
+    root.position.set(-0.12, 0, 0);
+    root.rotation.y = Math.PI / 2;
+    const skin = this.std("#c68a5e", 0.6);
+    const hair = this.std("#1b1320", 0.7);
+    const ink = new THREE.MeshBasicMaterial({ color: "#1b1320" });
+
+    const legs = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.14, 0.9, 16), this.std("#1a1430", 0.7));
+    legs.position.y = 0.45;
+    root.add(legs);
+    const torso = new THREE.Group();
+    torso.position.y = 0.92;
+    const shirt = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, 0.4, 6, 16), this.std("#cfc8e6", 0.7));
+    shirt.position.y = 0.33;
+    torso.add(shirt);
+    const vest = new THREE.Mesh(new THREE.CapsuleGeometry(0.212, 0.3, 6, 16), this.std("#5b3fd6", 0.45, 0.1));
+    vest.position.y = 0.28;
+    vest.scale.z = 0.94;
+    torso.add(vest);
+    const bib = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.24), this.std("#cfc8e6", 0.7));
+    bib.position.set(0, 0.45, 0.2);
+    torso.add(bib);
+    for (const side of [-1, 1]) {
+      const bow = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.07, 10), this.gold());
+      bow.rotation.z = (side * Math.PI) / 2;
+      bow.position.set(side * 0.035, 0.6, 0.19);
+      torso.add(bow);
+    }
+    const knot = new THREE.Mesh(new THREE.SphereGeometry(0.018, 10, 8), this.gold());
+    knot.position.set(0, 0.6, 0.2);
+    torso.add(knot);
+    const tag = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.025, 0.01), this.gold());
+    tag.position.set(0.1, 0.42, 0.205);
+    torso.add(tag);
+    root.add(torso);
+
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.06, 0.1, 12), skin);
+    neck.position.y = 1.6;
+    root.add(neck);
+    const head = new THREE.Group();
+    head.position.y = 1.78;
+    const face = new THREE.Mesh(new THREE.SphereGeometry(0.17, 24, 18), skin);
+    head.add(face);
+    const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.18, 24, 18), hair);
+    hairCap.scale.set(1.02, 0.82, 1);
+    hairCap.position.set(0, 0.05, -0.04);
+    head.add(hairCap);
+    for (const side of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.018, 10, 8), ink);
+      eye.position.set(side * 0.06, 0.01, 0.155);
+      head.add(eye);
+      const brow = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.01, 0.01), ink);
+      brow.position.set(side * 0.06, 0.06, 0.158);
+      brow.rotation.z = side * -0.12;
+      head.add(brow);
+      const ear = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), skin);
+      ear.position.set(side * 0.168, 0, 0);
+      head.add(ear);
+    }
+    const smile = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.008, 6, 16, Math.PI), ink);
+    smile.rotation.z = Math.PI;
+    smile.position.set(0, -0.045, 0.152);
+    head.add(smile);
+    root.add(head);
+
+    // Arms rest forward on the counter; the one on the room side waves.
+    let wave = new THREE.Group();
+    for (const side of [-1, 1]) {
+      const arm = new THREE.Group();
+      arm.position.set(side * 0.25, 1.46, 0);
+      arm.rotation.x = -0.7;
+      const sleeve = new THREE.Mesh(new THREE.CapsuleGeometry(0.055, 0.36, 6, 12), this.std("#cfc8e6", 0.7));
+      sleeve.position.y = -0.24;
+      arm.add(sleeve);
+      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 10), skin);
+      hand.position.y = -0.48;
+      arm.add(hand);
+      root.add(arm);
+      if (side === -1) wave = arm;
+    }
+    this.cashier = { root, head, torso, wave, greet: 0 };
+    return root;
   }
 
   private buildDecor() {
@@ -870,6 +1083,15 @@ export class CasinoWorld {
     this.heading = st.id === "cashier" ? -Math.PI / 2 : Math.PI;
     // At a slot, Axie steps beside the cabinet and faces you, so the close-up stays clear.
     if (st.id === "jukebox") this.heading = Math.PI / 2;
+    if (st.id === "cashier") {
+      // Axie steps to the side of the window so the cashier is in full view.
+      this.axie.position.set(st.stand.x + 0.1, 0, st.stand.z + 1.05);
+      this.heading = -Math.PI / 2;
+    }
+    if (st.id === "cashier" && this.cashier) {
+      this.cashier.greet = 1.8;
+      this.sfx?.play("bell");
+    }
     if (st.id === "slots") {
       this.axie.position.set(SLOT_X[st.index] + 0.8, 0, SLOT_FRONT + 0.3);
       this.heading = -0.35;
@@ -906,6 +1128,8 @@ export class CasinoWorld {
     const n = STRIP.length;
     const quick = this.reduced;
     if (lever) this.tween(quick ? 0.01 : 0.55, (k) => (lever.rotation.x = Math.sin(k * Math.PI) * 0.95));
+    this.sfx?.play("lever");
+    const roll = this.sfx?.roll();
     if (!quick) {
       this.zoomGoal = 1;
       this.shake = Math.max(this.shake, 0.012);
@@ -922,6 +1146,7 @@ export class CasinoWorld {
         const slowTail = anticipate && j === 2 && !quick;
         if (slowTail) {
           // Once the second reel lands, the third keeps rolling and the room leans in.
+          this.sfx?.riser(stopAt[1], stopAt[2] - stopAt[1]);
           this.later(stopAt[1], () => {
             this.zoomGoal = 1.22;
             this.hum = 0.016;
@@ -933,6 +1158,9 @@ export class CasinoWorld {
         this.tween(dur, (k) => this.setReel(r, from + (turns + delta) * curve(k), true), () => {
           this.setReel(r, stops[j]);
           if (!quick) this.shake = Math.max(this.shake, j === 2 ? 0.05 : 0.03);
+          this.sfx?.play("thunk");
+          roll?.setActive(left - 1);
+          if (left === 1) roll?.stop();
           if (j === 2) this.hum = 0;
           if (--left === 0) resolve();
         });
@@ -942,7 +1170,7 @@ export class CasinoWorld {
 
   // The payoff after the reels settle: shake and flash sized to the win,
   // coins out of the tray, then the camera eases back to the cabinet.
-  settleSpin(machine: number, size: "none" | "win" | "big") {
+  settleSpin(machine: number, size: "none" | "win" | "big", multiple = 1) {
     const quick = this.reduced;
     if (size !== "none") {
       this.flashMachine = machine;
@@ -954,6 +1182,7 @@ export class CasinoWorld {
         this.burstCoins(new THREE.Vector3(x, 0.38, SLOT_FRONT + 0.2), size === "big" ? 46 : 18, new THREE.Vector3(0, 0, 1));
       }
       this.react(size === "big" ? "big" : "win");
+      this.sfx?.win(winIntensity(multiple));
     }
     this.later(quick ? 0.01 : size === "big" ? 1.9 : 1.1, () => (this.zoomGoal = 0));
   }
@@ -965,7 +1194,7 @@ export class CasinoWorld {
   }
 
   // The pot slides to whoever won it. A win of your own adds coins and a kick.
-  payPot(seat: number, big: boolean) {
+  payPot(seat: number, big: boolean, multiple = 1) {
     const g = this.chipStacks[4];
     const spot = this.seatSpots()[seat].clone().multiplyScalar(0.5);
     const from = g.position.clone();
@@ -978,6 +1207,9 @@ export class CasinoWorld {
       this.shake = big ? 0.12 : 0.05;
       this.burstCoins(new THREE.Vector3(TABLE.x, TABLE.top + 0.1, TABLE.z), big ? 34 : 14, new THREE.Vector3(0, 0, 1));
     }
+    this.sfx?.play("chips");
+    // Your pot sounds as big as it is, measured in big blinds.
+    if (seat === 0) this.sfx?.win(winIntensity(multiple, 300));
     const bot = this.bots[seat];
     if (bot && !this.reduced) bot.hop = 1;
   }
@@ -1120,6 +1352,7 @@ export class CasinoWorld {
       return;
     }
     this.later(delay, () => {
+      this.sfx?.play("flip");
       const lift = g.position.y;
       this.tween(dur, (k) => {
         const e = easeInOut(k);
@@ -1133,6 +1366,7 @@ export class CasinoWorld {
   }
 
   private deal(m: THREE.Object3D, from: THREE.Vector3, to: THREE.Vector3, delay: number) {
+    this.sfx?.play("deal", delay);
     if (this.reduced) {
       m.position.copy(to);
       return;
@@ -1223,6 +1457,27 @@ export class CasinoWorld {
       b.g.position.y = 0.57 + Math.max(0, hop) * 0.22 + (think ? Math.abs(Math.sin(t * 7)) * 0.03 : 0);
     });
 
+    const c = this.cashier;
+    if (c) {
+      c.torso.scale.y = 1 + Math.sin(t * 2.1) * 0.012;
+      // Eyes follow Axie when Axie is close; the head turns, within reason.
+      const wp = new THREE.Vector3();
+      c.root.getWorldPosition(wp);
+      const dx = this.axie.position.x - wp.x;
+      const dz = this.axie.position.z - wp.z;
+      let yaw = 0;
+      if (Math.hypot(dx, dz) < 6) {
+        yaw = Math.atan2(dx, dz) - Math.PI / 2;
+        yaw = THREE.MathUtils.clamp(Math.atan2(Math.sin(yaw), Math.cos(yaw)), -0.9, 0.9);
+      }
+      c.head.rotation.y += (yaw - c.head.rotation.y) * Math.min(1, dt * 4);
+      c.greet = Math.max(0, c.greet - dt);
+      const waving = c.greet > 0 && !this.reduced;
+      const w = c.wave;
+      w.rotation.x += ((waving ? 0 : -0.7) - w.rotation.x) * Math.min(1, dt * 8);
+      w.rotation.z += ((waving ? -2.5 + Math.sin(t * 12) * 0.35 : 0) - w.rotation.z) * Math.min(1, dt * 8);
+    }
+
     const beat = this.music?.pulse() ?? 0;
     // Below the bloom threshold at rest; the kick pushes them over it.
     this.jukeTubes.forEach((m, k) => m.color.copy(m.userData.base).multiplyScalar(0.92 + beat * (0.9 - k * 0.15)));
@@ -1278,8 +1533,9 @@ export class CasinoWorld {
       return { pos: look.clone().add(new THREE.Vector3(-1, 0.28, 0.12).normalize().multiplyScalar(d)), look };
     }
     if (st?.id === "cashier") {
-      const look = new THREE.Vector3(-6.2, 1.2, 0.6);
-      const d = this.fitDistance(3, 3.2);
+      const portrait = this.camera.aspect < 1;
+      const look = new THREE.Vector3(-6.1, portrait ? 0.8 : 1.3, 0.6);
+      const d = portrait ? this.fitDistance(2.8, 4.0) : this.fitDistance(3.9, 3.6);
       return { pos: look.clone().add(new THREE.Vector3(1, 0.45, 0.25).normalize().multiplyScalar(d)), look };
     }
     // Wide screens see the whole room as one diorama that drifts with Axie;

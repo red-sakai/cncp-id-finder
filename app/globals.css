@@ -7674,6 +7674,48 @@ html.dark .footer-legal-links a:hover {
 @keyframes casEq { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
 .cas-now { margin-right: auto; margin-left: 10px; }
 
+.cas-sfx {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 0 4px 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--cas-ink-soft);
+  font: 600 13px/1 var(--font-body), sans-serif;
+  cursor: pointer;
+}
+.cas-sfx i {
+  position: relative;
+  width: 40px;
+  height: 24px;
+  border-radius: 12px;
+  background: var(--cas-hair);
+  transition: background 0.2s var(--cas-out);
+}
+.cas-sfx i::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--cas-ink);
+  transition: transform 0.25s var(--cas-out);
+}
+.cas-sfx[aria-pressed="true"] i { background: var(--cas-violet); }
+.cas-sfx[aria-pressed="true"] i::after { transform: translateX(16px); }
+.cas-greet {
+  margin: 0 44px 0 0;
+  font-family: var(--font-display), sans-serif;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.3;
+  color: var(--cas-ink);
+}
+
 /* The payoff: a number that rolls up over the scene, no box around it. */
 .cas-toast {
   position: absolute;
@@ -7741,6 +7783,6 @@ html.dark .footer-legal-links a:hover {
 @media (prefers-reduced-motion: reduce) {
   .cas-prompt, .cas-deck, .cas-pane, .cas-hint, .cas-tag-act, .cas-stepper-value b, .cas-loading-bar, .cas-dots i, .cas-btn.is-busy, .cas-eq i { animation: none; }
   .cas-toast { animation: casFadeOnly 0.3s linear; }
-  .cas-btn, .cas-icon, .cas-stepper button, .cas-stick-knob { transition: none; }
+  .cas-btn, .cas-icon, .cas-stepper button, .cas-stick-knob, .cas-sfx i, .cas-sfx i::after { transition: none; }
 }
 @keyframes casFadeOnly { from { opacity: 0; } }
