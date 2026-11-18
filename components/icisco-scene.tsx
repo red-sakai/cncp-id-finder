@@ -319,6 +319,13 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
     loadShop();
   }, [clearPurchaseExit, loadShop]);
 
+  // Real-deal games move Ciscoins, so the ID card and the shop wallet follow.
+  const syncCiscoins = useCallback((email: string, ciscoins: number) => {
+    const same = (other: string) => other.trim().toLowerCase() === email.trim().toLowerCase();
+    setLookupResult((r) => (r && same(r.email) ? { ...r, ciscoins } : r));
+    setWallet((w) => (w && same(w.email) ? { ...w, ciscoins } : w));
+  }, []);
+
   // The tablet is shared, so leaving the shop locks the wallet behind it.
   const lockWallet = useCallback(() => {
     clearPurchaseExit();
@@ -3195,7 +3202,11 @@ export default function IciscoScene({ onDismiss }: { onDismiss: () => void }) {
 
       {activeApp === "games" && !closing && (
         <div className="icisco-app-screen">
-          <Casino onExit={() => setActiveApp(null)} />
+          <Casino
+            onExit={() => setActiveApp(null)}
+            member={lookupResult}
+            onBalance={syncCiscoins}
+          />
         </div>
       )}
     </div>

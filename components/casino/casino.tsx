@@ -125,7 +125,18 @@ function Eq() {
   return <span className="cas-eq" aria-hidden="true"><i /><i /><i /></span>;
 }
 
-export default function Casino({ onExit }: { onExit: () => void }) {
+// `member` is whoever is looked up on the tablet, so their email is already
+// filled in at the cashier. `onBalance` hands every real-deal balance back to
+// the tablet so the ID card and the shop show the same Ciscoins.
+export default function Casino({
+  onExit,
+  member,
+  onBalance,
+}: {
+  onExit: () => void;
+  member?: { email: string; first_name: string } | null;
+  onBalance?: (email: string, balance: number) => void;
+}) {
   const mountRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<CasinoWorld | null>(null);
@@ -145,6 +156,13 @@ export default function Casino({ onExit }: { onExit: () => void }) {
   const [realBalance, setRealBalance] = useState<number | null>(null);
   const balance = mode === "practice" ? practice : realBalance ?? 0;
   const shownBalance = useCountUp(balance);
+  const onBalanceRef = useRef(onBalance);
+  useEffect(() => {
+    onBalanceRef.current = onBalance;
+  }, [onBalance]);
+  useEffect(() => {
+    if (wallet && realBalance !== null) onBalanceRef.current?.(wallet.email, realBalance);
+  }, [wallet, realBalance]);
 
   const [toast, setToast] = useState<Toast>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -515,7 +533,7 @@ export default function Casino({ onExit }: { onExit: () => void }) {
   }, [view, act]);
 
   // ── Cashier ────────────────────────────────────────────────────────────
-  const [walletEmail, setWalletEmail] = useState("");
+  const [walletEmail, setWalletEmail] = useState(member?.email ?? "");
   const [walletPhone, setWalletPhone] = useState("");
   const [walletBusy, setWalletBusy] = useState(false);
   const [walletError, setWalletError] = useState<string | null>(null);
@@ -1083,7 +1101,11 @@ export default function Casino({ onExit }: { onExit: () => void }) {
                 </>
               ) : (
                 <form className="cas-wallet" onSubmit={openWallet}>
-                  <p className="cas-note">Open your wallet with the email and phone number on your membership.</p>
+                  <p className="cas-note">
+                    {member && walletEmail === member.email
+                      ? `${member.first_name}, enter the phone number on your membership to play with your Ciscoins.`
+                      : "Open your wallet with the email and phone number on your membership."}
+                  </p>
                   <input type="email" autoComplete="email" required placeholder="Email" aria-label="Email" value={walletEmail} onChange={(e) => setWalletEmail(e.target.value)} />
                   <input type="tel" inputMode="numeric" autoComplete="tel" required placeholder="Phone, 09XXXXXXXXX" aria-label="Phone" value={walletPhone} onChange={(e) => setWalletPhone(e.target.value)} />
                   {walletError && <p className="cas-note is-error" role="alert">{walletError}</p>}
