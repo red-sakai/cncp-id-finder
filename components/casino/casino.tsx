@@ -79,7 +79,7 @@ function actText(act: string, to: number) {
 }
 
 // Numbers roll to their new value instead of jumping, so a win is felt.
-function useCountUp(value: number, ms = 700) {
+export function useCountUp(value: number, ms = 700) {
   const [shown, setShown] = useState(value);
   const from = useRef(value);
   useEffect(() => {
